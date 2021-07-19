@@ -1,0 +1,18 @@
+[package]
+name = "rankd"
+version = "0.1.0"
+authors = ["Rui Lopes <ruieduardo.fa.lopes@icloud.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+failure = "0.1"
+uname = "0.1.1"
+slog = "2.7"
+slog-term = "2.8"
+slog-async = "2.6"
+toml = "0.5"
+structopt = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+pnet = "0.28"
