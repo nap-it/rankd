@@ -9,3 +9,13 @@ pub struct Capabilities {
     kernel: Kernel,
     user: User,
 }
+
+impl Capabilities {
+    pub fn new() -> Self {
+        Capabilities {
+            description: "".to_string(),
+            kernel: Kernel::new(),
+            user: User::new(),
+        }
+    }
+}

@@ -92,7 +92,7 @@ pub(crate) struct User {
 }
 
 impl User {
-    pub fn new(&self) -> Self {
+    pub fn new() -> Self {
         User {
             network: Network::new(),
             applications: Applications::new(),
