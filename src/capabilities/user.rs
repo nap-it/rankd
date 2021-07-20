@@ -34,11 +34,13 @@ impl Applications {
     }
 }
 
+#[derive(Debug)]
 enum SDNRole {
     SWITCH,
     CONTROLLER,
 }
 
+#[derive(Debug)]
 struct SDN {
     role: SDNRole,
     framework: String,
@@ -55,20 +57,22 @@ impl SDN {
     }
 }
 
+#[derive(Debug)]
 struct Interface {
     name: String,
     ips: Vec<IpNetwork>,
 }
 
+#[derive(Debug)]
 struct Network {
-    sdn: SDN,
+    sdn: Option<SDN>,
     interfaces: Vec<Interface>,
 }
 
 impl Network {
     pub fn new() -> Self {
         Self {
-            sdn: SDN::new(),
+            sdn: None,
             interfaces: Self::load_interfaces(),
         }
     }
@@ -100,3 +104,13 @@ impl User {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use crate::capabilities::user::Network;
+
+    #[test]
+    fn create_network_object() {
+        let network = Network::new();
+        println!("{:#?}", network);
+    }
+}
