@@ -4,14 +4,14 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 #[structopt(name = "rankd")]
 pub struct RankdOpts {
-    #[structopt(
-        parse(from_os_str),
-        short = "c",
-        long = "config",
-        value_name = "filename",
-        help = "configuration file"
-    )]
-    pub config_file: PathBuf,
+    //#[structopt(
+    //    parse(from_os_str),
+    //    short = "c",
+    //    long = "config",
+    //    value_name = "filename",
+    //    help = "configuration file"
+    //)]
+    //pub config_file: PathBuf,
     #[structopt(
         short = "q",
         long = "quiet",

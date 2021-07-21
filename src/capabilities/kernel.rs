@@ -59,7 +59,7 @@ mod tests {
     #[test]
     fn create_kernel_object() {
         let kernel = Kernel::new();
-        println!("{:?}", kernel);
+        println!("{:#?}", kernel);
         assert_eq!(kernel.precision, 8);
     }
 }

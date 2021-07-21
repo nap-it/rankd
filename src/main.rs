@@ -1,16 +1,19 @@
 mod capabilities;
 mod config;
 mod options;
+mod service;
 
 use failure::Error;
 use std::fs::OpenOptions;
 use slog::{Drain, Duplicate, o, info};
 use structopt::StructOpt;
+use tokio::net::TcpListener;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     // Read options from CLI.
     let cli_options = options::RankdOpts::from_args();
-    let config = config::parse_file(&cli_options.config_file);
+    //let config = config::parse_file(&cli_options.config_file);
 
     // Initialize logger.
     let log_file = OpenOptions::new().create(true).write(true).truncate(true).open("rankd.log").unwrap();
@@ -26,5 +29,7 @@ fn main() {
         slog::Logger::root(file_drain, o!())
     };
 
-    info!(log, "[rankd] starting rankd");
+    info!(log, "rankd is now starting its server.");
+
+    service::start(log).await;
 }
