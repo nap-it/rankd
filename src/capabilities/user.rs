@@ -1,11 +1,13 @@
 use pnet::ipnetwork::IpNetwork;
 
+#[derive(Debug)]
 struct Application {
     name: String,
     port: u16,
     version: String,
 }
 
+#[derive(Debug)]
 struct Applications {
     network: Vec<Application>,
     av: Vec<Application>,
@@ -22,15 +24,15 @@ impl Applications {
     }
 
     fn load_network_apps() -> Vec<Application> {
-        unimplemented!()
+        Vec::new()
     }
 
     fn load_av_apps() -> Vec<Application> {
-        unimplemented!()
+        Vec::new()
     }
 
     fn load_utility_apps() -> Vec<Application> {
-        unimplemented!()
+        Vec::new()
     }
 }
 
@@ -90,7 +92,8 @@ impl Network {
     }
 }
 
-pub(crate) struct User {
+#[derive(Debug)]
+pub struct User {
     network: Network,
     applications: Applications,
 }

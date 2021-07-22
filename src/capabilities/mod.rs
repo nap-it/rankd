@@ -22,4 +22,8 @@ impl Capabilities {
     pub fn kernel() -> Kernel {
         Kernel::new()
     }
+
+    pub fn user() -> User {
+        User::new()
+    }
 }
