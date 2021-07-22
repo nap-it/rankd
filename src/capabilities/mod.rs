@@ -18,4 +18,8 @@ impl Capabilities {
             user: User::new(),
         }
     }
+
+    pub fn kernel() -> Kernel {
+        Kernel::new()
+    }
 }

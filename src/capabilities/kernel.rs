@@ -3,8 +3,8 @@ use std::io::Error;
 use systemstat::Platform;
 use std::time::Duration;
 
-#[derive(Debug)]
-pub(crate) struct Kernel {
+#[derive(Debug, Clone)]
+pub struct Kernel {
     name: String,
     nodename: String,
     release: String,
@@ -19,7 +19,6 @@ pub(crate) struct Kernel {
 impl Kernel {
     pub fn new() -> Self {
         let uname_structure = uname::uname().unwrap();
-        println!("{:?}", uname_structure);
         Kernel {
             name: uname_structure.sysname,
             nodename: uname_structure.nodename,
