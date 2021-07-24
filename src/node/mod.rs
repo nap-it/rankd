@@ -84,7 +84,7 @@ impl Display for SystemInformation {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct System<'a> {
     /// Private object with system's information.
     _system: sysinfo::System,
@@ -114,5 +114,9 @@ impl System {
             graphics: Graphics::load(),
             sensors: Sensor::update_all(&system),
         }
+    }
+
+    pub fn jsonify(&self) -> String {
+        serde_json::to_string(self).unwrap()
     }
 }
