@@ -1,6 +1,7 @@
+use crate::node::graphics::Graphics;
+use crate::node::sensor::Sensor;
 use std::fmt::{Display, Formatter};
 use sysinfo::SystemExt;
-use crate::node::graphics::Graphics;
 
 mod graphics;
 mod memory;
@@ -60,7 +61,7 @@ impl SystemInformation {
             name: system.name(),
             uptime: system.uptime(),
             boot_time: system.boot_time(),
-            cores: system.physical_core_count()
+            cores: system.physical_core_count(),
         }
     }
 
@@ -101,7 +102,7 @@ pub struct System<'a> {
 impl System {
     pub fn new() -> Self {
         let system = sysinfo::System::new_all();
-        
+
         System {
             _system: system,
             global_information: SystemInformation::update(&system),
@@ -110,12 +111,8 @@ impl System {
             storage: storage::Storage::update_all(&system),
             network: network::Network::update_all(&system),
             os: os::OperativeSystem::update(&system),
-            graphics: if Graphics::there_is_a_graphics_card() {
-                Some(Graphics::load())
-            } else {
-                None
-            },
-            sensors: None
+            graphics: Graphics::load(),
+            sensors: Sensor::update_all(&system),
         }
     }
 }

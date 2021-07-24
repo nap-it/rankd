@@ -45,12 +45,16 @@ impl Graphics {
         }
     }
 
-    pub fn load() -> Self {
+    pub fn load() -> Option<Self> {
+        if !Self::there_is_a_graphics_card() {
+            return None;
+        }
+
         let device = nvml_wrapper::NVML::init()
             .unwrap()
             .device_by_index(0)
             .unwrap();
-        Graphics {
+        Some(Graphics {
             _device: device,
             brand: match device.brand().unwrap() {
                 Brand::Unknown => String::from("Unknown"),
@@ -94,6 +98,6 @@ impl Graphics {
             board_part_no: device.board_part_number().unwrap(),
             temperature: device.temperature(TemperatureSensor::Gpu).unwrap(),
             uuid: device.uuid().unwrap(),
-        }
+        })
     }
 }
