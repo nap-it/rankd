@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter};
 use sysinfo::SystemExt;
+use crate::node::graphics::Graphics;
 
 mod graphics;
 mod memory;
@@ -83,7 +84,7 @@ impl Display for SystemInformation {
 }
 
 #[derive(Debug)]
-pub struct System {
+pub struct System<'a> {
     /// Private object with system's information.
     _system: sysinfo::System,
     /// Global and summary information on the system.
@@ -93,7 +94,7 @@ pub struct System {
     pub storage: Vec<storage::Storage>,
     pub network: Vec<network::Network>,
     pub os: os::OperativeSystem,
-    pub graphics: Option<Graphics>,
+    pub graphics: Option<graphics::Graphics<'a>>,
     pub sensors: Option<Vec<Sensor>>,
 }
 
@@ -109,7 +110,11 @@ impl System {
             storage: storage::Storage::update_all(&system),
             network: network::Network::update_all(&system),
             os: os::OperativeSystem::update(&system),
-            graphics: None,
+            graphics: if Graphics::there_is_a_graphics_card() {
+                Some(Graphics::load())
+            } else {
+                None
+            },
             sensors: None
         }
     }

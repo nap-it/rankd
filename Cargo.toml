@@ -24,3 +24,4 @@ tokio = { version = "1", features = ["full"] }
 warp = "0.3"
 validator = "0.14"
 sysinfo = "0.19"
+nvml-wrapper = "0.7"
