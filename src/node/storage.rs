@@ -1,0 +1,71 @@
+use std::fmt::{Display, Formatter};
+use sysinfo::{DiskExt, DiskType, SystemExt};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum StorageType {
+    /// Hard disk drive.
+    HDD,
+    /// Solid-state drive.
+    SSD,
+    /// Other unknown type.
+    Unknown(isize),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Storage {
+    type_: StorageType,
+    name: String,
+    file_system: String,
+    mount_point: String,
+    total: u64,
+    available: u64,
+    is_removable: bool,
+}
+
+impl Storage {
+    pub fn update(disk: &sysinfo::Disk) -> Self {
+        Storage {
+            type_: match disk.type_() {
+                DiskType::HDD => StorageType::HDD,
+                DiskType::SSD => StorageType::SSD,
+                DiskType::Unknown(value) => StorageType::Unknown(value),
+            },
+            name: disk.name().into(),
+            file_system: disk.file_system().into(),
+            mount_point: disk.mount_point().to_str().unwrap().to_string(),
+            total: disk.total_space(),
+            available: disk.available_space(),
+            is_removable: disk.is_removable(),
+        }
+    }
+
+    pub fn update_all(system: &sysinfo::System) -> Vec<Storage> {
+        let mut storages: Vec<Storage> = Vec::new();
+
+        for storage in system.disks() {
+            storages.push(Storage::update(storage));
+        }
+
+        storages
+    }
+
+    pub fn jsonify(&self) -> String {
+        serde_json::to_string(self).unwrap()
+    }
+}
+
+impl Display for Storage {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "DSK -> [name: {}, type: {}, fs: {}, at: {}, rem: {}, free: {}, total: {}]",
+            self.name,
+            self.type_.into(),
+            self.file_system,
+            self.mount_point,
+            self.is_removable,
+            self.available,
+            self.total
+        )
+    }
+}

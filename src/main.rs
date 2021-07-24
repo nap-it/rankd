@@ -1,5 +1,6 @@
 mod capabilities;
 mod config;
+mod node;
 mod options;
 mod service;
 
