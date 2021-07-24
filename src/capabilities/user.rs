@@ -1,4 +1,6 @@
 use pnet::ipnetwork::IpNetwork;
+use validator::Contains;
+use std::error::Error;
 
 #[derive(Debug)]
 struct Application {
@@ -36,13 +38,13 @@ impl Applications {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum SDNRole {
     SWITCH,
     CONTROLLER,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct SDN {
     role: SDNRole,
     framework: String,
@@ -59,14 +61,20 @@ impl SDN {
     }
 }
 
-#[derive(Debug)]
-struct Interface {
+#[derive(Debug, Clone)]
+pub struct Interface {
     name: String,
     ips: Vec<IpNetwork>,
 }
 
-#[derive(Debug)]
-struct Network {
+impl Contains for Interface {
+    fn has_element(&self, needle: &str) -> bool {
+        needle == self.name
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Network {
     sdn: Option<SDN>,
     interfaces: Vec<Interface>,
 }
@@ -77,6 +85,10 @@ impl Network {
             sdn: None,
             interfaces: Self::load_interfaces(),
         }
+    }
+
+    pub fn interfaces(&self) -> Vec<Interface> {
+        self.interfaces.clone()
     }
 
     fn load_interfaces() -> Vec<Interface> {
@@ -93,6 +105,11 @@ impl Network {
 }
 
 #[derive(Debug)]
+pub enum Errors {
+    NoSuchInterface,
+}
+
+#[derive(Debug)]
 pub struct User {
     network: Network,
     applications: Applications,
@@ -104,6 +121,21 @@ impl User {
             network: Network::new(),
             applications: Applications::new(),
         }
+    }
+
+    pub fn network(&self) -> Network {
+        self.network.clone()
+    }
+
+    pub fn network_interface(&self, network_interface: String) -> Result<Interface, Errors> {
+        let interfaces = crate::capabilities::Capabilities::user().network().interfaces();
+        for interface in interfaces {
+            if interface.has_element(network_interface.as_str()) {
+                return Ok(interface);
+            }
+        }
+
+        Err(Errors::NoSuchInterface)
     }
 }
 

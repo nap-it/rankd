@@ -21,3 +21,4 @@ os_info = "3.0"
 systemstat = "0.1"
 tokio = { version = "1", features = ["full"] }
 warp = "0.3"
+validator = "0.14"

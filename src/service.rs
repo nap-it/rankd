@@ -14,9 +14,19 @@ pub async fn start(log: Logger) {
         format!("{:#?}", crate::capabilities::Capabilities::user())
     });
 
+    let network_info = warp::path("network").map(move || {
+        format!("{:#?}", crate::capabilities::Capabilities::user().network())
+    });
+
+    let network_interface_info = warp::path!("networks" / String).map(|interface| {
+         format!("{:#?}", crate::capabilities::Capabilities::user().network_interface(interface).unwrap())
+    });
+
     let routes = warp::get().and(
         kernel_info
             .or(userspace_info)
+            .or(network_info)
+            .or(network_interface_info)
     );
 
     warp::serve(routes).run(([127, 0, 0, 1], 7265)).await;
