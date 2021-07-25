@@ -1,5 +1,6 @@
 use sysinfo::{ComponentExt, SystemExt};
 use std::fmt::{Display, Formatter};
+use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Sensor {
@@ -10,7 +11,7 @@ pub struct Sensor {
 impl Sensor {
     pub fn update(sensor: &sysinfo::Component) -> Self {
         Sensor {
-            name: sensor.label().into_string(),
+            name: String::from(sensor.label()),
             temperature: Some(sensor.temperature())
         }
     }

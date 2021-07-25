@@ -1,7 +1,8 @@
 use std::fmt::{Display, Formatter};
 use sysinfo::{Gid, Pid, ProcessExt, ProcessStatus, SystemExt, Uid, UserExt};
+use serde::{Serialize, Deserialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 pub struct User {
     uid: Uid,
     gid: Gid,
@@ -28,23 +29,19 @@ impl User {
 
         users
     }
-
-    pub fn jsonify(&self) -> String {
-        serde_json::to_string(self).unwrap()
-    }
 }
 
 impl Display for User {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "USR -> [name: {}, uid: {}, gid: {}]",
+            "USR -> [name: {}, uid: {:?}, gid: {:?}]",
             self.name, self.uid, self.gid
         )
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 pub struct Process {
     name: String,
     command: String,
@@ -72,7 +69,7 @@ impl Process {
                 command.pop();
                 command
             },
-            path: String::from(process.exe().to_owned().to_str()),
+            path: String::from(process.exe().to_owned().to_str().unwrap()),
             pid: process.pid(),
             memory_used: process.memory(),
             virtual_memory: process.virtual_memory(),
@@ -94,10 +91,6 @@ impl Process {
 
         processes
     }
-
-    pub fn jsonify(&self) -> String {
-        serde_json::to_string(self).unwrap()
-    }
 }
 
 impl Display for Process {
@@ -117,7 +110,7 @@ impl Display for Process {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 pub struct OperativeSystem {
     users: Vec<User>,
     processes: Vec<Process>,
@@ -129,10 +122,6 @@ impl OperativeSystem {
             users: User::get_all(system),
             processes: Process::update_all(system),
         }
-    }
-
-    pub fn jsonify(&self) -> String {
-        serde_json::to_string(self).unwrap()
     }
 }
 

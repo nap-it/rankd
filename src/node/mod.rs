@@ -1,5 +1,6 @@
 use crate::node::graphics::Graphics;
 use crate::node::sensor::Sensor;
+use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use sysinfo::SystemExt;
 
@@ -76,18 +77,16 @@ impl Display for SystemInformation {
         write!(
             f,
             "[host_name: {}, os: {}, kernel: {}, uptime: {}]",
-            self.host_name.unwrap(),
-            self.long_os_version.unwrap(),
-            self.kernel_version.unwrap(),
+            self.host_name.as_ref().unwrap(),
+            self.long_os_version.as_ref().unwrap(),
+            self.kernel_version.as_ref().unwrap(),
             self.uptime
         )
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct System<'a> {
-    /// Private object with system's information.
-    _system: sysinfo::System,
+#[derive(Debug)]
+pub struct System {
     /// Global and summary information on the system.
     pub global_information: SystemInformation,
     pub processor: Vec<processor::Processor>,
@@ -95,7 +94,7 @@ pub struct System<'a> {
     pub storage: Vec<storage::Storage>,
     pub network: Vec<network::Network>,
     pub os: os::OperativeSystem,
-    pub graphics: Option<graphics::Graphics<'a>>,
+    pub graphics: Option<graphics::Graphics>,
     pub sensors: Option<Vec<Sensor>>,
 }
 
@@ -104,7 +103,6 @@ impl System {
         let system = sysinfo::System::new_all();
 
         System {
-            _system: system,
             global_information: SystemInformation::update(&system),
             processor: processor::Processor::update_all(&system),
             memory: memory::Memory::update(&system),
@@ -114,9 +112,5 @@ impl System {
             graphics: Graphics::load(),
             sensors: Sensor::update_all(&system),
         }
-    }
-
-    pub fn jsonify(&self) -> String {
-        serde_json::to_string(self).unwrap()
     }
 }

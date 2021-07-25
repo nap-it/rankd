@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter};
 use sysinfo::{ProcessorExt, SystemExt};
+use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Processor {

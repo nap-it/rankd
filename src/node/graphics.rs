@@ -1,10 +1,11 @@
-use nvml_wrapper::error::NvmlError;
-use nvml_wrapper::enum_wrappers::device::{Brand, Clock, EncoderType, OperationMode, TemperatureSensor};
 use nvml_wrapper::enum_wrappers::device::ClockId::Current;
+use nvml_wrapper::enum_wrappers::device::{
+    Brand, Clock, EncoderType, OperationMode, TemperatureSensor,
+};
+use nvml_wrapper::error::NvmlError;
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Graphics<'a> {
-    _device: nvml_wrapper::device::Device<'a>,
+#[derive(Debug)]
+pub struct Graphics {
     brand: String,
     clock_graphics: u32,
     clock_sm: u32,
@@ -50,12 +51,9 @@ impl Graphics {
             return None;
         }
 
-        let device = nvml_wrapper::NVML::init()
-            .unwrap()
-            .device_by_index(0)
-            .unwrap();
+        let nvml = nvml_wrapper::NVML::init().unwrap();
+        let device = nvml.device_by_index(0).unwrap();
         Some(Graphics {
-            _device: device,
             brand: match device.brand().unwrap() {
                 Brand::Unknown => String::from("Unknown"),
                 Brand::Quadro => String::from("Quadro"),

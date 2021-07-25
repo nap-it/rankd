@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter};
 use sysinfo::{DiskExt, DiskType, SystemExt};
+use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum StorageType {
@@ -30,8 +31,8 @@ impl Storage {
                 DiskType::SSD => StorageType::SSD,
                 DiskType::Unknown(value) => StorageType::Unknown(value),
             },
-            name: disk.name().into(),
-            file_system: disk.file_system().into(),
+            name: String::from(disk.name().to_str().unwrap()),
+            file_system: String::from(format!("{:?}", disk.file_system())),
             mount_point: disk.mount_point().to_str().unwrap().to_string(),
             total: disk.total_space(),
             available: disk.available_space(),
@@ -60,7 +61,11 @@ impl Display for Storage {
             f,
             "DSK -> [name: {}, type: {}, fs: {}, at: {}, rem: {}, free: {}, total: {}]",
             self.name,
-            self.type_.into(),
+            match self.type_ {
+                StorageType::HDD => "HDD",
+                StorageType::SSD => "SSD",
+                StorageType::Unknown(_) => "Unknown"
+            },
             self.file_system,
             self.mount_point,
             self.is_removable,

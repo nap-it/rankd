@@ -4,7 +4,7 @@ use pnet::util::MacAddr;
 use std::fmt::{Display, Formatter};
 use sysinfo::{NetworkExt, SystemExt};
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Default)]
 pub struct Network {
     /// The name of the interface.
     name: String,
@@ -36,9 +36,10 @@ pub struct Network {
 
 impl Network {
     pub fn update(interface_name: &String, network: &sysinfo::NetworkData) -> Self {
-        let interface = interfaces()
+        let interfaces = interfaces();
+        let interface = interfaces
             .iter()
-            .find(|int| int.name == interface_name)
+            .find(|int| int.name == *interface_name)
             .unwrap();
 
         Network {
@@ -67,10 +68,6 @@ impl Network {
 
         networks
     }
-
-    pub fn jsonify(&self) -> String {
-        serde_json::to_string(self).unwrap()
-    }
 }
 
 impl Display for Network {
@@ -82,8 +79,8 @@ impl Display for Network {
             self.mac_address.unwrap(),
             {
                 let mut ips = String::new();
-                for ip in self.ips {
-                    ips += ip.ip().to_string().into() + " ";
+                for ip in &self.ips {
+                    ips += String::from(ip.ip().to_string() + " ").as_str();
                 }
                 ips
             }
