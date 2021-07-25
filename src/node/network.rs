@@ -74,16 +74,35 @@ impl Display for Network {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "IF -> [name: {}, mac: {}, ips: {}]",
+            "IF  -> [name: {}, mac: {}, ips: ({})]",
             self.name,
             self.mac_address.unwrap(),
             {
                 let mut ips = String::new();
                 for ip in &self.ips {
-                    ips += String::from(ip.ip().to_string() + " ").as_str();
+                    ips += String::from(ip.ip().to_string() + "; ").as_str();
                 }
+                ips.pop();
+                ips.pop();
                 ips
             }
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use sysinfo::SystemExt;
+    use crate::node::network::Network;
+
+    #[test]
+    fn create_network_object() {
+        let system = sysinfo::System::new_all();
+        let networks = Network::update_all(&system);
+
+        println!("{:?}", networks);
+        for network in networks {
+            println!("{}", network);
+        }
     }
 }

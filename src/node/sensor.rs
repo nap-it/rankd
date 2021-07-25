@@ -40,3 +40,28 @@ impl Display for Sensor {
         write!(f, "SEN -> [name: {}, temp: {}]", self.name, self.temperature.unwrap())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use sysinfo::SystemExt;
+    use crate::node::sensor::Sensor;
+
+    #[test]
+    fn create_sensor_object() {
+        let system = sysinfo::System::new_all();
+        let sensors = Sensor::update_all(&system);
+
+        match sensors {
+            None => println!("There is no sensor."),
+            Some(sensors) => {
+                println!("{:?}", sensors);
+
+                for sensor in sensors {
+                    println!("{}", sensor);
+                }
+            }
+        }
+
+
+    }
+}

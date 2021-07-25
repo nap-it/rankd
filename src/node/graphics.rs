@@ -40,9 +40,15 @@ pub struct Graphics {
 
 impl Graphics {
     pub fn there_is_a_graphics_card() -> bool {
-        match nvml_wrapper::NVML::init().unwrap().device_by_index(0) {
-            Ok(_) => true,
-            Err(_) => false,
+        let nvml = nvml_wrapper::NVML::init();
+        match nvml {
+            Ok(nvml) => {
+                match nvml.device_by_index(0) {
+                    Ok(_) => true,
+                    Err(_) => false,
+                }
+            },
+            Err(_) => false
         }
     }
 
@@ -97,5 +103,20 @@ impl Graphics {
             temperature: device.temperature(TemperatureSensor::Gpu).unwrap(),
             uuid: device.uuid().unwrap(),
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::node::graphics::Graphics;
+
+    #[test]
+    fn create_graphics_object() {
+        let graphics = Graphics::load();
+
+        match graphics {
+            None => println!("There is no graphics card installed."),
+            Some(info) => println!("{:?}", info),
+        }
     }
 }

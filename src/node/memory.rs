@@ -49,3 +49,18 @@ impl Display for Memory {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::node::memory::Memory;
+    use sysinfo::SystemExt;
+
+    #[test]
+    fn create_memory_object() {
+        let system = sysinfo::System::new_all();
+        let memory = Memory::update(&system);
+
+        println!("{:?}", memory);
+        println!("{}", memory);
+    }
+}

@@ -46,3 +46,21 @@ impl Display for Processor {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use sysinfo::SystemExt;
+    use crate::node::processor::Processor;
+
+    #[test]
+    fn create_processor_object() {
+        let system = sysinfo::System::new_all();
+        let processors = Processor::update_all(&system);
+
+        println!("{:?}", processors);
+
+        for processor in processors {
+            println!("{}", processor);
+        }
+    }
+}

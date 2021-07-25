@@ -32,7 +32,7 @@ impl Storage {
                 DiskType::Unknown(value) => StorageType::Unknown(value),
             },
             name: String::from(disk.name().to_str().unwrap()),
-            file_system: String::from(format!("{:?}", disk.file_system())),
+            file_system: String::from_utf8(disk.file_system().to_vec()).unwrap(),
             mount_point: disk.mount_point().to_str().unwrap().to_string(),
             total: disk.total_space(),
             available: disk.available_space(),
@@ -72,5 +72,23 @@ impl Display for Storage {
             self.available,
             self.total
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use sysinfo::SystemExt;
+    use crate::node::storage::Storage;
+
+    #[test]
+    fn create_storage_object() {
+        let system = sysinfo::System::new_all();
+        let storages = Storage::update_all(&system);
+
+        println!("{:?}", storages);
+
+        for storage in storages {
+            println!("{}", storage);
+        }
     }
 }

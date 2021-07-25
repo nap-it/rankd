@@ -64,7 +64,7 @@ impl Process {
             command: {
                 let mut command = String::new();
                 for directory in process.cmd().to_vec() {
-                    command += String::from(format!("{}/", directory)).as_str();
+                    command += String::from(format!("{} ", directory)).as_str();
                 }
                 command.pop();
                 command
@@ -128,5 +128,24 @@ impl OperativeSystem {
 impl Display for OperativeSystem {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "OS  -> [users active: {}, processes: {}]", self.users.len(), self.processes.len())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use sysinfo::SystemExt;
+    use crate::node::os::OperativeSystem;
+
+    #[test]
+    fn create_os_object() {
+        let system = sysinfo::System::new_all();
+        let os = OperativeSystem::update(&system);
+
+        println!("{:?}", os);
+        println!("{}", os);
+
+        for process in os.processes {
+            println!("{}", process);
+        }
     }
 }
