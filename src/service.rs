@@ -1,20 +1,27 @@
 use warp::Filter;
 use slog::{Logger, info};
+use json::object;
+use crate::node::System;
 
 pub async fn start(log: Logger) {
-    let testing_tool = warp::path::end().map(move || {
+    info!(log, "Successfully loaded system information.");
+
+    let testing_tool = warp::path::end().map(|| {
         format!("Welcome to this service")
     });
 
-    let kernel_info = warp::path("kernel").map(move || {
-        format!("{:#?}", crate::capabilities::Capabilities::kernel())
+    let kernel_info = warp::path("os").map(|| {
+        format!("{}", object!{
+            code : 200,
+            data : System::global(),
+        })
     });
 
-    let userspace_info = warp::path("user").map(move || {
+    let userspace_info = warp::path("user").map(|| {
         format!("{:#?}", crate::capabilities::Capabilities::user())
     });
 
-    let network_info = warp::path("network").map(move || {
+    let network_info = warp::path("network").map(|| {
         format!("{:#?}", crate::capabilities::Capabilities::user().network())
     });
 

@@ -3,6 +3,8 @@ use crate::node::sensor::Sensor;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use sysinfo::SystemExt;
+use std::borrow::Borrow;
+use json::{object, JsonValue};
 
 mod graphics;
 mod memory;
@@ -112,5 +114,33 @@ impl System {
             graphics: Graphics::load(),
             sensors: Sensor::update_all(&system),
         }
+    }
+
+    pub fn global() -> JsonValue {
+        let global_information = SystemInformation::update(sysinfo::System::new_all().borrow());
+
+        let value = object!{
+            "hostname" : global_information.host_name,
+            "name" : global_information.name,
+            "kernel" : global_information.kernel_version,
+            "os" : global_information.long_os_version,
+            "uptime" : global_information.uptime,
+        };
+
+        value
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::node::System;
+
+    #[test]
+    fn create_system_object() {
+        let system = System::new();
+
+        println!("{:?}", system);
+
+        println!("{}", system.global_information);
     }
 }
