@@ -10,6 +10,18 @@ pub fn parse_file(config_file: &PathBuf) -> Result<RankdConfig, Error> {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+pub struct Log {
+    pub file: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct Server {
+    pub ip: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
 pub struct RankdConfig {
-    pub title: String,
+    pub title: Option<String>,
+    pub server: Server,
+    pub log: Option<Log>,
 }

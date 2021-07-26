@@ -1,0 +1,9 @@
+# This is a template of a rankd configuration file.
+
+title = "Template of a rankd file"
+
+[server]
+ip = "127.0.0.1"
+
+[log]
+file = "/var/logs/rankd.log"
