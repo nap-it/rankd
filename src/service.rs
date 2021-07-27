@@ -11,10 +11,13 @@ pub async fn start(log: Logger, ip: Ipv4Addr) {
         format!("Welcome to this service")
     });
 
-    let kernel_info = warp::path("os").map(|| {
+    let log_kernel_info = log.clone();
+    let kernel_info = warp::path("os").map(move || {
+        info!(log_kernel_info, "Received request in /os endpoint.");
+        let data = System::global();
         format!("{}", object!{
             code : 200,
-            data : System::global(),
+            data : data,
         })
     });
 

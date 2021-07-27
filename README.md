@@ -13,10 +13,3 @@ As this is still under development, currently there is no release available, but
 ### Running Rankd
 
 In order to run this project you simply have to run the compiled executable called `rankd` and, if everything runs well, you should receive a feedback on a server waiting for requests in the port 7265 (T9-code for `r-a-n-k`).
-
-After this step you should be able to perform the following HTTP GET requests for data:
-
-* `<server-ip-address>:7265/kernel` to retrieve kernel status information;
-* `<server-ip-address>:7265/user` to retrieve userspace status information;
-* `<server-ip-address>:7265/network` to retrieve a list of interfaces with their current IP addresses (IPv4/v6);
-* `<server-ip-address>:7265/network/<interface>` to retrieve information on the interface `<interface>`.

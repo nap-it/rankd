@@ -88,7 +88,6 @@ async fn main() {
         slog::Logger::root(file_drain, o!())
     };
 
-    debug!(log, "debug message");
     info!(log, "rankd is now starting its server.");
 
     service::start(log, server_ip).await;
