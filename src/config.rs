@@ -20,8 +20,14 @@ pub struct Server {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+pub struct Installation {
+    pub path: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
 pub struct RankdConfig {
     pub title: Option<String>,
     pub server: Server,
     pub log: Option<Log>,
+    pub installation: Option<Installation>,
 }

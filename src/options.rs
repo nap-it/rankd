@@ -9,7 +9,7 @@ pub struct RankdOpts {
         short = "c",
         long = "config",
         value_name = "filename",
-        help = "configuration file"
+        help = "configuration file (default is /etc/rank/config.toml)"
     )]
     pub config_file: Option<PathBuf>,
     #[structopt(

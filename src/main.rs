@@ -1,10 +1,12 @@
 mod capabilities;
 mod config;
+mod errors;
 mod node;
 mod options;
 mod service;
+mod security;
 
-use crate::config::Log;
+use crate::config::{Log, Installation};
 use failure::Error;
 use slog::{info, debug, o, Drain, Duplicate};
 use std::fs::OpenOptions;
@@ -24,6 +26,7 @@ async fn main() {
     let mut quiet: bool = false;
     let mut server_ip: Ipv4Addr = Ipv4Addr::new(127, 0, 0, 1);
     let mut running_deployment_name: String = String::from("Default configuration");
+    let mut installation_path: String = String::from("/etc/rank");
 
     match &cli_options.config_file {
         Some(config_file_path) => {
@@ -47,6 +50,14 @@ async fn main() {
                     log_file = PathBuf::from(log.file);
                 }
             }
+
+            // Get installation options.
+            match config.installation {
+                None => {}
+                Some(installation) => {
+                    installation_path = installation.path;
+                }
+            }
         }
         None => {}
     }
@@ -57,6 +68,9 @@ async fn main() {
         }
         None => {}
     }
+
+    // Create or verify the creation of keys.
+    security::create_identifier(&installation_path, false);
 
     // Initialize logger.
     let log_file = OpenOptions::new()
@@ -90,5 +104,5 @@ async fn main() {
 
     info!(log, "rankd is now starting its server.");
 
-    service::start(log, server_ip).await;
+    service::start(log, server_ip, installation_path.clone()).await;
 }
