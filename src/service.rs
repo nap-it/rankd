@@ -2,8 +2,9 @@ use warp::Filter;
 use slog::{Logger, info};
 use json::object;
 use crate::node::System;
+use std::net::Ipv4Addr;
 
-pub async fn start(log: Logger) {
+pub async fn start(log: Logger, ip: Ipv4Addr) {
     info!(log, "Successfully loaded system information.");
 
     let testing_tool = warp::path::end().map(|| {
@@ -36,5 +37,6 @@ pub async fn start(log: Logger) {
             .or(network_interface_info)
     );
 
-    warp::serve(routes).run(([127, 0, 0, 1], 7265)).await;
+    info!(log, "Running server in http://{}:{}.", ip, 7265);
+    warp::serve(routes).run((ip.octets(), 7265)).await;
 }

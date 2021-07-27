@@ -13,6 +13,7 @@ pub struct RankdOpts {
     )]
     pub config_file: Option<PathBuf>,
     #[structopt(
+        parse(from_os_str),
         short = "l",
         long = "log-file",
         value_name = "logfile",
@@ -20,17 +21,16 @@ pub struct RankdOpts {
     )]
     pub log_file: Option<PathBuf>,
     #[structopt(
-        short = "v",
-        long = "verbose",
-        value_name = "verbose",
+        parse(from_occurrences),
+        short, long,
         help = "verbosity level (v - info, vv - debug, vvv - trace)"
     )]
-    pub verbose: bool,
+    pub verbose: u8,
     #[structopt(
         short = "q",
         long = "quiet",
         value_name = "quiet",
-        help = "do not output any message"
+        help = "do not output any message to TTY"
     )]
     pub quiet: bool,
 }
