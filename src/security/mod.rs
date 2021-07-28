@@ -38,16 +38,3 @@ pub fn get_own_identifier(path: String) -> Result<String, SecurityError> {
 
     Ok(identifier)
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use crate::security::create_hash;
-//     use std::path::PathBuf;
-//
-//     #[test]
-//     fn create_hash_test() {
-//         let hash = create_hash(PathBuf::from("/Users/ruilopes/tests/"), true).unwrap();
-//         println!("private: \n{}", String::from_utf8(hash.0).unwrap());
-//         println!("public: \n{}", String::from_utf8(hash.1).unwrap());
-//     }
-// }
