@@ -4,6 +4,17 @@ use crate::errors::SecurityError;
 use std::fs::{OpenOptions, File};
 use std::io::{Write, Error, Read};
 
+pub async fn check_access_token_from_gitlab(domain: &str, access_token: &str) -> bool {
+    let token_verification_endpoint = format!(
+        "https://{}/oauth/token/info?access_token={}",
+        domain, access_token
+    );
+    let answer = reqwest::get(domain).await.unwrap();
+    let answer = json::parse(answer.text().await.unwrap().as_str()).unwrap();
+
+    answer["error"].is_null()
+}
+
 pub fn create_identifier(path: &String, force_creation: bool) -> Result<bool, SecurityError> {
     // Verify if the key is already defined, only if force_creation flag is set.
     if !Path::new(&(path.as_str().to_owned() + "id_rank")).exists() || force_creation {
