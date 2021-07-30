@@ -9,7 +9,7 @@ pub async fn check_access_token_from_gitlab(domain: &str, access_token: &str) ->
         "https://{}/oauth/token/info?access_token={}",
         domain, access_token
     );
-    let answer = reqwest::get(domain).await.unwrap();
+    let answer = reqwest::get(token_verification_endpoint).await.unwrap();
     let answer = json::parse(answer.text().await.unwrap().as_str()).unwrap();
 
     answer["error"].is_null()
