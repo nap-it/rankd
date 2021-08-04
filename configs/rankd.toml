@@ -7,3 +7,6 @@ ip = "127.0.0.1"
 
 [log]
 file = "/var/logs/rankd.log"
+
+[installation]
+path = "/etc/rank/"
