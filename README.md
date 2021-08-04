@@ -1,3 +1,5 @@
+<img src="docs/logo/long.png"  width="500" height="102">
+
 # Rankd
 
 Rank deamon (Rankd) is an implementation of a service to retrieve information on a machine where a server instance is being ran. Such information ranges from kernel data to userspace applications being used and network capabilities.
