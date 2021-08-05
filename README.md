@@ -1,4 +1,8 @@
 <img src="docs/logo/long.png"  width="500" height="102">
+<a href="https://code.nap.av.it.pt/ruieduardo.fa.lopes/rankd/-/wikis/home" rel="some text"><img src="https://img.shields.io/badge/wiki-repo%20wiki-blue"></a>
+<img src="https://img.shields.io/badge/build-not%20configured-inactive">
+<img src="https://img.shields.io/badge/docs-not%20published-inactive">
+<img src="https://img.shields.io/badge/version-0.1.0%20(alpha)-green">
 
 # Rankd
 
