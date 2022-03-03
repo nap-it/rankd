@@ -4,7 +4,7 @@ mod errors;
 mod node;
 mod options;
 mod service;
-mod security;
+//mod security;
 
 use crate::config::{Log, Installation};
 use failure::Error;
@@ -69,8 +69,8 @@ async fn main() {
         None => {}
     }
 
-    // Create or verify the creation of keys.
-    security::create_identifier(&installation_path, false);
+    // Create or verify the creation of keys. TODO Security was dropped off.
+    //security::create_identifier(&installation_path, false);
 
     // Initialize logger.
     let log_file = OpenOptions::new()
