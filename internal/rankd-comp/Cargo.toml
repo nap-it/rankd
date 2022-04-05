@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 cached = "0.33"
 hostname = "0.3"
+uname = "0.1"
