@@ -1,7 +1,0 @@
-[workspace]
-members = [
-    "cmd/rankd",
-    "internal/rankd-comp",
-    "internal/rankd-net",
-    "internal/rankd-time"
-]

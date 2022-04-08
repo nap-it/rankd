@@ -4,8 +4,10 @@ project(rankd-comp
         LANGUAGES CXX C)
 
 set(HEADER_LIST
+        include/structs/cpu.h
         )
 set(SOURCE_LIST
+        structs/cpu.cpp
         )
 
 # Make the rankd-comp library (librankd-comp).
