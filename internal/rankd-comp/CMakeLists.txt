@@ -5,15 +5,19 @@ project(rankd-comp
 
 set(HEADER_LIST
         include/structs/cpu.h
+        include/structs/memory.h
         )
 set(SOURCE_LIST
         structs/cpu.cpp
+        structs/memory.cpp
         )
+
+add_subdirectory(vendor/pfs)
 
 # Make the rankd-comp library (librankd-comp).
 add_library(rankd-comp lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
-target_include_directories(rankd-comp PUBLIC include)
-#target_link_libraries(rankd-comp PRIVATE )
+target_include_directories(rankd-comp PUBLIC include vendor/pfs/include)
+target_link_libraries(rankd-comp PRIVATE pfs)
 
 # All users to compile this library need, at least, C++20.
 target_compile_features(rankd-comp PUBLIC cxx_std_20)

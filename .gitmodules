@@ -1,0 +1,3 @@
+[submodule "internal/rankd-comp/vendor/pfs"]
+	path = internal/rankd-comp/vendor/pfs
+	url = https://github.com/dtrugman/pfs.git

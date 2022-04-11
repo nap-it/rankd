@@ -2,17 +2,24 @@
 #define RANKD_STRUCTS_CPU_H
 
 #include <cstdint>
+#include <fstream>
 #include <map>
 #include <optional>
 #include <set>
 #include <string>
+#include <sstream>
 
-class CPUCore {
-private:
-  uint8_t _identifier;
-  std::optional<int> _frequency;
-  std::optional<size_t> _cache_size;
-  std::optional<bool> _has_fpu;
+#include "pfs/procfs.hpp"
+
+struct CPUCore {
+  /// Identifier of the CPU core.
+  uint8_t identifier;
+  /// Frequency of the CPU core, in MHz.
+  std::optional<double> frequency;
+  /// Cache size of the CPU core, in Mbytes.
+  std::optional<std::string> cache_size;
+  /// Flag noticing if this CPU core has an FP unit.
+  std::optional<bool> has_fpu;
 };
 
 enum ByteOrder {
@@ -22,24 +29,27 @@ enum ByteOrder {
 
 struct CPUStats {
   /// Processes executing in kernel mode.
-  double system;
+  unsigned long long int system;
   /// Normal processes executing in user mode.
-  double user;
+  unsigned long long int user;
   /// Niced processes executing in user mode.
-  double nice;
+  unsigned long long int nice;
   /// Servicing interrupts.
-  double irqs;
+  unsigned long long int irqs;
   /// Servicing Soft IRQs.
-  double softirqs;
+  unsigned long long int softirqs;
   /// Waiting for I/O to complete.
-  double iowait;
+  unsigned long long int iowait;
   /// Waiting for something to happen.
-  double idle;
+  unsigned long long int idle;
   /// Time spent in other OSes when running in a virtualized environment.
-  double steal;
+  unsigned long long int steal;
 };
 
 class CPU {
+public:
+  CPU();
+  void snap();
 private:
   /* Information */
   uint8_t _identifier = 0;
@@ -56,7 +66,6 @@ private:
   std::map<int, CPUCore> _cores;
 
   /* Statistics */
-  double _cpu_busy;
   CPUStats _snapshot;
 };
 
