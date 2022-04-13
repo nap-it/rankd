@@ -8,6 +8,55 @@
 class Memory {
 public:
   void snap();
+  [[nodiscard]] const std::optional<size_t>& total() const;
+  [[nodiscard]] const std::optional<size_t>& free() const;
+  [[nodiscard]] const std::optional<size_t>& available() const;
+  [[nodiscard]] const std::optional<size_t>& buffers() const;
+  [[nodiscard]] const std::optional<size_t>& cached() const;
+  [[nodiscard]] const std::optional<size_t>& swap_cached() const;
+  [[nodiscard]] const std::optional<size_t>& active() const;
+  [[nodiscard]] const std::optional<size_t>& inactive() const;
+  [[nodiscard]] const std::optional<size_t>& active_anonymous() const;
+  [[nodiscard]] const std::optional<size_t>& inactive_anonymous() const;
+  [[nodiscard]] const std::optional<size_t>& active_file() const;
+  [[nodiscard]] const std::optional<size_t>& inactive_file() const;
+  [[nodiscard]] const std::optional<size_t>& unevictable() const;
+  [[nodiscard]] const std::optional<size_t>& locked() const;
+  [[nodiscard]] const std::optional<size_t>& swap_total() const;
+  [[nodiscard]] const std::optional<size_t>& swap_free() const;
+  [[nodiscard]] const std::optional<size_t>& dirty() const;
+  [[nodiscard]] const std::optional<size_t>& writeback() const;
+  [[nodiscard]] const std::optional<size_t>& anonymous_pages() const;
+  [[nodiscard]] const std::optional<size_t>& mapped() const;
+  [[nodiscard]] const std::optional<size_t>& shared_memory() const;
+  [[nodiscard]] const std::optional<size_t>& kernel_reclaimable() const;
+  [[nodiscard]] const std::optional<size_t>& slab() const;
+  [[nodiscard]] const std::optional<size_t>& slab_reclaimable() const;
+  [[nodiscard]] const std::optional<size_t>& slab_unreclaim() const;
+  [[nodiscard]] const std::optional<size_t>& kernel_stack() const;
+  [[nodiscard]] const std::optional<size_t>& page_tables() const;
+  [[nodiscard]] const std::optional<size_t>& nfs_unstable() const;
+  [[nodiscard]] const std::optional<size_t>& bounce() const;
+  [[nodiscard]] const std::optional<size_t>& writeback_tmp() const;
+  [[nodiscard]] const std::optional<size_t>& commit_limit() const;
+  [[nodiscard]] const std::optional<size_t>& committed_as() const;
+  [[nodiscard]] const std::optional<size_t>& vmalloc_total() const;
+  [[nodiscard]] const std::optional<size_t>& vmalloc_used() const;
+  [[nodiscard]] const std::optional<size_t>& vmalloc_chunk() const;
+  [[nodiscard]] const std::optional<size_t>& percpu() const;
+  [[nodiscard]] const std::optional<size_t>& hardware_corrupted() const;
+  [[nodiscard]] const std::optional<size_t>& anon_huge_pages() const;
+  [[nodiscard]] const std::optional<size_t>& shared_memory_huge_pages() const;
+  [[nodiscard]] const std::optional<size_t>& shared_memory_pmd_mapped() const;
+  [[nodiscard]] const std::optional<size_t>& file_huge_pages() const;
+  [[nodiscard]] const std::optional<size_t>& file_pmd_mapped() const;
+  [[nodiscard]] const std::optional<size_t>& huge_pages_total() const;
+  [[nodiscard]] const std::optional<size_t>& huge_pages_free() const;
+  [[nodiscard]] const std::optional<size_t>& huge_pages_rsvd() const;
+  [[nodiscard]] const std::optional<size_t>& huge_pages_surp() const;
+  [[nodiscard]] const std::optional<size_t>& huge_page_size() const;
+  [[nodiscard]] const std::optional<size_t>& huge_tlb() const;
+
 private:
   std::optional<size_t> _total;
   std::optional<size_t> _free;

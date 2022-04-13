@@ -1,6 +1,7 @@
 #ifndef RANKD_STRUCTS_CPU_H
 #define RANKD_STRUCTS_CPU_H
 
+#include <algorithm>
 #include <cstdint>
 #include <fstream>
 #include <map>
@@ -50,6 +51,20 @@ class CPU {
 public:
   CPU();
   void snap();
+  [[nodiscard]] uint8_t identifier() const;
+  [[nodiscard]] ByteOrder byte_order() const;
+  [[nodiscard]] const std::optional<std::string> &vendor_id() const;
+  [[nodiscard]] const std::optional<std::string> &family() const;
+  [[nodiscard]] const std::optional<std::string> &model() const;
+  [[nodiscard]] const std::optional<std::string> &model_name() const;
+  [[nodiscard]] const std::optional<std::string> &stepping() const;
+  [[nodiscard]] const std::optional<std::string> &microcode() const;
+  [[nodiscard]] const std::set<std::string> &flags() const;
+  [[nodiscard]] const std::set<std::string> &bugs() const;
+  [[nodiscard]] double bogomips() const;
+  [[nodiscard]] const std::map<int, CPUCore> &cores() const;
+  [[nodiscard]] const CPUStats &snapshot() const;
+
 private:
   /* Information */
   uint8_t _identifier = 0;
@@ -61,12 +76,12 @@ private:
   std::optional<std::string> _stepping;
   std::optional<std::string> _microcode;
   std::set<std::string> _flags;
-  std::optional<std::set<std::string>> _bugs;
+  std::set<std::string> _bugs;
   double _bogomips;
   std::map<int, CPUCore> _cores;
 
   /* Statistics */
-  CPUStats _snapshot;
+  CPUStats _snapshot{};
 };
 
 #endif // RANKD_STRUCTS_CPU_H

@@ -1,10 +1,13 @@
 #include "structs/cpu.h"
 
+#include <iostream>
+
 #ifdef __linux__
 CPU::CPU() {
   std::ifstream cpuinfo("/proc/cpuinfo");
 
   if (not cpuinfo.is_open()) {
+    std::cerr << "Error on opening file." << std::endl;
     // TODO Throw error.
   }
 
@@ -21,16 +24,18 @@ CPU::CPU() {
     while (true) {
       // Get title of attribute. If none, get out, since this must the EOB.
       getline(cpuinfo, line, ':');
-      if (line.empty()) {
+      if (cpuinfo.eof()) {
         break;
       }
       std::string key = line.substr(0, line.find(' '));
+      key.erase(std::remove(key.begin(), key.end(), '\n'), key.end());
+      key.erase(std::remove(key.begin(), key.end(), '\t'), key.end());
       unit_parsing_tree[key] = "";
 
       // Add the value to the given key in the map.
       getline(cpuinfo, unit_parsing_tree[key]);
     }
-
+    
     // Add the register onto the main parsing tree.
     parsing_tree[unit++] = unit_parsing_tree;
   }
@@ -54,6 +59,7 @@ CPU::CPU() {
   } else {
     _flags = std::set<std::string>();
   }
+
   while (!flags.eof()) {
     std::string item;
     flags >> item;
@@ -64,13 +70,11 @@ CPU::CPU() {
   std::stringstream bugs;
   if (unit_parsing_tree.count("bugs")) {
     bugs.str(parsing_tree[0].at("bugs"));
-  } else {
-    _bugs = std::nullopt;
-  }
-  while (!bugs.eof()) {
-    std::string item;
-    bugs >> item;
-    _bugs->insert(item);
+    while (!bugs.eof()) {
+      std::string item;
+      bugs >> item;
+      _bugs.insert(item);
+    }
   }
 
   // Parse BogoMIPS.
@@ -85,10 +89,47 @@ CPU::CPU() {
     cpu_core.has_fpu = core.count("fpu") != 0 ? std::optional(core.at("fpu") == "yes") : std::nullopt;
     _cores[identifier] = cpu_core;
   }
-
+  
   // Take a snapshot of the system, CPU-wise.
   snap();
 }
+
+uint8_t CPU::identifier() const { return _identifier; }
+
+ByteOrder CPU::byte_order() const { return _byte_order; }
+
+const std::optional<std::string> &CPU::vendor_id() const {
+  return _vendor_id;
+}
+
+const std::optional<std::string> &CPU::family() const { return _family; }
+
+const std::optional<std::string> &CPU::model() const { return _model; }
+
+const std::optional<std::string> &CPU::model_name() const {
+  return _model_name;
+}
+
+const std::optional<std::string> &CPU::stepping() const {
+  return _stepping;
+}
+
+const std::optional<std::string> &CPU::microcode() const {
+  return _microcode;
+}
+
+const std::set<std::string> &CPU::flags() const { return _flags; }
+
+const std::set<std::string> &CPU::bugs() const {
+  return _bugs;
+}
+
+double CPU::bogomips() const { return _bogomips; }
+
+const std::map<int, CPUCore> &CPU::cores() const { return _cores; }
+
+const CPUStats &CPU::snapshot() const { return _snapshot; }
+
 
 void CPU::snap() {
   pfs::proc_stat stat = pfs::procfs().get_stat();
@@ -102,7 +143,10 @@ void CPU::snap() {
   stats.iowait = stat.cpus.total.iowait;
   stats.idle = stat.cpus.total.idle;
   stats.steal = stat.cpus.total.steal;
+
+  _snapshot = stats;
 }
+
 
 #elif __APPLE__
 CPU::CPU() = default;
@@ -110,5 +154,6 @@ CPU::CPU() = default;
 void CPU::snap() {
 
 }
+
 #endif
 
