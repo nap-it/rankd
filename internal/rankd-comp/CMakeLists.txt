@@ -4,14 +4,12 @@ project(rankd-comp
         LANGUAGES CXX C)
 
 set(HEADER_LIST
-        include/structs/cpu.h
-        include/structs/memory.h
-        include/structs/network.h
+        include/linux/cpu.h
+        include/macos/cpu.h
         )
 set(SOURCE_LIST
-        structs/cpu.cpp
-        structs/memory.cpp
-        structs/network.cpp
+        data-sources/linux/cpu.cpp
+        data-sources/macos/cpu.cpp
         )
 
 add_subdirectory(vendor/pfs)

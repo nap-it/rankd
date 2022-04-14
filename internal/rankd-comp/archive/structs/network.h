@@ -21,22 +21,22 @@ public:
 private:
   std::map<std::string, InterfaceStats> _interface_stats;
   std::map<std::string, std::pair<std::string, std::string>> _arp_table;
-  int _tcp_allocated_sockets;
-  int _tcp_inuse_sockets;
-  int _tcp_orphan_sockets;
-  int _tcp_tw_sockets;
-  int _tcp_in_data;
-  int _tcp_out_data;
-  int _udp_inuse_sockets;
-  int _udp_udplite_inuse_sockets;
-  int _udp_mem_sockets;
-  int _udp_in_data;
-  int _udp_out_data;
-  int _sockets_used;
+  unsigned int _tcp_allocated_sockets;
+  unsigned int _tcp_inuse_sockets;
+  unsigned int _tcp_orphan_sockets;
+  unsigned int _tcp_tw_sockets;
+  unsigned int _tcp_in_data;
+  unsigned int _tcp_out_data;
+  unsigned int _udp_inuse_sockets;
+  unsigned int _udp_udplite_inuse_sockets;
+  unsigned int _udp_mem_sockets;
+  unsigned int _udp_in_data;
+  unsigned int _udp_out_data;
+  unsigned int _sockets_used;
   bool _ip_forwarding;
-  int _icmp_out;
-  int _icmp_in;
-  int _icmp_errors;
+  unsigned int _icmp_out;
+  unsigned int _icmp_in;
+  unsigned int _icmp_errors;
 };
 
 #endif // RANKD_NETWORK_H
