@@ -1,4 +1,4 @@
-#include "linux/cpu.h"
+#include "cpu.h"
 
 CPU::CPU() {
   std::ifstream cpuinfo("/proc/cpuinfo");

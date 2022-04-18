@@ -3,21 +3,38 @@ project(rankd-comp
         DESCRIPTION "Computational Rank daemon library"
         LANGUAGES CXX C)
 
-set(HEADER_LIST
-        include/linux/cpu.h
-        include/macos/cpu.h
-        )
-set(SOURCE_LIST
-        data-sources/linux/cpu.cpp
-        data-sources/macos/cpu.cpp
-        )
+if(APPLE)
+    message("-- Preparing rankd-comp environment as Mac OS X")
+    set(HEADER_LIST
+            include/comp-lib.h
+            include/macos/cpu.h
+            )
+    set(SOURCE_LIST
+            data-sources/macos/cpu.cpp
+            )
 
-add_subdirectory(vendor/pfs)
+    # Make the rankd-comp library (librankd-comp).
+    add_library(rankd-comp lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
+    target_include_directories(rankd-comp PUBLIC include include/macos)
+    target_link_libraries(rankd-comp PRIVATE)
 
-# Make the rankd-comp library (librankd-comp).
-add_library(rankd-comp lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
-target_include_directories(rankd-comp PUBLIC include vendor/pfs/include)
-target_link_libraries(rankd-comp PRIVATE pfs)
+
+elseif (UNIX)
+    message("-- Preparing rankd-comp environment as Linux")
+    set(HEADER_LIST
+            include/comp-lib.h
+            include/linux/cpu.h
+            )
+    set(SOURCE_LIST
+            data-sources/linux/cpu.cpp
+            )
+
+    add_subdirectory(vendor/pfs)
+    # Make the rankd-comp library (librankd-comp).
+    add_library(rankd-comp lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
+    target_include_directories(rankd-comp PUBLIC include include/linux vendor/pfs/include)
+    target_link_libraries(rankd-comp PRIVATE pfs)
+endif()
 
 # All users to compile this library need, at least, C++20.
 target_compile_features(rankd-comp PUBLIC cxx_std_20)

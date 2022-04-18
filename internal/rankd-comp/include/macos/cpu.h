@@ -43,8 +43,8 @@ public:
   [[nodiscard]] const int &family() const;
   [[nodiscard]] const int &model() const;
   [[nodiscard]] const std::string &model_name() const;
-  [[nodiscard]] const std::string &stepping() const;
-  [[nodiscard]] const std::string &microcode() const;
+  [[nodiscard]] const int &stepping() const;
+  [[nodiscard]] const int &microcode() const;
   [[nodiscard]] const std::set<std::string> &flags() const;
   [[nodiscard]] const int &cores() const;
   [[nodiscard]] const CPUStats &snapshot() const;
@@ -56,8 +56,8 @@ private:
   int _family;
   int _model;
   std::string _model_name;
-  std::string _stepping;
-  std::string _microcode;
+  int _stepping;
+  int _microcode;
   std::set<std::string> _flags;
   int _cores;
 
