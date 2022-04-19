@@ -26,10 +26,12 @@ elseif (UNIX)
     set(HEADER_LIST
             include/comp-lib.h
             include/linux/cpu.h
+            include/linux/memory.h
             include/utils/strings.h
             )
     set(SOURCE_LIST
             data-sources/linux/cpu.cpp
+            data-sources/linux/memory.cpp
             utils/strings.cpp
             )
 
