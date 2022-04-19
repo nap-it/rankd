@@ -8,9 +8,11 @@ if(APPLE)
     set(HEADER_LIST
             include/comp-lib.h
             include/macos/cpu.h
+            include/utils/strings.h
             )
     set(SOURCE_LIST
             data-sources/macos/cpu.cpp
+            utils/strings.cpp
             )
 
     # Make the rankd-comp library (librankd-comp).
@@ -24,9 +26,11 @@ elseif (UNIX)
     set(HEADER_LIST
             include/comp-lib.h
             include/linux/cpu.h
+            include/utils/strings.h
             )
     set(SOURCE_LIST
             data-sources/linux/cpu.cpp
+            utils/strings.cpp
             )
 
     add_subdirectory(vendor/pfs)

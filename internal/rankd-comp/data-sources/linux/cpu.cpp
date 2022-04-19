@@ -1,5 +1,7 @@
 #include "cpu.h"
 
+#include <iostream>
+
 CPU::CPU() {
   std::ifstream cpuinfo("/proc/cpuinfo");
 
@@ -23,9 +25,7 @@ CPU::CPU() {
       if (cpuinfo.eof()) {
         break;
       }
-      std::string key = line.substr(0, line.find(' '));
-      key.erase(std::remove(key.begin(), key.end(), '\n'), key.end());
-      key.erase(std::remove(key.begin(), key.end(), '\t'), key.end());
+      std::string key = trim(line);
       unit_parsing_tree[key] = "";
 
       // Add the value to the given key in the map.
@@ -37,12 +37,16 @@ CPU::CPU() {
   }
   cpuinfo.close();
 
+  for (auto [k,v] : parsing_tree[0]) {
+    std::cout << "key is \"" << k << "\"" << std::endl;
+  }
+
   _identifier = 0;  // TODO Get information on this identifier.
   _byte_order = LITTLE; // TODO Get this information.
   _vendor_id = (parsing_tree[0].count("vendor_id") != 0) ? std::optional(parsing_tree[0].at("vendor_id")) : std::nullopt;
   _family = (parsing_tree[0].count("cpu family") != 0) ? std::optional(parsing_tree[0].at("cpu family")) : std::nullopt;
-  _model = (parsing_tree[0].count("model") != 0) ? std::optional(parsing_tree[0].at("model")) : std::nullopt;
-  _model_name = (parsing_tree[0].count("model name") != 0) ? std::optional(parsing_tree[0].at("model name")) : std::nullopt;
+  _model = (parsing_tree[0].count("model name") != 0) ? std::optional(parsing_tree[0].at("model name")) : std::nullopt;
+  _model_name = (parsing_tree[0].count("model") != 0) ? std::optional(parsing_tree[0].at("model")) : std::nullopt;
   _stepping = (parsing_tree[0].count("stepping") != 0) ? std::optional(parsing_tree[0].at("stepping")) : std::nullopt;
   _microcode = (parsing_tree[0].count("microcode") != 0) ? std::optional(parsing_tree[0].at("microcode")) : std::nullopt;
 
@@ -90,41 +94,57 @@ CPU::CPU() {
   snap();
 }
 
-uint8_t CPU::identifier() const { return _identifier; }
-
-ByteOrder CPU::byte_order() const { return _byte_order; }
-
-const std::optional<std::string> &CPU::vendor_id() const {
-  return _vendor_id;
+uint8_t CPU::identifier() const {
+  return _identifier;
 }
 
-const std::optional<std::string> &CPU::family() const { return _family; }
-
-const std::optional<std::string> &CPU::model() const { return _model; }
-
-const std::optional<std::string> &CPU::model_name() const {
-  return _model_name;
+ByteOrder CPU::byte_order() const {
+  return _byte_order;
 }
 
-const std::optional<std::string> &CPU::stepping() const {
-  return _stepping;
+std::string CPU::vendor_id() const {
+  return _vendor_id ? _vendor_id.value() : "";
 }
 
-const std::optional<std::string> &CPU::microcode() const {
-  return _microcode;
+std::string CPU::family() const {
+  return _family ? _family.value() : "";
 }
 
-const std::set<std::string> &CPU::flags() const { return _flags; }
+std::string CPU::model() const {
+  return _model ? _model.value() : "";
+}
+
+std::string CPU::model_name() const {
+  return _model_name ? _model_name.value() : "";
+}
+
+std::string CPU::stepping() const {
+  return _stepping ? _stepping.value() : "";
+}
+
+std::string CPU::microcode() const {
+  return _microcode ? _microcode.value() : "";
+}
+
+const std::set<std::string> &CPU::flags() const {
+  return _flags;
+}
 
 const std::set<std::string> &CPU::bugs() const {
   return _bugs;
 }
 
-double CPU::bogomips() const { return _bogomips; }
+double CPU::bogomips() const {
+  return _bogomips;
+}
 
-const std::map<int, CPUCore> &CPU::cores() const { return _cores; }
+const std::map<int, CPUCore> &CPU::cores() const {
+  return _cores;
+}
 
-const CPUStats &CPU::snapshot() const { return _snapshot; }
+const CPUStats &CPU::snapshot() const {
+  return _snapshot;
+}
 
 void CPU::snap() {
   pfs::proc_stat stat = pfs::procfs().get_stat();
@@ -138,6 +158,9 @@ void CPU::snap() {
   stats.iowait = stat.cpus.total.iowait;
   stats.idle = stat.cpus.total.idle;
   stats.steal = stat.cpus.total.steal;
+
+  stats.total = stats.system + stats.user + stats.nice + stats.irqs + stats.softirqs + stats.iowait + stats.idle + stats.steal;
+  stats.in_use = (stats.system + stats.user + stats.nice + stats.irqs + stats.softirqs + stats.iowait + stats.steal) / stats.total;
 
   _snapshot = stats;
 }

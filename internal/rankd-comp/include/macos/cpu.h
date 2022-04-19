@@ -17,7 +17,7 @@ enum ByteOrder {
 
 struct CPUStats {
   /// Processes executing in kernel mode.
-  unsigned long long int system;
+  unsigned long long int system = 0;
   /// Normal processes executing in user mode.
   unsigned long long int user;
   /// Niced processes executing in user mode.
@@ -29,9 +29,13 @@ struct CPUStats {
   /// Waiting for I/O to complete.
   unsigned long long int iowait;
   /// Waiting for something to happen.
-  unsigned long long int idle;
+  unsigned long long int idle = 0;
   /// Time spent in other OSes when running in a virtualized environment.
   unsigned long long int steal;
+  /// In use percentage.
+  double in_use;
+  /// Total percentage.
+  double total;
 };
 
 class CPU {

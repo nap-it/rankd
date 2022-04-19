@@ -11,10 +11,11 @@
 #include <sstream>
 
 #include "pfs/procfs.hpp"
+#include "utils/strings.h"
 
 struct CPUCore {
   /// Identifier of the CPU core.
-  uint8_t identifier;
+  uint8_t identifier{};
   /// Frequency of the CPU core, in MHz.
   std::optional<double> frequency;
   /// Cache size of the CPU core, in Mbytes.
@@ -45,6 +46,10 @@ struct CPUStats {
   unsigned long long int idle;
   /// Time spent in other OSes when running in a virtualized environment.
   unsigned long long int steal;
+  /// In use percentage.
+  double in_use;
+  /// Total percentage.
+  double total;
 };
 
 class CPU {
@@ -53,12 +58,12 @@ public:
   void snap();
   [[nodiscard]] uint8_t identifier() const;
   [[nodiscard]] ByteOrder byte_order() const;
-  [[nodiscard]] const std::optional<std::string> &vendor_id() const;
-  [[nodiscard]] const std::optional<std::string> &family() const;
-  [[nodiscard]] const std::optional<std::string> &model() const;
-  [[nodiscard]] const std::optional<std::string> &model_name() const;
-  [[nodiscard]] const std::optional<std::string> &stepping() const;
-  [[nodiscard]] const std::optional<std::string> &microcode() const;
+  [[nodiscard]] std::string vendor_id() const;
+  [[nodiscard]] std::string family() const;
+  [[nodiscard]] std::string model() const;
+  [[nodiscard]] std::string model_name() const;
+  [[nodiscard]] std::string stepping() const;
+  [[nodiscard]] std::string microcode() const;
   [[nodiscard]] const std::set<std::string> &flags() const;
   [[nodiscard]] const std::set<std::string> &bugs() const;
   [[nodiscard]] double bogomips() const;
