@@ -5,6 +5,8 @@
 #include "macos/cpu.h"
 #elif __linux
 #include "linux/cpu.h"
+#include "linux/memory.h"
+#include "linux/storage.h"
 #endif
 
 #endif // RANKD_COMP_LIB_H

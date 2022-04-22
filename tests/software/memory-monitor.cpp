@@ -1,7 +1,7 @@
 #include <iostream>
 #include <thread>
 
-#include "structs/memory.h"
+#include "memory.h"
 
 using namespace std;
 
@@ -11,7 +11,7 @@ int main() {
 
   cout << "Memory usage is: (Total/Free/Available)" << endl;
   while (true) {
-    cout << ". " << memory.total().value()/1048576.0 << " / " << memory.free().value()/1048576.0 << " / " << memory.available().value()/1048576.0 << endl;
+    cout << ". " << memory.total()/1048576.0 << " / " << memory.free()/1048576.0 << " / " << memory.available()/1048576.0 << " / " << "with " << memory.oom_killer_invocations() << " OOM Killer invocations." << endl;
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
     memory.snap();
