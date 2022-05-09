@@ -1,51 +1,43 @@
 #include <iostream>
 #include <string>
 
-//#include "comp-lib.h"
+#include "comp-lib.h"
 #include "sensors-c++/sensors.h"
 
 using namespace std;
 
 int main() {
-  cout << "Hello Flag!" << endl;
+  Sensors sensors = Sensors();
 
-  auto chips = sensors::get_detected_chips();
-  cout << "vector size is " << chips.size() << "." << endl;
+  cout << "A total of " << sensors.sensors().size() << " sensors were found." << endl;
+  cout << endl;
 
-  for (auto& chip : chips) {
-    cout << "Chip name: " << chip.name() << endl;
-    cout << "Chip address: " << chip.address() << endl;
-    cout << "Chip bus type (to int): " << (int)(chip.bus().type()) << endl;
-    cout << "Chip bus adapter name: " << chip.bus().adapter_name() << endl;
-    cout << "Chip bus nr: " << chip.bus().nr() << endl;
-    cout << "Chip path: " << chip.path() << endl;
-    cout << "Chip prefix: " << chip.prefix() << endl;
-    cout << "  This chip has the following features:" << endl;
-    for (auto& feature : chip.features()) {
-      cout << "\t" << "Feature name: " << feature.name() << endl;
-      cout << "\t" << "Feature type (as int): " << (int)feature.type() << endl;
-      cout << "\t" << "Feature number: " << feature.number() << endl;
-      cout << "\t" << "Feature label: " << feature.label() << endl;
-      cout << "\t  " << "This feature has the following subfeatures: " << endl;
-      for (auto& subfeature : feature.subfeatures()) {
-        cout << "\t\t" << "Subfeature name: " << subfeature.name() << endl;
-        cout << "\t\t" << "Subfeature number: " << subfeature.number() << endl;
-        cout << "\t\t" << "Subfeature type (as int): " << (int)subfeature.type() << endl;
-        cout << "\t\t" << "Subfeature compute mapping: " << subfeature.compute_mapping() << endl;
-        cout << "\t\t" << "Subfeature read (double): " << subfeature.read() << endl;
-        cout << "\t\t" << "Subfeature readable: " << subfeature.readable() << endl;
-        cout << "\t\t" << "Subfeature writable: " << subfeature.writable() << endl;
+  for (auto [sensor_name, sensor] : sensors.sensors()) {
+    cout << "A sensor called \"" << sensor_name << "\" was found with the following info:" << endl;
+    cout << "Name: " << sensor.name() << endl;
+    cout << "Address: " << sensor.address() << endl;
+    cout << "Bus: " << get_bus_name(sensor.bus_type()) << endl;
+    cout << "Path: " << sensor.path() << endl;
+    cout << "Prefix: " << sensor.prefix() << endl;
+
+    cout << " The following features are presented:" << endl;
+    for (auto [feature_name, feature] : sensor.features()) {
+      cout << "\t" << "Feature identifier: " << feature_name << endl;
+      cout << "\t" << "Type: " << get_feature_name(feature.type()) << endl;
+
+      cout << "\t" << " The following subfeatures are presented:" << endl;
+      for (auto [subfeature_name, subfeature] : feature.subfeatures()) {
+        cout << "\t\t" << "Name: " << subfeature.name() << endl;
+        cout << "\t\t" << "Number: " << subfeature.number() << endl;
+        cout << "\t\t" << "Type: " << get_subfeature_name(subfeature.type()) << endl;
+        cout << "\t\t" << "Value: " << subfeature.value() << endl;
+        cout << "\t\t" << "CM/R/W: " << subfeature.is_compute_mapped() << "/" << subfeature.is_readable() << "/" << subfeature.is_writable() << endl;
+        cout << endl;
       }
-
-      //cout << feature.name() << ", with number " << feature.number() << ", label " << feature.label() << ", and the following subfeatures:" << endl << "\t";
-      //for (auto& subfeature : feature.subfeatures()) {
-      //  cout << subfeature.name() << ", whose value is of " << subfeature.number() << endl << "\t";
-      //}
-      //cout << endl << "\t";
     }
+
     cout << endl;
   }
-
 
   return 0;
 }
