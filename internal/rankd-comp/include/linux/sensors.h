@@ -1,0 +1,4 @@
+#ifndef RANKD_SENSORS_H
+#define RANKD_SENSORS_H
+
+#endif // RANKD_SENSORS_H

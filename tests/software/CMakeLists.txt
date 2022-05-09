@@ -9,3 +9,9 @@ target_link_libraries(network-monitor rankd-comp)
 
 add_executable(storage-monitor storage-monitor.cpp)
 target_link_libraries(storage-monitor rankd-comp)
+
+add_executable(sensors-monitor sensors-monitor.cpp)
+target_link_libraries(sensors-monitor rankd-comp sensors-c++)
+
+add_executable(os-monitor os-monitor.cpp)
+target_link_libraries(os-monitor rankd-comp)

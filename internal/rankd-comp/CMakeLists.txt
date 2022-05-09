@@ -27,21 +27,25 @@ elseif (UNIX)
             include/comp-lib.h
             include/linux/cpu.h
             include/linux/memory.h
+            include/linux/sensors.h
             include/linux/storage.h
             include/utils/strings.h
             )
     set(SOURCE_LIST
             data-sources/linux/cpu.cpp
             data-sources/linux/memory.cpp
+            data-sources/linux/sensors.cpp
             data-sources/linux/storage.cpp
             utils/strings.cpp
             )
 
     add_subdirectory(vendor/pfs)
+    add_subdirectory(vendor/libsensors-cpp)
+
     # Make the rankd-comp library (librankd-comp).
     add_library(rankd-comp lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
-    target_include_directories(rankd-comp PUBLIC include include/linux vendor/pfs/include)
-    target_link_libraries(rankd-comp PRIVATE pfs)
+    target_include_directories(rankd-comp PUBLIC include include/linux vendor/pfs/include vendor/libsensors-cpp/include)
+    target_link_libraries(rankd-comp PRIVATE pfs sensors-c++)
 endif()
 
 # All users to compile this library need, at least, C++20.

@@ -1,3 +1,6 @@
 [submodule "internal/rankd-comp/vendor/pfs"]
 	path = internal/rankd-comp/vendor/pfs
 	url = https://github.com/dtrugman/pfs.git
+[submodule "internal/rankd-comp/vendor/libsensors-cpp"]
+	path = internal/rankd-comp/vendor/libsensors-cpp
+	url = https://github.com/sfranzen/libsensors-cpp.git
