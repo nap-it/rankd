@@ -55,10 +55,21 @@ class OperativeSystem {
 public:
   OperativeSystem();
   void snap();
+  [[nodiscard]] const Kernel& kernel() const;
+  [[nodiscard]] const std::chrono::seconds &uptime() const;
+  [[nodiscard]] double load_1m() const;
+  [[nodiscard]] double load_5m() const;
+  [[nodiscard]] double load_15m() const;
+  [[nodiscard]] const std::map<unsigned int, Process> &processes() const;
 private:
   Kernel _kernel;
-  std::chrono::seconds _uptime;
+  std::chrono::seconds _uptime{};
+  double _load1m;
+  double _load5m;
+  double _load15m;
   std::map<unsigned int, Process> _processes;
 };
+
+const float LOAD = 1.f / (1 << SI_LOAD_SHIFT);
 
 #endif // RANKD_OS_H

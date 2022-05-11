@@ -92,6 +92,19 @@ std::string get_username_from_uid(int uid) {
 }
 
 OperativeSystem::OperativeSystem() {
+  // Get kernel information.
+  Kernel kernel;
+  struct utsname info{};
+  uname(&info);
+
+  kernel.sysname = info.sysname;
+  kernel.nodename = info.nodename;
+  kernel.release = info.release;
+  kernel.version = info.version;
+  kernel.machine = info.machine;
+
+  _kernel = kernel;
+
   snap();
 }
 
@@ -108,28 +121,34 @@ void OperativeSystem::snap() {
     temporary_process.id = process.id();
     temporary_process.user = get_username_from_uid(process.get_status().uid.effective);
     temporary_process.status = parse_state_type(process.get_status().state);
-    temporary_process.time = std::chrono::duration<long, std::micro>(std::chrono::seconds(system_info.uptime) - std::chrono::seconds(process.get_stat().starttime/CLOCKS_PER_SEC));
+    //temporary_process.time = std::chrono::duration<long, std::micro>(std::chrono::seconds(system_info.uptime) - std::chrono::seconds(process.get_stat().starttime/CLOCKS_PER_SEC));
     auto command_line = process.get_cmdline();
     temporary_process.command = std::accumulate(command_line.begin(), command_line.end(), std::string{});
     temporary_process.threads = process.get_status().threads;
 
     _processes[temporary_process.id] = temporary_process;
   }
-
-  // Get kernel information.
-  Kernel kernel;
-  struct utsname info{};
-  uname(&info);
-
-  kernel.sysname = info.sysname;
-  kernel.nodename = info.nodename;
-  kernel.release = info.release;
-  kernel.version = info.version;
-  kernel.machine = info.machine;
-
-  _kernel = kernel;
-
   // Get uptime.
   sysinfo(&system_info);
   _uptime = std::chrono::seconds(system_info.uptime);
+
+  // Get CPU load.
+  _load1m = system_info.loads[0]*LOAD;
+  _load5m = system_info.loads[1]*LOAD;
+  _load15m = system_info.loads[2]*LOAD;
+}
+const Kernel &OperativeSystem::kernel() const { return _kernel; }
+
+const std::chrono::seconds &OperativeSystem::uptime() const {
+  return _uptime;
+}
+
+double OperativeSystem::load_1m() const { return _load1m; }
+
+double OperativeSystem::load_5m() const { return _load5m; }
+
+double OperativeSystem::load_15m() const { return _load15m; }
+
+const std::map<unsigned int, Process> &OperativeSystem::processes() const {
+  return _processes;
 }
