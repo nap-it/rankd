@@ -27,6 +27,7 @@ elseif (UNIX)
             include/comp-lib.h
             include/linux/cpu.h
             include/linux/memory.h
+            include/linux/os.h
             include/linux/sensors.h
             include/linux/storage.h
             include/utils/strings.h
@@ -34,6 +35,7 @@ elseif (UNIX)
     set(SOURCE_LIST
             data-sources/linux/cpu.cpp
             data-sources/linux/memory.cpp
+            data-sources/linux/os.cpp
             data-sources/linux/sensors.cpp
             data-sources/linux/storage.cpp
             utils/strings.cpp

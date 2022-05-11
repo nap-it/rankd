@@ -6,6 +6,7 @@
 #elif __linux
 #include "linux/cpu.h"
 #include "linux/memory.h"
+#include "linux/os.h"
 #include "linux/sensors.h"
 #include "linux/storage.h"
 #endif
