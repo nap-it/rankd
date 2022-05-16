@@ -15,3 +15,6 @@ target_link_libraries(sensors-monitor rankd-comp sensors-c++)
 
 add_executable(os-monitor os-monitor.cpp)
 target_link_libraries(os-monitor rankd-comp)
+
+add_executable(relyum-monitor relyum-snmp-monitor.cpp)
+target_link_libraries(relyum-monitor netsnmp)
