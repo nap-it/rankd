@@ -5,11 +5,11 @@ project(rankd-time
 
 set(HEADER_LIST
         include/relyum/snmp.h
-        include/relyum/hardware-structs.h
+        include/relyum/structs.h
         include/time-lib.h
         )
 set(SOURCE_LIST
-        relyum/hardware-structs.cpp
+        relyum/structs.cpp
         relyum/snmp.cpp
         )
 

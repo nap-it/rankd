@@ -4,7 +4,7 @@
 #ifdef __APPLE__
 
 #elif __linux
-#include "relyum/hardware-structs.h"
+#include "relyum/structs.h"
 #include "relyum/snmp.h"
 #endif
 
