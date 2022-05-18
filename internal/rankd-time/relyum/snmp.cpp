@@ -63,9 +63,9 @@ std::string get_snmp_name(const PortSNMP& item) {
   return "";
 }
 
-std::string compose_target(const PortSNMP& item, char unit) {
+std::string compose_target(const PortSNMP& item, int unit) {
   if (unit >= 0 && unit <= 3) {
-    return MIB_PREFIX + "PORT-" + unit + "." + get_snmp_name(item) + ".0";
+    return MIB_PREFIX + "PORT-" + std::to_string(unit) + "." + get_snmp_name(item) + ".0";
   } else {
     return MIB_PREFIX + "INTERNAL-PORT." + get_snmp_name(item) + ".0";
   }
@@ -84,7 +84,7 @@ struct snmp_session* open_snmp_session() {
   return snmp_open(&session);
 }
 
-int compose_request_port(char port, netsnmp_pdu* request, oid* OID, size_t* OID_length) {
+int compose_request_port(int port, netsnmp_pdu* request, oid* OID, size_t* OID_length) {
   get_node(compose_target(PortSNMP::HALF_DUPLEX, port).c_str(), OID, OID_length);
   snmp_add_null_var(request, OID, *OID_length);
   get_node(compose_target(PortSNMP::PHY_SPEED, port).c_str(), OID, OID_length);

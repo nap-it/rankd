@@ -4,7 +4,6 @@
 
 #include <string>
 
-
 #include "net-snmp/net-snmp-config.h"
 #include "net-snmp/net-snmp-includes.h"
 
@@ -47,11 +46,11 @@ enum class PortSNMP {
 
 std::string get_snmp_name(const PortSNMP& item);
 
-std::string compose_target(const PortSNMP& item, char unit);
+std::string compose_target(const PortSNMP& item, int unit);
 
 netsnmp_session* open_snmp_session();
 
-int compose_request_port(char port, netsnmp_pdu* request, oid* OID, size_t* OID_length);
+int compose_request_port(int port, netsnmp_pdu* request, oid* OID, size_t* OID_length);
 
 int fill_port_information(Port* port, netsnmp_pdu response);
 

@@ -1,24 +1,14 @@
 #include "relyum/structs.h"
 
-Bridge *Bridge::get_instance() {
-  if (_instance == nullptr) {
-    _instance = new Bridge();
+void Bridge::snap_snmp() {
+  // Open the SNMP session.
+  auto session = open_snmp_session();
+  if (!session) {
+    // TODO Handle this error.
   }
 
-  return _instance;
-}
-
-Bridge::Bridge() = default;
-
-void Bridge::snap_snmp() {
   // For each port and for the internal port (port identified as 4).
   for (char port = 0; port <= 4; port++) {
-    // Open the SNMP session.
-    auto session = open_snmp_session();
-    if (!session) {
-      // TODO Handle this error.
-    }
-
     // Create the set of PDU requests.
     struct snmp_pdu *request;
     struct snmp_pdu *response;
@@ -45,7 +35,9 @@ void Bridge::snap_snmp() {
       snmp_free_pdu(response);
     }
 
-    // Close the session.
-    snmp_close(session);
   }
+
+
+  // Close the session.
+  snmp_close(session);
 }

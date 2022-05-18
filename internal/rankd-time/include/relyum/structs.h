@@ -92,6 +92,51 @@ public:
   void tx_preemption_continue_frames(long tx_preemption_continue_frames) {
     _tx_preemption_continue_frames = tx_preemption_continue_frames;
   }
+  [[nodiscard]] bool is_internal() const { return _internal; }
+  [[nodiscard]] bool is_enabled() const { return _enabled; }
+  [[nodiscard]] PhySpeed phy_speed() const { return _phy_speed; }
+  [[nodiscard]] long rx_frames() const { return _rx_frames; }
+  [[nodiscard]] long rx_dropped_overflowed_frame() const {
+    return _rx_dropped_overflowed_frame;
+  }
+  [[nodiscard]] long rx_unicast_frames() const { return _rx_unicast_frames; }
+  [[nodiscard]] long rx_multicast_frames() const { return _rx_multicast_frames; }
+  [[nodiscard]] long rx_broadcast_frames() const { return _rx_broadcast_frames; }
+  [[nodiscard]] long rx_vlan_tagged_frames() const { return _rx_vlan_tagged_frames; }
+  [[nodiscard]] long rx_ptp_frames() const { return _rx_ptp_frames; }
+  [[nodiscard]] long rx_overlength_frames() const { return _rx_overlength_frames; }
+  [[nodiscard]] long rx_underlength_frames() const { return _rx_underlength_frames; }
+  [[nodiscard]] long rx_preemption_start_frames() const {
+    return _rx_preemption_start_frames;
+  }
+  [[nodiscard]] long rx_preemption_continue_frames() const {
+    return _rx_preemption_continue_frames;
+  }
+  [[nodiscard]] long rx_preemption_bad_sequence_in_continue_frames() const {
+    return _rx_preemption_bad_sequence_in_continue_frames;
+  }
+  [[nodiscard]] long rx_preemption_crc_error_in_frames() const {
+    return _rx_preemption_crc_error_in_frames;
+  }
+  [[nodiscard]] long rx_bytes() const { return _rx_bytes; }
+  [[nodiscard]] long crc_erroneous_frames() const { return _crc_erroneous_frames; }
+  [[nodiscard]] long lan_id_erroneous_frames() const { return _lan_id_erroneous_frames; }
+  [[nodiscard]] long tx_frames() const { return _tx_frames; }
+  [[nodiscard]] long tx_dropped_overflowed_frames() const {
+    return _tx_dropped_overflowed_frames;
+  }
+  [[nodiscard]] long tx_unicast_frames() const { return _tx_unicast_frames; }
+  [[nodiscard]] long tx_multicast_frames() const { return _tx_multicast_frames; }
+  [[nodiscard]] long tx_broadcast_frames() const { return _tx_broadcast_frames; }
+  [[nodiscard]] long tx_vlan_tagged_frames() const { return _tx_vlan_tagged_frames; }
+  [[nodiscard]] long tx_ptp_frames() const { return _tx_ptp_frames; }
+  [[nodiscard]] long tx_bytes() const { return _tx_bytes; }
+  [[nodiscard]] long tx_preemption_start_frames() const {
+    return _tx_preemption_start_frames;
+  }
+  [[nodiscard]] long tx_preemption_continue_frames() const {
+    return _tx_preemption_continue_frames;
+  }
 
 private:
   bool _internal;
@@ -131,11 +176,12 @@ private:
 
 class Bridge {
 public:
-  Bridge *get_instance();
+  static Bridge& get_instance() {
+    static Bridge instance;
+    return instance;
+  }
+  void operator=(const Bridge& bridge) = delete;
   void snap_snmp();
-
-private:
-  Bridge();
   Port *port_no(char identifier = -1) {
     switch (identifier) {
     case 0:
@@ -151,12 +197,17 @@ private:
     }
   }
   Port *internal_port() { return &_internal_port; }
+
+private:
+  Bridge() {
+      snap_snmp();
+  };
   Port _port_0 = Port(0);
   Port _port_1 = Port(1);
   Port _port_2 = Port(2);
   Port _port_3 = Port(3);
   Port _internal_port = Port();
-  Bridge *_instance = nullptr;
+  static Bridge *_instance;
 };
 
 #endif // RANKD_RELYUM_HARDWARE_STRUCTS_H
