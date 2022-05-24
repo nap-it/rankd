@@ -1,8 +1,6 @@
 #include "relyum/timesync.h"
 #include "linuxptp/util.h"
 
-#include <iostream>
-
 void PTP::snap() {
 
 #ifdef _SNMP_REQUEST_INFO
@@ -86,8 +84,6 @@ void PTP::snap() {
       // TODO Handle this error.
     }
   }
-
-  std::cerr << "REvents are " << pollfd.revents << std::endl;
 
   if (pollfd.revents & (POLLIN|POLLPRI|POLLOUT)) {
     struct ptp_message* message = pmc_recv(pmc);
