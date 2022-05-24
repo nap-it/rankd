@@ -22,6 +22,12 @@ int main() {
   cout << "Port 3 is enabled? " << (bridge.port_no(3)->is_enabled() ? "Yes" : "No") << endl;
   cout << "Internal Port is enabled? " << (bridge.internal_port()->is_enabled() ? "Yes" : "No") << endl;
 
+  cout << endl;
+
+  cout << "gPTP: " << endl;
+  cout << "Master offset: " << bridge.services()->ptp()->master_offset() << endl;
+  cout << "Ingress Time: " << bridge.services()->ptp()->ingress_time() << endl;
+
 //  // Variable declaration.
 //  netsnmp_session session;
 //  netsnmp_session*ss;
