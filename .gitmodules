@@ -4,6 +4,3 @@
 [submodule "internal/rankd-comp/vendor/libsensors-cpp"]
 	path = internal/rankd-comp/vendor/libsensors-cpp
 	url = https://github.com/sfranzen/libsensors-cpp.git
-[submodule "internal/rankd-time/vendor/linuxptp"]
-	path = internal/rankd-time/vendor/linuxptp
-	url = https://github.com/richardcochran/linuxptp
