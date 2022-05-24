@@ -1,8 +1,10 @@
-#pragma once
-#ifndef RANKD_RELYUM_HARDWARE_STRUCTS_H
-#define RANKD_RELYUM_HARDWARE_STRUCTS_H
+#ifndef RANKD_RELYUM_STRUCTS_H
+#define RANKD_RELYUM_STRUCTS_H
+
+class Port;
 
 #include "relyum/snmp.h"
+#include "relyum/services.h"
 
 enum class PhySpeed {
   FIRST_INVALID = 0,
@@ -16,6 +18,9 @@ class Port {
 public:
   Port() : _internal(true), _identifier(0){};
   explicit Port(char id) : _internal(false), _identifier(id) {}
+#ifdef _SNMP_REQUEST_INFO
+  int update_information(netsnmp_pdu response);
+#endif
   char identifier() const { return _identifier; }
   bool is_half_duplex() const { return _is_half_duplex; }
   void is_half_duplex(bool is) { _is_half_duplex = is; }
@@ -181,7 +186,7 @@ public:
     return instance;
   }
   void operator=(const Bridge& bridge) = delete;
-  void snap_snmp();
+  void snap();
   Port *port_no(char identifier = -1) {
     switch (identifier) {
     case 0:
@@ -197,17 +202,19 @@ public:
     }
   }
   Port *internal_port() { return &_internal_port; }
+  [[nodiscard]] Services* services() const;
 
 private:
   Bridge() {
-      snap_snmp();
+    _services = &Services::get_instance();
+    snap();
   };
   Port _port_0 = Port(0);
   Port _port_1 = Port(1);
   Port _port_2 = Port(2);
   Port _port_3 = Port(3);
   Port _internal_port = Port();
-  static Bridge *_instance;
+  Services* _services{};
 };
 
-#endif // RANKD_RELYUM_HARDWARE_STRUCTS_H
+#endif // RANKD_RELYUM_STRUCTS_H

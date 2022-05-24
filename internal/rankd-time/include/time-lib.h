@@ -5,7 +5,6 @@
 
 #elif __linux
 #include "relyum/structs.h"
-#include "relyum/snmp.h"
 #endif
 
 #endif // RANKD_TIME_LIB_H

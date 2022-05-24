@@ -1,5 +1,6 @@
 #include "relyum/snmp.h"
 
+#ifdef _RELYUM_BOARD
 std::string get_snmp_name(const PortSNMP& item) {
   switch (item) {
   case PortSNMP::HALF_DUPLEX:
@@ -145,65 +146,13 @@ int compose_request_port(int port, netsnmp_pdu* request, oid* OID, size_t* OID_l
   return 0;
 }
 
-int fill_port_information(Port* port, netsnmp_pdu response) {
-  auto* variable = response.variables;
+int compose_ptp_information_request(netsnmp_pdu* request, oid* id, size_t* id_length) {
+  get_node((MIB_PREFIX+"statusPtp4l.0").c_str(), id, id_length);
+  snmp_add_null_var(request, id, *id_length);
+  get_node((MIB_PREFIX+"statusPhc2sys.0").c_str(), id, id_length);
+  snmp_add_null_var(request, id, *id_length);
 
-  port->is_half_duplex(*variable->val.integer != 0);
-  variable = variable->next_variable;
-  port->phy_speed(PhySpeed(*variable->val.integer));
-  variable = variable->next_variable;
-  port->rx_frames(*variable->val.integer);
-  variable = variable->next_variable;
-  port->tx_frames(*variable->val.integer);
-  variable = variable->next_variable;
-  port->crc_erroneous_frames(*variable->val.integer);
-  variable = variable->next_variable;
-  port->lan_id_erroneous_frames(*variable->val.integer);
-  variable = variable->next_variable;
-  port->rx_dropped_overflowed_frame(*variable->val.integer);
-  variable = variable->next_variable;
-  port->rx_unicast_frames(*variable->val.integer);
-  variable = variable->next_variable;
-  port->rx_multicast_frames(*variable->val.integer);
-  variable = variable->next_variable;
-  port->rx_broadcast_frames(*variable->val.integer);
-  variable = variable->next_variable;
-  port->rx_vlan_tagged_frames(*variable->val.integer);
-  variable = variable->next_variable;
-  port->rx_ptp_frames(*variable->val.integer);
-  variable = variable->next_variable;
-  port->rx_overlength_frames(*variable->val.integer);
-  variable = variable->next_variable;
-  port->rx_bytes(*variable->val.integer);
-  variable = variable->next_variable;
-  port->enabled(*variable->val.integer != 0);
-  variable = variable->next_variable;
-  port->tx_dropped_overflowed_frames(*variable->val.integer);
-  variable = variable->next_variable;
-  port->tx_unicast_frames(*variable->val.integer);
-  variable = variable->next_variable;
-  port->tx_multicast_frames(*variable->val.integer);
-  variable = variable->next_variable;
-  port->tx_broadcast_frames(*variable->val.integer);
-  variable = variable->next_variable;
-  port->tx_vlan_tagged_frames(*variable->val.integer);
-  variable = variable->next_variable;
-  port->tx_ptp_frames(*variable->val.integer);
-  variable = variable->next_variable;
-  port->tx_bytes(*variable->val.integer);
-  variable = variable->next_variable;
-  port->rx_preemption_start_frames(*variable->val.integer);
-  variable = variable->next_variable;
-  port->rx_preemption_continue_frames(*variable->val.integer);
-  variable = variable->next_variable;
-  port->rx_preemption_bad_sequence_in_continue_frames(*variable->val.integer);
-  variable = variable->next_variable;
-  port->rx_preemption_crc_error_in_frames(*variable->val.integer);
-  variable = variable->next_variable;
-  port->tx_preemption_start_frames(*variable->val.integer);
-  variable = variable->next_variable;
-  port->tx_preemption_continue_frames(*variable->val.integer);
-  variable = variable->next_variable;
-
-  return variable == nullptr;
+  return 0;
 }
+
+#endif

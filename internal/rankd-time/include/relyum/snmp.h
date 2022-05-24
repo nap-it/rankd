@@ -1,4 +1,3 @@
-#pragma once
 #ifndef RANKD_RELYUM_SNMP_H
 #define RANKD_RELYUM_SNMP_H
 
@@ -9,10 +8,9 @@
 
 const std::string MIB_PREFIX = "SOCE-DESIGN-3524-MIB::";
 
-class Port;
+//#include "relyum/structs.h"
 
-#include "relyum/structs.h"
-
+#ifdef _RELYUM_BOARD
 enum class PortSNMP {
   HALF_DUPLEX,
   PHY_SPEED,
@@ -52,6 +50,7 @@ netsnmp_session* open_snmp_session();
 
 int compose_request_port(int port, netsnmp_pdu* request, oid* OID, size_t* OID_length);
 
-int fill_port_information(Port* port, netsnmp_pdu response);
+int compose_ptp_information_request(netsnmp_pdu* request, oid* id, size_t* id_length);
+#endif
 
 #endif // RANKD_RELYUM_SNMP_H
