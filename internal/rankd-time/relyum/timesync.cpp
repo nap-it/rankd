@@ -62,9 +62,6 @@ void PTP::snap() {
   auto domain_number = config_get_int(pmc_configuration, nullptr, "domainNumber");
   auto interface_name = "/var/run/pmc." + std::to_string(getpid()); // TODO Could this lead to errors?
 
-  print_set_syslog(1);
-  print_set_verbose(1);
-
   auto pmc = pmc_create(pmc_configuration, transport_type, interface_name.c_str(), boundary_hops, domain_number, transport_specific, 0);
   if (!pmc) {
     // TODO Handle this error.
