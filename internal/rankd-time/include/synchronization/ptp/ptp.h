@@ -1,6 +1,7 @@
 #ifndef RANKD_TIME_SYNC_PTP_PTP_H
 #define RANKD_TIME_SYNC_PTP_PTP_H
 
+#include <cstring>
 #include <map>
 #include <string>
 #include <vector>

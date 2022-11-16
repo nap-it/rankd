@@ -1,5 +1,7 @@
 #include "synchronization/ptp/ptp.h"
 
+#include <iostream>
+
 [[maybe_unused]] static std::vector<std::string> timestamping_labels = {
     "hardware-transmit",        // SOF_TIMESTAMPING_TX_HARDWARE
     "software-transmit",        // SOF_TIMESTAMPING_TX_SOFTWARE
@@ -16,7 +18,7 @@
     "one-step-sync",            // HWTSTAMP_TX_ONESTEP_SYNC
 };
 
-[[maybe_unused]] static std::vector<std::string> reception_filters = {
+const std::vector<std::string> reception_filters = {
     "none",                     // HWTSTAMP_FILTER_NONE
     "all",                      // HWTSTAMP_FILTER_ALL
     "some",                     // HWTSTAMP_FILTER_SOME
@@ -44,6 +46,8 @@ get_ptp_capabilities(const std::string &interface) {
     // TODO Handle this error with an exception throw.
   }
   command_context.devname = interface.c_str();
+  memset(&command_context.ifr, 0, sizeof(command_context.ifr));
+  strncpy(command_context.ifr.ifr_name, command_context.devname, interface.size());
 
   // Create a socket and retrieve its file descriptor.
   command_context.fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -81,21 +85,17 @@ get_ptp_capabilities(const std::string &interface) {
   information["ptp_hardware_clock"] = ptp_hardware_clock;
 
   std::vector<std::string> hardware_transmit_ts_modes;
-  if (information_request.tx_types) {
-    for (int i = 0; i < transmission_types.size(); ++i) {
-      if (information_request.tx_types & (1 << i)) {
-        hardware_transmit_ts_modes.push_back(transmission_types.at(i));
-      }
+  for (int i = 0; i < transmission_types.size(); ++i) {
+    if (information_request.tx_types & (1 << i)) {
+      hardware_transmit_ts_modes.push_back(transmission_types.at(i));
     }
   }
   information["hardware_transmit_ts_mode"] = hardware_transmit_ts_modes;
 
   std::vector<std::string> hardware_receive_filter_modes;
-  if (information_request.rx_filters) {
-    for (int i = 0; i < reception_filters.size(); ++i) {
-      if (information_request.rx_filters & (1 << i)) {
-        hardware_receive_filter_modes.push_back(reception_filters.at(i));
-      }
+  for (int i = 0; i < reception_filters.size(); ++i) {
+    if (information_request.rx_filters & (1 << i)) {
+      hardware_receive_filter_modes.push_back(reception_filters.at(i));
     }
   }
   information["hardware_receive_filter_modes"] = hardware_receive_filter_modes;

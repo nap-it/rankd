@@ -4,17 +4,10 @@ project(rankd-time
         LANGUAGES CXX C)
 
 set(HEADER_LIST
-        include/configuration/srp/relyum/services.h
-        include/configuration/srp/relyum/snmp.h
-        include/configuration/srp/relyum/structs.h
-        include/configuration/srp/relyum/timesync.h
         include/synchronization/ptp/ptp.h
         include/time-lib.h
         )
 set(SOURCE_LIST
-        configuration/srp/relyum/structs.cpp
-        configuration/srp/relyum/snmp.cpp
-        configuration/srp/relyum/timesync.cpp
         synchronization/ptp/ptp.cpp
         )
 
@@ -35,7 +28,7 @@ endif()
 # Make the rankd-time library (librankd-net).
 add_library(rankd-time SHARED lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
 target_include_directories(rankd-time PUBLIC include vendor/ptp)
-target_link_libraries(rankd-time netsnmp linuxptp)
+#target_link_libraries(rankd-time netsnmp linuxptp)
 
 # All users to compile this library need, at least, C++20.
 target_compile_features(rankd-time PUBLIC cxx_std_20)

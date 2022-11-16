@@ -18,3 +18,6 @@ target_link_libraries(os-monitor rankd-comp)
 
 add_executable(relyum-monitor relyum-snmp-monitor.cpp)
 target_link_libraries(relyum-monitor rankd-time netsnmp linuxptp)
+
+add_executable(ptp-monitor ptp-monitor.cpp)
+target_link_libraries(ptp-monitor rankd-time)
