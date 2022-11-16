@@ -1,4 +1,4 @@
-#include "relyum/timesync.h"
+#include "configuration/srp/relyum/timesync.h"
 #include "linuxptp/util.h"
 
 void PTP::snap() {

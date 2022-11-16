@@ -1,4 +1,4 @@
-#include "relyum/structs.h"
+#include "configuration/srp/relyum/structs.h"
 
 #ifdef _SNMP_REQUEST_INFO
 int Port::update_information(netsnmp_pdu response) {

@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 extern "C" {
-#include "linuxptp/pmc.h"
+#include "../../../../vendor/ptp/linuxptp/pmc.h"
 };
 
 class PTP;

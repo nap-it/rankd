@@ -3,7 +3,7 @@
 
 class Services;
 
-#include "relyum/timesync.h"
+#include "timesync.h"
 
 class Services {
 public:

@@ -1,4 +1,4 @@
-#include "relyum/snmp.h"
+#include "configuration/srp/relyum/snmp.h"
 
 #ifdef _RELYUM_BOARD
 std::string get_snmp_name(const PortSNMP& item) {

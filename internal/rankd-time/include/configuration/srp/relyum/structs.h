@@ -3,8 +3,8 @@
 
 class Port;
 
-#include "relyum/snmp.h"
-#include "relyum/services.h"
+#include "services.h"
+#include "snmp.h"
 
 enum class PhySpeed {
   FIRST_INVALID = 0,
