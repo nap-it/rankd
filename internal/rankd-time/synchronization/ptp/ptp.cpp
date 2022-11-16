@@ -1,40 +1,40 @@
 #include "synchronization/ptp/ptp.h"
 
-#include <iostream>
+enum class PTPCapability { UNCAPABLE, SOFTWARE_ONLY, HARDWARE };
 
 [[maybe_unused]] static std::vector<std::string> timestamping_labels = {
-    "hardware-transmit",        // SOF_TIMESTAMPING_TX_HARDWARE
-    "software-transmit",        // SOF_TIMESTAMPING_TX_SOFTWARE
-    "hardware-receive",         // SOF_TIMESTAMPING_RX_HARDWARE
-    "software-receive",         // SOF_TIMESTAMPING_RX_SOFTWARE
-    "software-system-clock",    // SOF_TIMESTAMPING_SOFTWARE
-    "hardware-legacy-clock",    // SOF_TIMESTAMPING_SYS_HARDWARE
-    "hardware-raw-clock",       // SOF_TIMESTAMPING_RAW_HARDWARE
+    "hardware-transmit",     // 0 SOF_TIMESTAMPING_TX_HARDWARE
+    "software-transmit",     // 1 SOF_TIMESTAMPING_TX_SOFTWARE
+    "hardware-receive",      // 2 SOF_TIMESTAMPING_RX_HARDWARE
+    "software-receive",      // 3 SOF_TIMESTAMPING_RX_SOFTWARE
+    "software-system-clock", // 4 SOF_TIMESTAMPING_SOFTWARE
+    "hardware-legacy-clock", // 5 SOF_TIMESTAMPING_SYS_HARDWARE
+    "hardware-raw-clock",    // 6 SOF_TIMESTAMPING_RAW_HARDWARE
 };
 
 [[maybe_unused]] static std::vector<std::string> transmission_types = {
-    "off",                      // HWTSTAMP_TX_OFF
-    "on",                       // HWTSTAMP_TX_ON
-    "one-step-sync",            // HWTSTAMP_TX_ONESTEP_SYNC
+    "off",           // HWTSTAMP_TX_OFF
+    "on",            // HWTSTAMP_TX_ON
+    "one-step-sync", // HWTSTAMP_TX_ONESTEP_SYNC
 };
 
 const std::vector<std::string> reception_filters = {
-    "none",                     // HWTSTAMP_FILTER_NONE
-    "all",                      // HWTSTAMP_FILTER_ALL
-    "some",                     // HWTSTAMP_FILTER_SOME
-    "ptpv1-l4-event",           // HWTSTAMP_FILTER_PTP_V1_L4_EVENT
-    "ptpv1-l4-sync",            // HWTSTAMP_FILTER_PTP_V1_L4_SYNC
-    "ptpv1-l4-delay-req",       // HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ
-    "ptpv2-l4-event",           // HWTSTAMP_FILTER_PTP_V2_L4_EVENT
-    "ptpv2-l4-sync",            // HWTSTAMP_FILTER_PTP_V2_L4_SYNC
-    "ptpv2-l4-delay-req",       // HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ
-    "ptpv2-l2-event",           // HWTSTAMP_FILTER_PTP_V2_L2_EVENT
-    "ptpv2-l2-sync",            // HWTSTAMP_FILTER_PTP_V2_L2_SYNC
-    "ptpv2-l2-delay-req",       // HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ
-    "ptpv2-event",              // HWTSTAMP_FILTER_PTP_V2_EVENT
-    "ptpv2-sync",               // HWTSTAMP_FILTER_PTP_V2_SYNC
-    "ptpv2-delay-req",          // HWTSTAMP_FILTER_PTP_V2_DELAY_REQ
-    "ntp-all",                  // HWTSTAMP_FILTER_NTP_ALL
+    "none",               // HWTSTAMP_FILTER_NONE
+    "all",                // HWTSTAMP_FILTER_ALL
+    "some",               // HWTSTAMP_FILTER_SOME
+    "ptpv1-l4-event",     // HWTSTAMP_FILTER_PTP_V1_L4_EVENT
+    "ptpv1-l4-sync",      // HWTSTAMP_FILTER_PTP_V1_L4_SYNC
+    "ptpv1-l4-delay-req", // HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ
+    "ptpv2-l4-event",     // HWTSTAMP_FILTER_PTP_V2_L4_EVENT
+    "ptpv2-l4-sync",      // HWTSTAMP_FILTER_PTP_V2_L4_SYNC
+    "ptpv2-l4-delay-req", // HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ
+    "ptpv2-l2-event",     // HWTSTAMP_FILTER_PTP_V2_L2_EVENT
+    "ptpv2-l2-sync",      // HWTSTAMP_FILTER_PTP_V2_L2_SYNC
+    "ptpv2-l2-delay-req", // HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ
+    "ptpv2-event",        // HWTSTAMP_FILTER_PTP_V2_EVENT
+    "ptpv2-sync",         // HWTSTAMP_FILTER_PTP_V2_SYNC
+    "ptpv2-delay-req",    // HWTSTAMP_FILTER_PTP_V2_DELAY_REQ
+    "ntp-all",            // HWTSTAMP_FILTER_NTP_ALL
 };
 
 std::map<std::string, std::vector<std::string>>
@@ -47,7 +47,8 @@ get_ptp_capabilities(const std::string &interface) {
   }
   command_context.devname = interface.c_str();
   memset(&command_context.ifr, 0, sizeof(command_context.ifr));
-  strncpy(command_context.ifr.ifr_name, command_context.devname, interface.size());
+  strncpy(command_context.ifr.ifr_name, command_context.devname,
+          interface.size());
 
   // Create a socket and retrieve its file descriptor.
   command_context.fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -101,4 +102,34 @@ get_ptp_capabilities(const std::string &interface) {
   information["hardware_receive_filter_modes"] = hardware_receive_filter_modes;
 
   return information;
+}
+
+PTPCapability capability_level_in(
+    const std::map<std::string, std::vector<std::string>> &information) {
+  // If there is no capability, then it is clearly uncapable.
+  if (information.at("capabilities").empty()) {
+    return PTPCapability::UNCAPABLE;
+  } else {
+    PTPCapability last_state = PTPCapability::UNCAPABLE;
+    int counter = 0;
+    for (const auto& capability : information.at("capabilities")) {
+      for (int i = 0; i < timestamping_labels.size(); ++i) {
+        if (capability == timestamping_labels.at(i)) {
+          counter |= (1 << i);
+          break;
+        }
+      }
+    }
+    if ((counter & SW_CAPABILITY_MASK) != counter) {
+      last_state = PTPCapability::SOFTWARE_ONLY;
+    }
+    if ((counter & SW_CAPABILITY_MASK) != counter) {
+      last_state = PTPCapability::HARDWARE;
+    } else if ((counter & HW_CAPABILITY_MASK) != counter && (counter & SW_CAPABILITY_MASK) != counter) {
+      return PTPCapability::UNCAPABLE;
+    }
+
+    // TODO Test for last 3 items.
+  }
+
 }

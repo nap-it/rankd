@@ -11,6 +11,8 @@
 #include <sys/ioctl.h>
 
 #define IOCTL_ETHTOOL_REQ 0x8946      // Ethtool family of IOCTL requests constant identifier.
+#define HW_CAPABILITY_MASK 0b1111101  // Mask to get if device has PTP hardware capabilities.
+#define SW_CAPABILITY_MASK 0b0101100  // Mask to get if device has PTP software capabilities.
 
 struct ethtool_command_context {
   const char* devname;
