@@ -1,4 +1,4 @@
-#include "sensors.h"
+#include "data-sources/sensors.h"
 
 BusType parse_bus_type(const sensors::bus_type &type) {
   switch (type) {

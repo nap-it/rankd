@@ -26,7 +26,7 @@ add_subdirectory(vendor/libsensors-cpp)
 
 # Make the rankd-comp library (librankd-comp).
 add_library(rankd-comp lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
-target_include_directories(rankd-comp PUBLIC include include/data-sources vendor/pfs/include vendor/libsensors-cpp/include)
+target_include_directories(rankd-comp PUBLIC include vendor/pfs/include vendor/libsensors-cpp/include)
 target_link_libraries(rankd-comp PRIVATE pfs sensors-c++)
 
 # All users to compile this library need, at least, C++20.
