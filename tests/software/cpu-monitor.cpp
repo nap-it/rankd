@@ -25,11 +25,10 @@ int main() {
   cout << "CPU stats are: (System/User/Nice/IRQs/SoftIRQs/IOwait/IDLE/Steal)"
        << endl;
   while (true) {
-    //cout << "· " << cpu.snapshot().system << "/" << cpu.snapshot().user << "/"
-    //     << cpu.snapshot().nice << "/" << cpu.snapshot().irqs << "/"
-    //     << cpu.snapshot().softirqs << "/" << cpu.snapshot().iowait << "/"
-    //     << cpu.snapshot().idle << "/" << cpu.snapshot().steal << endl;
-    cout << (cpu.snapshot().in_use * 1000000)/2.4 << " %" << endl;
+    cout << "· " << cpu.snapshot().system << "/" << cpu.snapshot().user << "/"
+         << cpu.snapshot().nice << "/" << cpu.snapshot().irqs << "/"
+         << cpu.snapshot().softirqs << "/" << cpu.snapshot().iowait << "/"
+         << cpu.snapshot().idle << "/" << cpu.snapshot().steal << endl;
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     cpu.snap();
