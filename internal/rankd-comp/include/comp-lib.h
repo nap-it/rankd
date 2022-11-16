@@ -1,14 +1,10 @@
 #ifndef RANKD_COMP_LIB_H
 #define RANKD_COMP_LIB_H
 
-#ifdef __APPLE__
-#include "macos/cpu.h"
-#elif __linux
-#include "linux/cpu.h"
-#include "linux/memory.h"
-#include "linux/os.h"
-#include "linux/sensors.h"
-#include "linux/storage.h"
-#endif
+#include "data-sources/cpu.h"
+#include "data-sources/memory.h"
+#include "data-sources/os.h"
+#include "data-sources/sensors.h"
+#include "data-sources/storage.h"
 
 #endif // RANKD_COMP_LIB_H

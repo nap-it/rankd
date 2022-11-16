@@ -3,52 +3,31 @@ project(rankd-comp
         DESCRIPTION "Computational Rank daemon library"
         LANGUAGES CXX C)
 
-if(APPLE)
-    message("-- Preparing rankd-comp environment as Mac OS X")
-    set(HEADER_LIST
-            include/comp-lib.h
-            include/macos/cpu.h
-            include/utils/strings.h
-            )
-    set(SOURCE_LIST
-            data-sources/macos/cpu.cpp
-            utils/strings.cpp
-            )
+set(HEADER_LIST
+        include/comp-lib.h
+        include/data-sources/cpu.h
+        include/data-sources/memory.h
+        include/data-sources/os.h
+        include/data-sources/sensors.h
+        include/data-sources/storage.h
+        include/utils/strings.h
+        )
+set(SOURCE_LIST
+        data-sources/cpu.cpp
+        data-sources/memory.cpp
+        data-sources/os.cpp
+        data-sources/sensors.cpp
+        data-sources/storage.cpp
+        utils/strings.cpp
+        )
 
-    # Make the rankd-comp library (librankd-comp).
-    add_library(rankd-comp lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
-    target_include_directories(rankd-comp PUBLIC include include/macos)
-    target_link_libraries(rankd-comp PRIVATE)
+add_subdirectory(vendor/pfs)
+add_subdirectory(vendor/libsensors-cpp)
 
-
-elseif (UNIX)
-    message("-- Preparing rankd-comp environment as Linux")
-    set(HEADER_LIST
-            include/comp-lib.h
-            include/linux/cpu.h
-            include/linux/memory.h
-            include/linux/os.h
-            include/linux/sensors.h
-            include/linux/storage.h
-            include/utils/strings.h
-            )
-    set(SOURCE_LIST
-            data-sources/linux/cpu.cpp
-            data-sources/linux/memory.cpp
-            data-sources/linux/os.cpp
-            data-sources/linux/sensors.cpp
-            data-sources/linux/storage.cpp
-            utils/strings.cpp
-            )
-
-    add_subdirectory(vendor/pfs)
-    add_subdirectory(vendor/libsensors-cpp)
-
-    # Make the rankd-comp library (librankd-comp).
-    add_library(rankd-comp lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
-    target_include_directories(rankd-comp PUBLIC include include/linux vendor/pfs/include vendor/libsensors-cpp/include)
-    target_link_libraries(rankd-comp PRIVATE pfs sensors-c++)
-endif()
+# Make the rankd-comp library (librankd-comp).
+add_library(rankd-comp lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
+target_include_directories(rankd-comp PUBLIC include include/data-sources vendor/pfs/include vendor/libsensors-cpp/include)
+target_link_libraries(rankd-comp PRIVATE pfs sensors-c++)
 
 # All users to compile this library need, at least, C++20.
 target_compile_features(rankd-comp PUBLIC cxx_std_20)
