@@ -4,16 +4,18 @@ project(rankd-time
         LANGUAGES CXX C)
 
 set(HEADER_LIST
-        include/relyum/services.h
-        include/relyum/snmp.h
-        include/relyum/structs.h
-        include/relyum/timesync.h
+        include/configuration/srp/relyum/services.h
+        include/configuration/srp/relyum/snmp.h
+        include/configuration/srp/relyum/structs.h
+        include/configuration/srp/relyum/timesync.h
+        include/synchronization/ptp/ptp.h
         include/time-lib.h
         )
 set(SOURCE_LIST
-        relyum/structs.cpp
-        relyum/snmp.cpp
-        relyum/timesync.cpp
+        configuration/srp/relyum/structs.cpp
+        configuration/srp/relyum/snmp.cpp
+        configuration/srp/relyum/timesync.cpp
+        synchronization/ptp/ptp.cpp
         )
 
 add_subdirectory(vendor)
