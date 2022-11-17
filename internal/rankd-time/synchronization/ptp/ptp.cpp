@@ -1,7 +1,5 @@
 #include "synchronization/ptp/ptp.h"
 
-enum class PTPCapability { UNCAPABLE, SOFTWARE_ONLY, HARDWARE };
-
 [[maybe_unused]] static std::vector<std::string> timestamping_labels = {
     "hardware-transmit",     // 0 SOF_TIMESTAMPING_TX_HARDWARE
     "software-transmit",     // 1 SOF_TIMESTAMPING_TX_SOFTWARE
@@ -112,7 +110,7 @@ PTPCapability capability_level_in(
   } else {
     PTPCapability last_state = PTPCapability::UNCAPABLE;
     int counter = 0;
-    for (const auto& capability : information.at("capabilities")) {
+    for (const auto &capability : information.at("capabilities")) {
       for (int i = 0; i < timestamping_labels.size(); ++i) {
         if (capability == timestamping_labels.at(i)) {
           counter |= (1 << i);
@@ -120,16 +118,52 @@ PTPCapability capability_level_in(
         }
       }
     }
-    if ((counter & SW_CAPABILITY_MASK) != counter) {
+    if ((counter & HW_CAPABILITY_MASK) == counter) {
+      last_state = PTPCapability::HARDWARE;
+    } else if ((counter & SW_CAPABILITY_MASK) == counter) {
       last_state = PTPCapability::SOFTWARE_ONLY;
     }
-    if ((counter & SW_CAPABILITY_MASK) != counter) {
-      last_state = PTPCapability::HARDWARE;
-    } else if ((counter & HW_CAPABILITY_MASK) != counter && (counter & SW_CAPABILITY_MASK) != counter) {
-      return PTPCapability::UNCAPABLE;
+
+    if (information.at("ptp_hardware_clock").empty()) {
+      return PTPCapability::SOFTWARE_ONLY;
     }
 
-    // TODO Test for last 3 items.
-  }
+    if (last_state == PTPCapability::HARDWARE) {
+      int modes = 0;
+      for (const auto &mode : information.at("hardware_transmit_ts_mode")) {
+        for (int i = 0; i < transmission_types.size(); ++i) {
+          if (mode == transmission_types.at(i)) {
+            modes |= (1 << i);
+            break;
+          }
+        }
+      }
+      if ((modes & HW_TX_TS_MODE_MASK) != modes) {
+        last_state = PTPCapability::SOFTWARE_ONLY;
+      }
+    }
 
+    if (last_state == PTPCapability::HARDWARE) {
+      int filters = 0;
+      for (const auto &filter :
+           information.at("hardware_receive_filter_modes")) {
+        for (int i = 0; i < reception_filters.size(); ++i) {
+          if (filter == reception_filters.at(i)) {
+            filters |= (1 << i);
+            break;
+          }
+        }
+      }
+
+      if ((filters & HW_RX_FILTER_MASK) != filters) {
+        last_state = PTPCapability::SOFTWARE_ONLY;
+      }
+    }
+
+    return last_state;
+  }
+}
+
+PTPCapability ptp_capability_type(const std::string &interface_name) {
+  return capability_level_in(get_ptp_capabilities(interface_name));
 }
