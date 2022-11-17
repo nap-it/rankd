@@ -167,3 +167,37 @@ PTPCapability capability_level_in(
 PTPCapability ptp_capability_type(const std::string &interface_name) {
   return capability_level_in(get_ptp_capabilities(interface_name));
 }
+
+#ifndef RELEASE_TARGET
+void debug_all_interfaces_ptp_capabilities() {
+  struct ifaddrs *address;
+  struct ifaddrs *temporary_address;
+
+  getifaddrs(&address);
+  temporary_address = address;
+
+  while (temporary_address) {
+    if (temporary_address->ifa_addr &&
+        temporary_address->ifa_addr->sa_family == AF_PACKET) {
+      auto type = ptp_capability_type(temporary_address->ifa_name);
+      switch (type) {
+      case PTPCapability::HARDWARE:
+        std::cout << temporary_address->ifa_name
+                  << " capability is full-hardware." << std::endl;
+        break;
+      case PTPCapability::SOFTWARE_ONLY:
+        std::cout << temporary_address->ifa_name
+                  << " capability is only by software." << std::endl;
+        break;
+      default:
+        std::cout << temporary_address->ifa_data
+                  << " is uncapable of handling with PTP." << std::endl;
+      }
+    }
+
+    temporary_address = temporary_address->ifa_next;
+  }
+
+  free(address);
+}
+#endif

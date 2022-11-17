@@ -10,6 +10,11 @@
 #include <linux/if.h>
 #include <sys/ioctl.h>
 
+#ifndef RELEASE_TARGET
+#include <iostream>
+#include <ifaddrs.h>
+#endif
+
 #define IOCTL_ETHTOOL_REQ                                                      \
   0x8946 // Ethtool family of IOCTL requests constant identifier.
 #define HW_CAPABILITY_MASK                                                     \
@@ -33,5 +38,10 @@ get_ptp_capabilities(const std::string &interface);
 PTPCapability capability_level_in(
     const std::map<std::string, std::vector<std::string>> &information);
 PTPCapability ptp_capability_type(const std::string &interface_name);
+
+// Debug functions.
+#ifndef RELEASE_TARGET
+void debug_all_interfaces_ptp_capabilities();
+#endif
 
 #endif // RANKD_TIME_SYNC_PTP_PTP_H
