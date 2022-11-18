@@ -28,7 +28,7 @@ endif()
 # Make the rankd-time library (librankd-net).
 add_library(rankd-time SHARED lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
 target_include_directories(rankd-time PUBLIC include vendor/ptp)
-#target_link_libraries(rankd-time netsnmp linuxptp)
+target_link_libraries(rankd-time pmc)
 
 # All users to compile this library need, at least, C++20.
 target_compile_features(rankd-time PUBLIC cxx_std_20)

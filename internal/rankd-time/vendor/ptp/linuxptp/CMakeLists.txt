@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1.0)
 
 project(linuxptp VERSION 3.1 LANGUAGES C)
 
-file(GLOB ptp_src
+file(GLOB pmc_src
         "config.h"
         "hash.h"
         "interface.h"
@@ -35,6 +35,10 @@ file(GLOB ptp_src
         "util.c"
 )
 
-add_library(linuxptp STATIC pmc.h ${ptp_src})
-set_property(TARGET linuxptp PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_link_libraries(linuxptp m rt pthread)
+if (APU)
+    add_definitions("-DHAVE_ONESTEP_P2P")
+endif()
+
+add_library(pmc STATIC pmc.h ${pmc_src})
+set_property(TARGET pmc PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_link_libraries(pmc m rt pthread)

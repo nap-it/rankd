@@ -168,6 +168,78 @@ PTPCapability ptp_capability_type(const std::string &interface_name) {
   return capability_level_in(get_ptp_capabilities(interface_name));
 }
 
+void PTP::snap() {
+  // Verify if ptp4l is running. If not, quit.
+  if (!_running) {
+    // TODO Handle this error with an exception throw.
+    return;
+  }
+
+  // Get configuration from linuxptp.
+  auto* pmc_configuration = config_create();
+  if (!pmc_configuration) {
+    // TODO Handle this error with an exception throw.
+  }
+
+  // Set flags to allow polling ptp4l.
+  if (config_set_int(pmc_configuration, "network_transport", TRANS_UDS)) {
+    // TODO Handle this error with an exception throw.
+  }
+  if (config_set_int(pmc_configuration, "transportSpecific", 1)) {
+    // TODO Handle this error with an exception throw.
+  }
+
+  // Specify initialized variables.
+  uint8_t boundary_hops = 0;
+  auto transport_type = TRANS_UDS;
+  auto transport_specific = config_get_int(pmc_configuration, nullptr, "transportSpecific") << 4;
+  auto domain_number = config_get_int(pmc_configuration, nullptr, "domainNumber");
+  auto interface_name = "/var/run/pmc." + std::to_string(getpid()); // TODO Could do this lead to errors?
+
+  // Create the pmc-relatable representation.
+  auto pmc_object = pmc_create(pmc_configuration, transport_type, interface_name.c_str(), boundary_hops, domain_number, transport_specific, 0);
+  if (!pmc_object) {
+    // TODO Handle this error with an exception throw.
+  }
+
+  // Prepare polling.
+  struct pollfd pollfd{};
+  pollfd.fd = pmc_get_transport_fd(pmc_object);
+  pollfd.events = POLLIN | POLLPRI | POLLOUT;
+  int count = poll(&pollfd, 1, 100);
+  if (count < 0) {
+    // TODO Handle this error with an exception throw.
+  }
+
+  // Parse and perform polling events.
+  if (pollfd.revents & POLLOUT) {
+    if (pmc_do_command(pmc_object, std::string("GET TIME_STATUS_NP").data())) {
+      // TODO Handle this error with an exception throw.
+    }
+  }
+  if (pollfd.revents & (POLLIN | POLLPRI | POLLOUT)) {
+    struct ptp_message* message = pmc_recv(pmc_object);
+    if (message) {
+      auto* time_status = (struct time_status_np*) ((struct management_tlv*) message->management.suffix)->data;
+      _master_offset = time_status->master_offset;
+      _ingress_time = time_status->ingress_time;
+      _cumulative_scaled_rate_offset = (time_status->cumulativeScaledRateOffset + 0.0) / ((double)(1ULL << 41));
+      _scaled_last_grand_master_phase_change = time_status->scaledLastGmPhaseChange;
+      _grand_master_time_base_indicator = time_status->gmTimeBaseIndicator;
+      _last_grand_master_phase_change_ns_msb = time_status->lastGmPhaseChange.nanoseconds_msb;
+      _last_grand_master_phase_change_ns_lsb = time_status->lastGmPhaseChange.nanoseconds_lsb;
+      _last_grand_master_phase_change_fractional_ns = time_status->lastGmPhaseChange.fractional_nanoseconds;
+      _grand_master_present = time_status->gmPresent != 0;
+      _grand_master_identity = cid2str(&time_status->gmIdentity);
+    }
+  }
+
+  // Clean used structures.
+  pmc_destroy(pmc_object);
+  msg_cleanup();
+  config_destroy(pmc_configuration);
+}
+
 #ifndef RELEASE_TARGET
 void debug_all_interfaces_ptp_capabilities() {
   struct ifaddrs *address;
