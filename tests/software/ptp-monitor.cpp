@@ -28,5 +28,11 @@ int main() {
 
   debug_all_interfaces_ptp_capabilities();
 
+  std::cout << std::endl;
+
+  auto ptp = PTP::get_instance();
+  ptp.snap();
+  std::cout << ptp << std::endl;
+
   return 0;
 }
