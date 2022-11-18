@@ -2,18 +2,20 @@
 #define RANKD_TIME_SYNC_PTP_PTP_H
 
 #include <cstring>
-#include <fstream>
 #include <map>
 #include <string>
 #include <vector>
 
 #include <poll.h>
+#include <signal.h>
 #include <linux/ethtool.h>
 #include <linux/if.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 
 extern "C" {
 #include "linuxptp/pmc.h"
+#include "linuxptp/util.h"
 };
 
 #ifndef RELEASE_TARGET
@@ -38,6 +40,8 @@ struct ethtool_command_context {
 };
 
 enum class PTPCapability { UNCAPABLE, SOFTWARE_ONLY, HARDWARE };
+
+static struct stat buffer;
 
 class PTP {
 public:
@@ -99,7 +103,7 @@ private:
   PTP() {
     snap();
   }
-  bool _running = std::ifstream("/var/run/ptp4l").good();
+  bool _running = stat("/var/run/ptp4l", &buffer) == 0;
   bool _applying_on_system{};
   long _master_offset{};
   long _ingress_time{};

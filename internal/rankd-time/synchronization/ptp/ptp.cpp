@@ -176,7 +176,7 @@ void PTP::snap() {
   }
 
   // Get configuration from linuxptp.
-  auto* pmc_configuration = config_create();
+  struct config* pmc_configuration = config_create();
   if (!pmc_configuration) {
     // TODO Handle this error with an exception throw.
   }
@@ -185,16 +185,13 @@ void PTP::snap() {
   if (config_set_int(pmc_configuration, "network_transport", TRANS_UDS)) {
     // TODO Handle this error with an exception throw.
   }
-  if (config_set_int(pmc_configuration, "transportSpecific", 1)) {
-    // TODO Handle this error with an exception throw.
-  }
 
   // Specify initialized variables.
   uint8_t boundary_hops = 0;
   auto transport_type = TRANS_UDS;
   auto transport_specific = config_get_int(pmc_configuration, nullptr, "transportSpecific") << 4;
   auto domain_number = config_get_int(pmc_configuration, nullptr, "domainNumber");
-  auto interface_name = "/var/run/pmc." + std::to_string(getpid()); // TODO Could do this lead to errors?
+  auto interface_name = "/var/run/pmc." + std::to_string(getpid());
 
   // Create the pmc-relatable representation.
   auto pmc_object = pmc_create(pmc_configuration, transport_type, interface_name.c_str(), boundary_hops, domain_number, transport_specific, 0);
@@ -217,7 +214,13 @@ void PTP::snap() {
       // TODO Handle this error with an exception throw.
     }
   }
-  if (pollfd.revents & (POLLIN | POLLPRI | POLLOUT)) {
+  pollfd.events = POLLIN | POLLPRI;
+  count = poll(&pollfd, 1, 100);
+  if (count < 0) {
+    // TODO Handle this error with an exception throw.
+  }
+
+  if (pollfd.revents & (POLLIN)) {
     struct ptp_message* message = pmc_recv(pmc_object);
     if (message) {
       auto* time_status = (struct time_status_np*) ((struct management_tlv*) message->management.suffix)->data;
