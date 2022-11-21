@@ -16,6 +16,17 @@ Rankd (to be pronounced _rank-ed_) while it is being developed, has a first goal
 
 As this is still under development, currently there is no release available, but it is expected to launch a version soon enough to be used in a set of equipments of Aveiro City Living Lab's infrastructure, in order to be able to coordinate maintenance actions with no further ado.
 
+## Current Development Status
+
+Rankd is still a work in progress, as part of Rui Lopes' PhD work in the scope of Time-sensitive and emergency networks. It is divided onto four main components: a computing resources gatherer (`rankd-comp`), a time resources gatherer (`rankd-time`), a network resources gatherer (`rankd-net`) which is to be tied with the `yanp-it` project, and a negotiator (`negotiator`). Below there is the current status of each one of these components.
+
+| **Tool**      | **Currently available**                       |
+|---------------|-----------------------------------------------|
+| `rankd-comp`  | CPU, Memory, Storage, Sensors, and OS metrics |
+| `rankd-time`  | PTP current metrics (linuxptp)                |
+| `rankd-net`   | YANP-it (for iPerf and NCM)                   |
+| `negotiator`  | _Nothing yet_                                 |
+
 ### Running Rankd
 
 In order to run this project you simply have to run the compiled executable called `rankd` and, if everything runs well, you should receive a feedback on a server waiting for requests in the port 7265 (T9-code for `r-a-n-k`).
