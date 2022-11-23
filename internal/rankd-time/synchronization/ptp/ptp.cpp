@@ -201,6 +201,8 @@ void PTP::snap() {
 
   // Prepare polling.
   struct pollfd pollfd{};
+
+  // Get TIME_STATUS_NP data.
   pollfd.fd = pmc_get_transport_fd(pmc_object);
   pollfd.events = POLLIN | POLLPRI | POLLOUT;
   int count = poll(&pollfd, 1, 100);
@@ -234,6 +236,181 @@ void PTP::snap() {
       _last_grand_master_phase_change_fractional_ns = time_status->lastGmPhaseChange.fractional_nanoseconds;
       _grand_master_present = time_status->gmPresent != 0;
       _grand_master_identity = cid2str(&time_status->gmIdentity);
+    }
+  }
+
+  // Get GRANDMASTER_SETTINGS_NP data.
+  pollfd.fd = pmc_get_transport_fd(pmc_object);
+  pollfd.events = POLLIN | POLLPRI | POLLOUT;
+  count = poll(&pollfd, 1, 100);
+  if (count < 0) {
+    // TODO Handle this error with an exception throw.
+  }
+
+  // Parse and perform polling events.
+  if (pollfd.revents & POLLOUT) {
+    if (pmc_do_command(pmc_object, std::string("GET GRANDMASTER_SETTINGS_NP").data())) {
+      // TODO Handle this error with an exception throw.
+    }
+  }
+  pollfd.events = POLLIN | POLLPRI;
+  count = poll(&pollfd, 1, 100);
+  if (count < 0) {
+    // TODO Handle this error with an exception throw.
+  }
+
+  if (pollfd.revents & POLLIN) {
+    struct ptp_message* message = pmc_recv(pmc_object);
+    if (message) {
+      auto gm_settings = (struct grandmaster_settings_np*) ((struct management_tlv*)message->management.suffix)->data;
+      _grand_master_clock_class = gm_settings->clockQuality.clockClass;
+      _grand_master_clock_accuracy = gm_settings->clockQuality.clockAccuracy;
+      _grand_master_offset_scaled_log_variance = gm_settings->clockQuality.offsetScaledLogVariance;
+      _grand_master_current_utc_offset = gm_settings->utc_offset;
+      _grand_master_leap_61 = gm_settings->time_flags & LEAP_61;
+      _grand_master_leap_59 = gm_settings->time_flags & LEAP_59;
+      _grand_master_current_utc_offset_valid = gm_settings->time_flags & UTC_OFF_VALID;
+      _grand_master_ptp_timescale = gm_settings->time_flags & PTP_TIMESCALE;
+      _grand_master_time_traceable = gm_settings->time_flags & TIME_TRACEABLE;
+      _grand_master_frequency_traceable = gm_settings->time_flags & FREQ_TRACEABLE;
+      _grand_master_time_source = gm_settings->time_source;
+    }
+  }
+
+  // Get PARENT_DATA_SET data.
+  pollfd.fd = pmc_get_transport_fd(pmc_object);
+  pollfd.events = POLLIN | POLLPRI | POLLOUT;
+  count = poll(&pollfd, 1, 100);
+  if (count < 0) {
+    // TODO Handle this error with an exception throw.
+  }
+
+  // Parse and perform polling events.
+  if (pollfd.revents & POLLOUT) {
+    if (pmc_do_command(pmc_object, std::string("GET PARENT_DATA_SET").data())) {
+      // TODO Handle this error with an exception throw.
+    }
+  }
+  pollfd.events = POLLIN | POLLPRI;
+  count = poll(&pollfd, 1, 100);
+  if (count < 0) {
+    // TODO Handle this error with an exception throw.
+  }
+
+  if (pollfd.revents & POLLIN) {
+    struct ptp_message* message = pmc_recv(pmc_object);
+    if (message) {
+      auto parent_ds = (struct parentDS*) ((struct management_tlv*) message->management.suffix)->data;
+      _parent_port_identity = pid2str(&parent_ds->parentPortIdentity);
+      _parent_stats = parent_ds->parentStats;
+      _observed_parent_offset_scaled_log_variance = parent_ds->observedParentOffsetScaledLogVariance;
+      _observed_parent_clock_phase_change_rate = parent_ds->observedParentClockPhaseChangeRate;
+      _grandmaster_priority_1 = parent_ds->grandmasterPriority1;
+      _grandmaster_priority_2 = parent_ds->grandmasterPriority2;
+    }
+  }
+
+  // Get CLOCK_DESCRIPTION data.
+  pollfd.fd = pmc_get_transport_fd(pmc_object);
+  pollfd.events = POLLIN | POLLPRI | POLLOUT;
+  count = poll(&pollfd, 1, 100);
+  if (count < 0) {
+    // TODO Handle this error with an exception throw.
+  }
+
+  // Parse and perform polling events.
+  if (pollfd.revents & POLLOUT) {
+    if (pmc_do_command(pmc_object, std::string("GET CLOCK_DESCRIPTION").data())) {
+      // TODO Handle this error with an exception throw.
+    }
+  }
+  pollfd.events = POLLIN | POLLPRI;
+  count = poll(&pollfd, 1, 100);
+  if (count < 0) {
+    // TODO Handle this error with an exception throw.
+  }
+
+  if (pollfd.revents & POLLIN) {
+    struct ptp_message* message = pmc_recv(pmc_object);
+    if (message) {
+      auto details = TAILQ_FIRST(&message->tlv_list);
+      auto clock_description = &details->cd;
+      _clock_type = align16(clock_description->clockType);
+      _physical_layer_protocol = text2str(clock_description->physicalLayerProtocol);
+      _physical_address = bin2str(clock_description->physicalAddress->address, align16(&clock_description->physicalAddress->length));
+      _protocol_address = align16(&clock_description->protocolAddress->networkProtocol);
+      _manufacturer_id = bin2str(clock_description->manufacturerIdentity, OUI_LEN);
+      _product_description = text2str(clock_description->productDescription);
+      _revision_data = text2str(clock_description->revisionData);
+      _user_description = text2str(clock_description->userDescription);
+      _profile_id = bin2str(clock_description->profileIdentity, PROFILE_ID_LEN);
+    }
+  }
+
+  // Get CURRENT_DATA_SET data.
+  pollfd.fd = pmc_get_transport_fd(pmc_object);
+  pollfd.events = POLLIN | POLLPRI | POLLOUT;
+  count = poll(&pollfd, 1, 100);
+  if (count < 0) {
+    // TODO Handle this error with an exception throw.
+  }
+
+  // Parse and perform polling events.
+  if (pollfd.revents & POLLOUT) {
+    if (pmc_do_command(pmc_object, std::string("GET CURRENT_DATA_SET").data())) {
+      // TODO Handle this error with an exception throw.
+    }
+  }
+  pollfd.events = POLLIN | POLLPRI;
+  count = poll(&pollfd, 1, 100);
+  if (count < 0) {
+    // TODO Handle this error with an exception throw.
+  }
+
+  if (pollfd.revents & POLLIN) {
+    struct ptp_message* message = pmc_recv(pmc_object);
+    if (message) {
+      auto current_ds = (struct currentDS*) ((struct management_tlv*) message->management.suffix)->data;
+      _steps_removed = current_ds->stepsRemoved;
+      _offset_from_master = current_ds->offsetFromMaster / 65536.0;
+      _mean_path_delay = current_ds->meanPathDelay / 65536.0;
+    }
+  }
+
+  // Get PORT_DATA_SET data.
+  pollfd.fd = pmc_get_transport_fd(pmc_object);
+  pollfd.events = POLLIN | POLLPRI | POLLOUT;
+  count = poll(&pollfd, 1, 100);
+  if (count < 0) {
+    // TODO Handle this error with an exception throw.
+  }
+
+  // Parse and perform polling events.
+  if (pollfd.revents & POLLOUT) {
+    if (pmc_do_command(pmc_object, std::string("GET PORT_DATA_SET").data())) {
+      // TODO Handle this error with an exception throw.
+    }
+  }
+  pollfd.events = POLLIN | POLLPRI;
+  count = poll(&pollfd, 1, 100);
+  if (count < 0) {
+    // TODO Handle this error with an exception throw.
+  }
+
+  if (pollfd.revents & POLLIN) {
+    struct ptp_message* message = pmc_recv(pmc_object);
+    if (message) {
+      auto port_ds = (struct portDS*) ((struct management_tlv*)message->management.suffix)->data;
+      _port_identity = pid2str(&port_ds->portIdentity);
+      _port_state = ps_str[port_ds->portState];
+      _log_min_delay_request_interval = port_ds->logMinDelayReqInterval;
+      _log_min_peer_delay_request_interval = port_ds->peerMeanPathDelay >> 16;
+      _log_announce_interval = port_ds->logAnnounceInterval;
+      _announce_receipt_timeout = port_ds->announceReceiptTimeout;
+      _log_sync_interval = port_ds->logSyncInterval;
+      _delay_mechanism = port_ds->delayMechanism;
+      _log_min_peer_delay_request_interval = port_ds->logMinPdelayReqInterval;
+      _version_number = port_ds->versionNumber & MAJOR_VERSION_MASK;
     }
   }
 
