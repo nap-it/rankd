@@ -271,16 +271,18 @@ static unsigned int ll_idx_a2n(const char *name)
 
 static int ll_link_get(const char *name, int index)
 {
- struct {
+ struct custom_link {
    struct nlmsghdr		n;
    struct ifinfomsg	ifm;
    char			buf[1024];
- } req = {
-     .n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
-     .n.nlmsg_flags = NLM_F_REQUEST,
-     .n.nlmsg_type = RTM_GETLINK,
-     .ifm.ifi_index = index,
  };
+
+ struct custom_link req{};
+ req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
+ req.n.nlmsg_flags = NLM_F_REQUEST;
+ req.n.nlmsg_type = RTM_GETLINK;
+ req.ifm.ifi_index = index;
+
  __u32 filt_mask = RTEXT_FILTER_VF | RTEXT_FILTER_SKIP_STATS;
  struct rtnl_handle rth = {};
  struct nlmsghdr *answer;
