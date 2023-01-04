@@ -1,9 +1,11 @@
 #include <iostream>
 
+#include <linux/types.h>
+#include "json_print.h"
 #include "libnetlink.h"
 #include "ll_map.h"
-#include "tc_common.h"
-#include "tc_util.h"
+#include "tc/tc_common.h"
+#include "tc/tc_util.h"
 #include "utils.h"
 #include <ifaddrs.h>
 #include <linux/rtnetlink.h>
@@ -136,7 +138,7 @@ int print_qdisc(struct nlmsghdr *header, void *arg) {
   print_nl();
 
   if (show_details && tb[TCA_STAB]) {
-    print_size_table(tb[TCA_STAB]);
+    print_size_table(file, " ", tb[TCA_STAB]);
     print_nl();
   }
 

@@ -5,6 +5,8 @@ project(rankd
         DESCRIPTION "Implementation of a service to retrieve information on a machine where a server instance is being ran."
         LANGUAGES CXX C)
 
+include(ExternalProject)
+
 # Define build type. If none is specified, then DEBUG is chosen.
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug")
