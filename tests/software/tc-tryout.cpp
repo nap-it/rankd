@@ -3,8 +3,10 @@
 #include <unistd.h>
 
 #include <asm/types.h>
+#include <cstring>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
+#include <linux/pkt_sched.h>
 #include <sys/socket.h>
 
 int main() {
@@ -55,7 +57,23 @@ int main() {
   while (NLMSG_OK(response_header, response_length)) {
     if (response_header->nlmsg_type == RTM_NEWQDISC) {
       auto* content = (struct tcmsg*) NLMSG_DATA(response_header);
-      std::cout << "qdisc " << content->tcm_family << " handle " << content->tcm_handle << " parent " << content->tcm_parent << " class " << content->tcm_info << std::endl;
+      std::cout << "qdisc ****" << std::endl;
+
+      // Parse attributes in message.
+      auto* attribute = (struct rtattr*) (content+1);
+      int attribute_length = response_header->nlmsg_len - NLMSG_LENGTH(sizeof(*content));
+      while (RTA_OK(attribute, attribute_length)) {
+        if (attribute->rta_type == TCA_KIND) {
+          if (strcmp(static_cast<const char*>(RTA_DATA(attribute)), "mqprio") == 0) {
+            auto* qvalue = (struct tc_mqprio_qopt*) RTA_DATA(attribute);
+            std::cout << "    - mqprio: " << "num_tc " << qvalue->num_tc << " hw " << qvalue->hw << std::endl;
+          } else if (strcmp(static_cast<const char*>(RTA_DATA(attribute)), "pfifo_fast") == 0) {
+            auto* qvalue = (struct tc_fifo_qopt*) RTA_DATA(attribute);
+            std::cout << "    - pfifo_fast: " << "limit " << qvalue->limit << std::endl;
+          }
+        }
+        attribute = RTA_NEXT(attribute, attribute_length);
+      }
     }
     response_header = NLMSG_NEXT(response_header, response_length);
   }
