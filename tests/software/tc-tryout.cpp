@@ -42,7 +42,7 @@ static const struct static_clockid {
     { "TAI", CLOCK_TAI },
     { "BOOTTIME", CLOCK_BOOTTIME },
     { "MONOTONIC", CLOCK_MONOTONIC },
-    { NULL }
+    { nullptr }
 };
 
 // From iproute2.
@@ -168,7 +168,7 @@ int main() {
                 cycle_time_extension = temporary_value;
               }
 
-              auto* schedule_pointer = taprio_attribute[TCA_TAPRIO_ATTR_SCHED_ENTRY_LIST];
+              struct rtattr* schedule_pointer = taprio_attribute[TCA_TAPRIO_ATTR_SCHED_ENTRY_LIST];
               std::vector<std::tuple<__u32, __u8, __u32, __u32>> schedule;
               struct rtattr* item;
               int remainder;
@@ -179,7 +179,23 @@ int main() {
                   __u32 index = 0, gatemask = 0, interval = 0;
                   __u8 command = 0;
 
+                  parse_rtattr_flags(schedule_attribute, TCA_TAPRIO_SCHED_ENTRY_MAX, (struct rtattr*)(RTA_DATA(item)), RTA_PAYLOAD(item), NLA_F_NESTED);
 
+                  if (schedule_attribute[TCA_TAPRIO_SCHED_ENTRY_INDEX]) {
+                    index = *(__u32*) RTA_DATA(schedule_attribute[TCA_TAPRIO_SCHED_ENTRY_INDEX]);
+                  }
+
+                  if (schedule_attribute[TCA_TAPRIO_SCHED_ENTRY_CMD]) {
+                    command = *(__u8*) RTA_DATA(schedule_attribute[TCA_TAPRIO_SCHED_ENTRY_CMD]);
+                  }
+
+                  if (schedule_attribute[TCA_TAPRIO_SCHED_ENTRY_GATE_MASK]) {
+                    gatemask = *(__u32*) RTA_DATA(schedule_attribute[TCA_TAPRIO_SCHED_ENTRY_GATE_MASK]);
+                  }
+
+                  if (schedule_attribute[TCA_TAPRIO_SCHED_ENTRY_INTERVAL]) {
+                    interval = *(__u32*)RTA_DATA(schedule_attribute[TCA_TAPRIO_SCHED_ENTRY_INTERVAL]);
+                  }
                 }
               }
             }
