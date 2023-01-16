@@ -1,4 +1,7 @@
 #include <iostream>
+#include <optional>
+#include <vector>
+#include <tuple>
 
 #include <unistd.h>
 
@@ -8,6 +11,51 @@
 #include <linux/rtnetlink.h>
 #include <linux/pkt_sched.h>
 #include <sys/socket.h>
+
+// Adapted from iproute2 git repo.
+int parse_rtattr_flags(struct rtattr* tb[], int max, struct rtattr* rta, int len, unsigned short flags) {
+  unsigned short type;
+
+  memset(tb, 0, sizeof(struct rtattr*) * (max + 1));
+  while (RTA_OK(rta, len)) {
+    type = rta->rta_type & ~flags;
+    if ((type <= max) && (!tb[type])) {
+      tb[type] = rta;
+    }
+    rta = RTA_NEXT(rta, len);
+  }
+
+  if (len) {
+    return -1;
+  }
+
+  return 0;
+}
+
+// From iproute2.
+#define CLOCKID_INVALID (-1)
+static const struct static_clockid {
+  const char *name;
+  clockid_t clockid;
+} clockids_sysv[] = {
+    { "REALTIME", CLOCK_REALTIME },
+    { "TAI", CLOCK_TAI },
+    { "BOOTTIME", CLOCK_BOOTTIME },
+    { "MONOTONIC", CLOCK_MONOTONIC },
+    { NULL }
+};
+
+// From iproute2.
+static const char* get_clock_name(clockid_t clockid) {
+  const struct static_clockid *c;
+
+  for (c = clockids_sysv; c->name; c++) {
+    if (clockid == c->clockid)
+      return c->name;
+  }
+
+  return "invalid";
+}
 
 int main() {
   // Create the socket to connect with netlink, route family.
@@ -65,11 +113,86 @@ int main() {
       while (RTA_OK(attribute, attribute_length)) {
         if (attribute->rta_type == TCA_KIND) {
           if (strcmp(static_cast<const char*>(RTA_DATA(attribute)), "mqprio") == 0) {
-            auto* qvalue = (struct tc_mqprio_qopt*) RTA_DATA(attribute);
-            std::cout << "    - mqprio: " << "num_tc " << qvalue->num_tc << " hw " << qvalue->hw << std::endl;
+
+            // Check if this attribute is a TAPRIO record.
+            struct rtattr* taprio_attribute[TCA_TAPRIO_ATTR_MAX+1];
+            parse_rtattr_flags(taprio_attribute, TCA_TAPRIO_ATTR_MAX, (struct rtattr*)(RTA_DATA(attribute)), RTA_PAYLOAD(attribute), 0);
+            if (taprio_attribute[TCA_TAPRIO_ATTR_PRIOMAP] == nullptr) {
+              // It is mqprio-only.
+              auto* qvalue = (struct tc_mqprio_qopt*) RTA_DATA(attribute);
+              std::cout << "    - mqprio: " << "num_tc " << qvalue->num_tc << " hw " << qvalue->hw << std::endl;
+            } else {
+              // It is TAPRIO.
+              auto* qvalue = (struct tc_mqprio_qopt*) RTA_DATA(taprio_attribute[TCA_TAPRIO_ATTR_PRIOMAP]);
+              auto num_tc = qvalue->num_tc;
+              std::vector<__u8> map{};
+              for (int i = 0; i <= TC_PRIO_MAX; i++) {
+                map.push_back(qvalue->prio_tc_map[i]);
+              }
+              std::vector<std::pair<__u8, __u8>> queues{};
+              for (int i = 0; i != num_tc; i++) {
+                queues.emplace_back(qvalue->count[i], qvalue->offset[i]);
+              }
+              std::optional<__s32> clockid;
+              if (taprio_attribute[TCA_TAPRIO_ATTR_SCHED_CLOCKID]) {
+                clockid = *(__s32*) RTA_DATA(taprio_attribute[TCA_TAPRIO_ATTR_SCHED_CLOCKID]);
+              }
+              std::string clockid_string = clockid.has_value() ? get_clock_name(clockid.value()) : "inexistent";
+              std::optional<__u32> flags;
+              if (taprio_attribute[TCA_TAPRIO_ATTR_FLAGS]) {
+                flags = *(__u32*) RTA_DATA(taprio_attribute[TCA_TAPRIO_ATTR_FLAGS]);
+              }
+              std::optional<__u32> txtime_delay;
+              if (taprio_attribute[TCA_TAPRIO_ATTR_TXTIME_DELAY]) {
+                txtime_delay = *(__u32*) RTA_DATA(taprio_attribute[TCA_TAPRIO_ATTR_TXTIME_DELAY]);
+              }
+
+              // Get details on schedule.
+              int64_t base_time = 0;
+              int64_t cycle_time = 0;
+              int64_t cycle_time_extension = 0;
+              __s64 temporary_value;
+
+              if (taprio_attribute[TCA_TAPRIO_ATTR_SCHED_BASE_TIME]) {
+                memcpy(&temporary_value, RTA_DATA(taprio_attribute[TCA_TAPRIO_ATTR_SCHED_BASE_TIME]), sizeof(temporary_value));
+                base_time = temporary_value;
+              }
+
+              if (taprio_attribute[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME]) {
+                memcpy(&temporary_value, RTA_DATA(taprio_attribute[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME]), sizeof(temporary_value));
+                cycle_time = temporary_value;
+              }
+
+              if (taprio_attribute[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME_EXTENSION]) {
+                memcpy(&temporary_value, RTA_DATA(taprio_attribute[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME_EXTENSION]), sizeof(temporary_value));
+                cycle_time_extension = temporary_value;
+              }
+
+              auto* schedule_pointer = taprio_attribute[TCA_TAPRIO_ATTR_SCHED_ENTRY_LIST];
+              std::vector<std::tuple<__u32, __u8, __u32, __u32>> schedule;
+              struct rtattr* item;
+              int remainder;
+              if (schedule_pointer != nullptr) {
+                remainder = RTA_PAYLOAD(schedule_pointer);
+                for (item = (struct rtattr*) RTA_DATA(schedule_pointer); RTA_OK(item, remainder); item = RTA_NEXT(item, remainder)) {
+                  struct rtattr* schedule_attribute[TCA_TAPRIO_SCHED_ENTRY_MAX + 1];
+                  __u32 index = 0, gatemask = 0, interval = 0;
+                  __u8 command = 0;
+
+
+                }
+              }
+            }
+
           } else if (strcmp(static_cast<const char*>(RTA_DATA(attribute)), "pfifo_fast") == 0) {
             auto* qvalue = (struct tc_fifo_qopt*) RTA_DATA(attribute);
             std::cout << "    - pfifo_fast: " << "limit " << qvalue->limit << std::endl;
+          } else if (strcmp(static_cast<const char*>(RTA_DATA(attribute)), "cbs") == 0) {
+            auto* qvalue = (struct tc_cbs_qopt*) RTA_DATA(attribute);
+            std::cout << "    - cbs: " << "idleSlope " << qvalue->idleslope << " sendSlope " << qvalue->sendslope << " hiCredit " << qvalue->hicredit << " loCredit " << qvalue->locredit << " offload " << qvalue->offload << std::endl;
+          } else if (strcmp(static_cast<const char*>(RTA_DATA(attribute)), "etf") == 0) {
+            auto* qvalue = (struct tc_etf_qopt*) RTA_DATA(attribute);
+            std::cout << "    - etf: " << "clockid " << qvalue->clockid << " delta " << qvalue->delta << " flags " << qvalue->flags << std::endl;
           }
         }
         attribute = RTA_NEXT(attribute, attribute_length);
