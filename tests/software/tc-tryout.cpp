@@ -196,10 +196,26 @@ int main() {
                   if (schedule_attribute[TCA_TAPRIO_SCHED_ENTRY_INTERVAL]) {
                     interval = *(__u32*)RTA_DATA(schedule_attribute[TCA_TAPRIO_SCHED_ENTRY_INTERVAL]);
                   }
+
+                  schedule.emplace_back(index, command, gatemask, interval);
                 }
               }
+              std::cout << "    - taprio: " << "num_tc " << num_tc << " map ";
+              for (const auto& priority : map) {
+                std::cout << priority << " ";
+              }
+              std::cout << "queues ";
+              for (const auto& [c,o] : queues) {
+                std::cout << c << "@" << o << " ";
+              }
+              std::cout << "base-time " << base_time << " ";
+              for (const auto& [s_idx, s_cmd, s_gmk, s_int] : schedule) {
+                std::cout << "sched-time cmd " << s_cmd << " index " << s_idx << " gatemask " << s_gmk << " interval " << s_int << " ";
+              }
+              std::cout << "flags " << (flags.has_value() ? flags.value() : 0) << " ";
+              std::cout << "txtime-delay " << (txtime_delay.has_value() ? txtime_delay.value() : 0) << " ";
+              std::cout << "clockid " << clockid_string << std::endl;
             }
-
           } else if (strcmp(static_cast<const char*>(RTA_DATA(attribute)), "pfifo_fast") == 0) {
             auto* qvalue = (struct tc_fifo_qopt*) RTA_DATA(attribute);
             std::cout << "    - pfifo_fast: " << "limit " << qvalue->limit << std::endl;
