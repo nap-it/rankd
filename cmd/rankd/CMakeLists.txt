@@ -12,13 +12,15 @@ else()
 endif()
 
 set(HEADER_LIST
+        include/cli/options.h
         )
 set(SOURCE_LIST
+        cli/options.cpp
         )
 
 # Make the rankd executable.
 add_executable(rankd main.cpp ${HEADER_LIST} ${SOURCE_LIST})
-target_include_directories(rankd PUBLIC include ${VENDOR_DIRS})
+target_include_directories(rankd PUBLIC include vendor)
 #target_link_libraries(rankd rankd-comp rankd-time rankd-net)
 
 # All users of this library will need, at least, C++20.

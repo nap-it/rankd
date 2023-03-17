@@ -4,3 +4,9 @@
 [submodule "internal/rankd-comp/vendor/libsensors-cpp"]
 	path = internal/rankd-comp/vendor/libsensors-cpp
 	url = https://github.com/sfranzen/libsensors-cpp.git
+[submodule "cmd/rankd/vendor/rapidjson"]
+	path = cmd/rankd/vendor/rapidjson
+	url = https://code.nap.av.it.pt/external-tools/rapidjson
+[submodule "cmd/rankd/vendor/spdlog"]
+	path = cmd/rankd/vendor/spdlog
+	url = https://code.nap.av.it.pt/external-tools/spdlog.git
