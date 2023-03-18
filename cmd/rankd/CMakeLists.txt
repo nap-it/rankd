@@ -5,23 +5,33 @@ project(rankd
 
 if(CMAKE_BUILD_TYPE MATCHES Release)
     message("-- Processing cmd/rankd in Release mode.")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -O3")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 else()
     message("-- Processing cmd/rankd in Debug mode.")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fsanitize=address -fno-omit-frame-pointer -g -O0")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer -g -O0")
 endif()
 
 set(HEADER_LIST
+        include/internals.h
         include/cli/options.h
+        include/components/engine.h
+        include/components/engine-computing.h
+        include/components/engine-network.h
+        include/components/engine-time.h
+        include/configs/configs.h
         )
 set(SOURCE_LIST
         cli/options.cpp
+        components/engine-computing.cpp
+        components/engine-network.cpp
+        components/engine-time.cpp
+        configs/configs.cpp
         )
 
 # Make the rankd executable.
 add_executable(rankd main.cpp ${HEADER_LIST} ${SOURCE_LIST})
 target_include_directories(rankd PUBLIC include vendor)
-#target_link_libraries(rankd rankd-comp rankd-time rankd-net)
+target_link_libraries(rankd pthread rankd-comp rankd-time rankd-net)
 
 # All users of this library will need, at least, C++20.
 target_compile_features(rankd PUBLIC cxx_std_20)
