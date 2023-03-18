@@ -11,8 +11,11 @@ void Storage::snap() {
   std::ifstream partitions_file(partitions_filename);
 
   // Trash the first two lines.
-  partitions_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-  partitions_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+  std::string disposable_string;
+  //partitions_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+  //partitions_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+  getline(partitions_file, disposable_string);
+  getline(partitions_file, disposable_string);
 
   // Temporarily save the name of the found partitions. Type map of <mount, fs-type>.
   std::map<std::string, std::pair<std::string, std::string>> partitions;
