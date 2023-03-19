@@ -10,3 +10,6 @@
 [submodule "cmd/rankd/vendor/spdlog"]
 	path = cmd/rankd/vendor/spdlog
 	url = https://code.nap.av.it.pt/external-tools/spdlog.git
+[submodule "cmd/rankd/vendor/restbed"]
+	path = cmd/rankd/vendor/restbed
+	url = https://code.nap.av.it.pt/mobility-networks/restbed.git
