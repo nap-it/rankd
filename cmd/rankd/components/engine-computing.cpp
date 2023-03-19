@@ -9,9 +9,19 @@ void ComputingEngine::operator()() {
     }
 }
 
-void ComputingEngine::execute() {
+std::shared_ptr<restbed::Resource> ComputingEngine::execute() {
     _is_running = true;
     _thread = std::thread(std::ref(*this));
+
+    _logger->trace("The computing engine is configuring its API resource.");
+    auto resource = std::make_shared<restbed::Resource>();
+    resource->set_path("api/v1/comp");
+    resource->set_method_handler(
+            "GET", [this](const std::shared_ptr<restbed::Session>& session) { return this->teller(session); });
+    _logger->trace("-- Setting /comp");
+    _logger->info("The computing engine is now starting all its services.");
+
+    return resource;
 }
 
 void ComputingEngine::stop() {
@@ -22,6 +32,13 @@ void ComputingEngine::stop() {
     _logger->debug("Stopping the computing engine thread.");
     _is_running = false;
     _thread.join();
+}
+
+void ComputingEngine::teller(const std::shared_ptr<restbed::Session>& session) const {
+    const auto request = session->get_request();
+    _logger->info("A request was received for computing information.");
+
+    session->close(restbed::OK, "", {{"Content-Length", std::to_string(0)}, {"Connection", "close"}});
 }
 
 const std::atomic<bool>& ComputingEngine::is_running() const {

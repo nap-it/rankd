@@ -10,8 +10,9 @@ public:
         return instance;
     }
     void operator()() override;
-    void execute() override;
+    std::shared_ptr<restbed::Resource> execute() override;
     void stop() override;
+    void teller(const std::shared_ptr<restbed::Session>& session) const override;
     [[nodiscard]] const std::atomic<bool>& is_running() const override;
     ~ComputingEngine();
 private:

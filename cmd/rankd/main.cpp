@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "cxxopts/cxxopts.hpp"
+#include "restbed"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
@@ -71,12 +72,19 @@ int main(int argc, char** argv) {
 
     logger->info("The rankd service is starting.");
 
+    std::vector<std::shared_ptr<restbed::Resource>> api_resources;
+
     auto* computing_engine = ComputingEngine::get_instance();
     auto* network_engine = NetworkEngine::get_instance();
     auto* time_engine = TimeEngine::get_instance();
-    computing_engine->execute();
-    network_engine->execute();
-    time_engine->execute();
+    api_resources.push_back(computing_engine->execute());
+    api_resources.push_back(network_engine->execute());
+    api_resources.push_back(time_engine->execute());
+
+    std::shared_ptr<restbed::Settings> api_settings = std::make_shared<restbed::Settings>();
+    api_settings->set_port(7265);
+    api_settings->set_default_header("Connection", "close");
+    api_settings->set_worker_limit(std::thread::hardware_concurrency());
 
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 

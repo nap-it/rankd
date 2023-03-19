@@ -9,6 +9,7 @@ set(SOURCE_LIST
         )
 
 # Make the rankd-net library (librankd-net).
+#set(RANKD_NET include)
 add_library(rankd-net lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
 target_include_directories(rankd-net PUBLIC include)
 #target_link_libraries(rankd-net PRIVATE )

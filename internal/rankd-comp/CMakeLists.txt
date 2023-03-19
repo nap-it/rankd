@@ -25,6 +25,7 @@ add_subdirectory(vendor/pfs)
 add_subdirectory(vendor/libsensors-cpp)
 
 # Make the rankd-comp library (librankd-comp).
+set(RANKD_COMP include)
 add_library(rankd-comp lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
 target_include_directories(rankd-comp PUBLIC include vendor/pfs/include vendor/libsensors-cpp/include)
 target_link_libraries(rankd-comp PRIVATE pfs sensors-c++)

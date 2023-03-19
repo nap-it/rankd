@@ -28,10 +28,13 @@ set(SOURCE_LIST
         configs/configs.cpp
         )
 
+# Add vendor project directories.
+add_subdirectory(vendor/restbed)
+
 # Make the rankd executable.
 add_executable(rankd main.cpp ${HEADER_LIST} ${SOURCE_LIST})
-target_include_directories(rankd PUBLIC include vendor)
-target_link_libraries(rankd pthread rankd-comp rankd-time rankd-net)
+target_include_directories(rankd PUBLIC include vendor ${rankd-comp} ${rankd-time} ${rankd-net})
+target_link_libraries(rankd pthread rankd-comp rankd-time rankd-net restbed-static)
 
 # All users of this library will need, at least, C++20.
 target_compile_features(rankd PUBLIC cxx_std_20)

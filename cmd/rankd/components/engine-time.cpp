@@ -9,9 +9,19 @@ void TimeEngine::operator()() {
     }
 }
 
-void TimeEngine::execute() {
+std::shared_ptr<restbed::Resource> TimeEngine::execute() {
     _is_running = true;
     _thread = std::thread(std::ref(*this));
+
+    _logger->trace("The time engine is configuring its API resource.");
+    auto resource = std::make_shared<restbed::Resource>();
+    resource->set_path("api/v1/time");
+    resource->set_method_handler(
+            "GET", [this](const std::shared_ptr<restbed::Session>& session) { return this->teller(session); });
+    _logger->trace("-- Setting /time");
+    _logger->info("The time engine is now starting all its services.");
+
+    return resource;
 }
 
 void TimeEngine::stop() {
@@ -22,6 +32,13 @@ void TimeEngine::stop() {
     _logger->debug("Stopping the time engine thread.");
     _is_running = false;
     _thread.join();
+}
+
+void TimeEngine::teller(const std::shared_ptr<restbed::Session>& session) const {
+    const auto request = session->get_request();
+    _logger->info("A request was received for time information.");
+
+    session->close(restbed::OK, "", {{"Content-Length", std::to_string(0)}, {"Connection", "close"}});
 }
 
 const std::atomic<bool>& TimeEngine::is_running() const {

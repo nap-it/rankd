@@ -19,6 +19,6 @@ find_package(PkgConfig REQUIRED)
 ## Load vendor packages.
 set(GLOBAL_VENDOR_DIRS "${PROJECT_SOURCE_DIR}/vendor")
 
-add_subdirectory(cmd)
 add_subdirectory(internal)
+add_subdirectory(cmd)
 add_subdirectory(tests)
