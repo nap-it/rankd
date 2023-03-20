@@ -12,6 +12,11 @@
 
 #include "pfs/procfs.hpp"
 
+// RapidJSON inclusions.
+#include "document.h"
+#include "stringbuffer.h"
+#include "writer.h"
+
 enum class ProcessStatus {
   Running,
   Sleeping,
@@ -61,6 +66,8 @@ public:
   [[nodiscard]] double load_5m() const;
   [[nodiscard]] double load_15m() const;
   [[nodiscard]] const std::map<unsigned int, Process> &processes() const;
+  [[nodiscard]] rapidjson::Document json() const;
+  friend std::ostream& operator<<(std::ostream& os, const OperativeSystem& operative_system);
 private:
   Kernel _kernel;
   std::chrono::seconds _uptime{};

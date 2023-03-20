@@ -8,6 +8,11 @@
 
 #include "pfs/procfs.hpp"
 
+// RapidJSON inclusions.
+#include "document.h"
+#include "stringbuffer.h"
+#include "writer.h"
+
 class Memory {
 public:
   Memory();
@@ -61,6 +66,8 @@ public:
   [[nodiscard]] size_t huge_page_size();
   [[nodiscard]] size_t huge_tlb();
   [[nodiscard]] int oom_killer_invocations();
+  [[nodiscard]] rapidjson::Document json() const;
+  friend std::ostream& operator<<(std::ostream& os, const Memory& memory);
 
 private:
   std::optional<size_t> _total;

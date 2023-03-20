@@ -160,3 +160,66 @@ const Device& Storage::root_device_snap() const {
 const Device* Storage::root_device() const {
   return _root_storage;
 }
+
+rapidjson::Document Storage::json() const {
+  // Create a JSON document.
+  rapidjson::Document json_document;
+  json_document.SetObject();
+  auto& allocator = json_document.GetAllocator();
+
+  json_document["root-device"].SetObject();
+  json_document["root-device"]["path"].SetString(rapidjson::GenericStringRef(_root_storage->path.c_str()));
+  json_document["root-device"]["filesystem"].SetString(rapidjson::GenericStringRef(_root_storage->filesystem.c_str()));
+  json_document["root-device"]["size"].SetUint64(_root_storage->size);
+  json_document["root-device"]["used"].SetUint64(_root_storage->used);
+  json_document["root-device"]["available"].SetUint64(_root_storage->available);
+  json_document["root-device"]["use-percentage"].SetDouble(_root_storage->use_percentage);
+  json_document["root-device"]["mounted-on"].SetString(rapidjson::GenericStringRef(_root_storage->mounted_on.c_str()));
+  json_document["root-device"]["iops"].SetObject();
+  json_document["root-device"]["iops"]["reads-completed"].SetUint64(_root_storage->iops.reads_completed);
+  json_document["root-device"]["iops"]["reads-merged"].SetUint64(_root_storage->iops.reads_merged);
+  json_document["root-device"]["iops"]["sectors-read"].SetUint64(_root_storage->iops.sectors_read);
+  json_document["root-device"]["iops"]["ms-spent-reading"].SetUint64(_root_storage->iops.ms_spent_reading);
+  json_document["root-device"]["iops"]["writes-completed"].SetUint64(_root_storage->iops.writes_completed);
+  json_document["root-device"]["iops"]["writes-merged"].SetUint64(_root_storage->iops.writes_merged);
+  json_document["root-device"]["iops"]["sectors-written"].SetUint64(_root_storage->iops.sectors_written);
+  json_document["root-device"]["iops"]["ms-spent-writing"].SetUint64(_root_storage->iops.ms_spent_writing);
+  json_document["root-device"]["iops"]["io-in-progress"].SetUint64(_root_storage->iops.io_in_progress);
+  json_document["root-device"]["iops"]["ms-doing-io"].SetUint64(_root_storage->iops.ms_doing_io);
+
+  json_document["devices"].SetObject();
+  for (const auto& [name, device] : _devices) {
+    json_document["devices"][name.c_str()].SetObject();
+    json_document["devices"][name.c_str()]["path"].SetString(rapidjson::GenericStringRef(device.path.c_str()));
+    json_document["devices"]["filesystem"].SetString(rapidjson::GenericStringRef(device.filesystem.c_str()));
+    json_document["devices"]["size"].SetUint64(device.size);
+    json_document["devices"]["used"].SetUint64(device.used);
+    json_document["devices"]["available"].SetUint64(device.available);
+    json_document["devices"]["use-percentage"].SetDouble(device.use_percentage);
+    json_document["devices"]["mounted-on"].SetString(rapidjson::GenericStringRef(device.mounted_on.c_str()));
+    json_document["devices"]["iops"].SetObject();
+    json_document["devices"]["iops"]["reads-completed"].SetUint64(device.iops.reads_completed);
+    json_document["devices"]["iops"]["reads-merged"].SetUint64(device.iops.reads_merged);
+    json_document["devices"]["iops"]["sectors-read"].SetUint64(device.iops.sectors_read);
+    json_document["devices"]["iops"]["ms-spent-reading"].SetUint64(device.iops.ms_spent_reading);
+    json_document["devices"]["iops"]["writes-completed"].SetUint64(device.iops.writes_completed);
+    json_document["devices"]["iops"]["writes-merged"].SetUint64(device.iops.writes_merged);
+    json_document["devices"]["iops"]["sectors-written"].SetUint64(device.iops.sectors_written);
+    json_document["devices"]["iops"]["ms-spent-writing"].SetUint64(device.iops.ms_spent_writing);
+    json_document["devices"]["iops"]["io-in-progress"].SetUint64(device.iops.io_in_progress);
+    json_document["devices"]["iops"]["ms-doing-io"].SetUint64(device.iops.ms_doing_io);
+  }
+
+  return json_document;
+}
+
+std::ostream& operator<<(std::ostream& os, const Storage& storage) {
+  rapidjson::StringBuffer buffer;
+  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+  auto json_document = storage.json();
+  json_document.Accept(writer);
+
+  os << buffer.GetString();
+
+  return os;
+}

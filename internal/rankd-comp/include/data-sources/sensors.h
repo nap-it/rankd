@@ -7,6 +7,11 @@
 
 #include "sensors-c++/sensors.h"
 
+// RapidJSON inclusions.
+#include "document.h"
+#include "stringbuffer.h"
+#include "writer.h"
+
 enum class BusType { ANY, I2C, ISA, PCI, SPI, VIRT, ACPI, HID, MDIO, SCSI };
 
 BusType parse_bus_type(const sensors::bus_type &type);
@@ -186,6 +191,8 @@ public:
   Sensors();
   void snap();
   [[nodiscard]] const std::map<std::string, Sensor>& sensors() const { return _sensors; }
+  [[nodiscard]] rapidjson::Document json() const;
+  friend std::ostream& operator<<(std::ostream& os, const Sensors& sensors);
 private:
   void update_sensors(const std::string& key, Sensor value) {
     _sensors[key] = std::move(value);
