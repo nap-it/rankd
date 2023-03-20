@@ -17,6 +17,10 @@ public:
     // API calls.
     void teller(const std::shared_ptr<restbed::Session>& session) override;
     void tell_cpu(const std::shared_ptr<restbed::Session>& session);
+    void tell_memory(const std::shared_ptr<restbed::Session>& session);
+    void tell_os(const std::shared_ptr<restbed::Session>& session);
+    void tell_sensors(const std::shared_ptr<restbed::Session>& session);
+    void tell_storage(const std::shared_ptr<restbed::Session>& session);
     std::vector<std::shared_ptr<restbed::Resource>>* get_resources() override;
     [[nodiscard]] const std::atomic<bool>& is_running() const override;
     ~ComputingEngine();
