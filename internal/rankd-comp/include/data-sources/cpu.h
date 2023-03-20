@@ -2,13 +2,20 @@
 #define RANKDCOMP_LINUX_CPU_H
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <fstream>
 #include <map>
 #include <optional>
+#include <ostream>
 #include <set>
-#include <string>
 #include <sstream>
+#include <string>
+
+// RapidJSON inclusions.
+#include "document.h"
+#include "stringbuffer.h"
+#include "writer.h"
 
 #include "pfs/procfs.hpp"
 #include "utils/strings.h"
@@ -69,8 +76,10 @@ public:
   [[nodiscard]] double bogomips() const;
   [[nodiscard]] const std::map<int, CPUCore> &cores() const;
   [[nodiscard]] const CPUStats &snapshot() const;
+  [[nodiscard]] rapidjson::Document json() const;
+  friend std::ostream& operator<<(std::ostream& os, const CPU& cpu);
 
-private:
+  private:
   /* Information */
   uint8_t _identifier = 0;
   ByteOrder _byte_order;

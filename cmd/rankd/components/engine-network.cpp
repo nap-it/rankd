@@ -24,7 +24,7 @@ void NetworkEngine::stop() {
     _thread.join();
 }
 
-void NetworkEngine::teller(const std::shared_ptr<restbed::Session>& session) const {
+void NetworkEngine::teller(const std::shared_ptr<restbed::Session>& session) {
     const auto request = session->get_request();
     _logger->info("A request was received for network information.");
 

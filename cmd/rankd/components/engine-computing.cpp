@@ -39,9 +39,18 @@ void ComputingEngine::stop() {
     _thread.join();
 }
 
-void ComputingEngine::teller(const std::shared_ptr<restbed::Session>& session) const {
+void ComputingEngine::teller(const std::shared_ptr<restbed::Session>& session) {
     const auto request = session->get_request();
     _logger->info("A request was received for computing information.");
+
+    session->close(restbed::OK, "", {{"Content-Length", std::to_string(0)}, {"Connection", "close"}});
+}
+
+void ComputingEngine::tell_cpu(const std::shared_ptr<restbed::Session>& session) {
+    const auto request = session->get_request();
+    _logger->info("A request was received for CPU information.");
+
+    _cpu.snap();
 
     session->close(restbed::OK, "", {{"Content-Length", std::to_string(0)}, {"Connection", "close"}});
 }

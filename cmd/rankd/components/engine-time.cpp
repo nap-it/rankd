@@ -24,7 +24,7 @@ void TimeEngine::stop() {
     _thread.join();
 }
 
-void TimeEngine::teller(const std::shared_ptr<restbed::Session>& session) const {
+void TimeEngine::teller(const std::shared_ptr<restbed::Session>& session) {
     const auto request = session->get_request();
     _logger->info("A request was received for time information.");
 

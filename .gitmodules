@@ -13,3 +13,6 @@
 [submodule "cmd/rankd/vendor/restbed"]
 	path = cmd/rankd/vendor/restbed
 	url = https://code.nap.av.it.pt/mobility-networks/restbed.git
+[submodule "internal/rankd-comp/vendor/rapidjson"]
+	path = internal/rankd-comp/vendor/rapidjson
+	url = https://code.nap.av.it.pt/external-tools/rapidjson

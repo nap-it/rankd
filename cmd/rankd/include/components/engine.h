@@ -14,7 +14,7 @@ public:
     virtual void execute() = 0;
     virtual void stop() = 0;
     virtual const std::atomic<bool>& is_running() const = 0;
-    virtual void teller(const std::shared_ptr<restbed::Session>& session) const = 0;
+    virtual void teller(const std::shared_ptr<restbed::Session>& session) = 0;
     virtual std::vector<std::shared_ptr<restbed::Resource>>* get_resources() = 0;
 protected:
     Engine() = default;
