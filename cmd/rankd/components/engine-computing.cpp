@@ -9,9 +9,8 @@ void ComputingEngine::operator()() {
     }
 }
 
-std::shared_ptr<restbed::Resource> ComputingEngine::execute() {
-    _is_running = true;
-    _thread = std::thread(std::ref(*this));
+std::vector<std::shared_ptr<restbed::Resource>>* ComputingEngine::get_resources() {
+    auto* resources = new std::vector<std::shared_ptr<restbed::Resource>>();
 
     _logger->trace("The computing engine is configuring its API resource.");
     auto resource = std::make_shared<restbed::Resource>();
@@ -20,8 +19,14 @@ std::shared_ptr<restbed::Resource> ComputingEngine::execute() {
             "GET", [this](const std::shared_ptr<restbed::Session>& session) { return this->teller(session); });
     _logger->trace("-- Setting /comp");
     _logger->info("The computing engine is now starting all its services.");
+    resources->push_back(resource);
 
-    return resource;
+    return resources;
+}
+
+void ComputingEngine::execute() {
+    _is_running = true;
+    _thread = std::thread(std::ref(*this));
 }
 
 void ComputingEngine::stop() {

@@ -6,9 +6,10 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
 
-#include "internals.h"
+#include "api/api.h"
 #include "cli/options.h"
 #include "configs/configs.h"
+#include "internals.h"
 
 int main(int argc, char** argv) {
     // Define an argument parser.
@@ -72,19 +73,23 @@ int main(int argc, char** argv) {
 
     logger->info("The rankd service is starting.");
 
-    std::vector<std::shared_ptr<restbed::Resource>> api_resources;
+    auto api_controller = ApiController::get_instance()->apply_settings();
 
     auto* computing_engine = ComputingEngine::get_instance();
     auto* network_engine = NetworkEngine::get_instance();
     auto* time_engine = TimeEngine::get_instance();
-    api_resources.push_back(computing_engine->execute());
-    api_resources.push_back(network_engine->execute());
-    api_resources.push_back(time_engine->execute());
 
-    std::shared_ptr<restbed::Settings> api_settings = std::make_shared<restbed::Settings>();
-    api_settings->set_port(7265);
-    api_settings->set_default_header("Connection", "close");
-    api_settings->set_worker_limit(std::thread::hardware_concurrency());
+    auto computing_engine_resources = computing_engine->get_resources();
+    auto network_engine_resources = network_engine->get_resources();
+    auto time_engine_resources = time_engine->get_resources();
+    api_controller->append_resources(computing_engine_resources)
+                  ->append_resources(network_engine_resources)
+                  ->append_resources(time_engine_resources);
+
+    computing_engine->execute();
+    network_engine->execute();
+    time_engine->execute();
+    api_controller->execute();
 
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 

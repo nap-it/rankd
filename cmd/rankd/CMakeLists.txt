@@ -13,6 +13,7 @@ endif()
 
 set(HEADER_LIST
         include/internals.h
+        include/api/api.h
         include/cli/options.h
         include/components/engine.h
         include/components/engine-computing.h
@@ -21,6 +22,7 @@ set(HEADER_LIST
         include/configs/configs.h
         )
 set(SOURCE_LIST
+        api/api.cpp
         cli/options.cpp
         components/engine-computing.cpp
         components/engine-network.cpp

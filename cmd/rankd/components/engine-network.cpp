@@ -9,19 +9,9 @@ void NetworkEngine::operator()() {
     }
 }
 
-std::shared_ptr<restbed::Resource> NetworkEngine::execute() {
+void NetworkEngine::execute() {
     _is_running = true;
     _thread = std::thread(std::ref(*this));
-
-    _logger->trace("The network engine is configuring its API resource.");
-    auto resource = std::make_shared<restbed::Resource>();
-    resource->set_path("api/v1/net");
-    resource->set_method_handler(
-            "GET", [this](const std::shared_ptr<restbed::Session>& session) { return this->teller(session); });
-    _logger->trace("-- Setting /net");
-    _logger->info("The network engine is now starting all its services.");
-
-    return resource;
 }
 
 void NetworkEngine::stop() {
@@ -39,6 +29,21 @@ void NetworkEngine::teller(const std::shared_ptr<restbed::Session>& session) con
     _logger->info("A request was received for network information.");
 
     session->close(restbed::OK, "", {{"Content-Length", std::to_string(0)}, {"Connection", "close"}});
+}
+
+std::vector<std::shared_ptr<restbed::Resource>>* NetworkEngine::get_resources() {
+    auto* resources = new std::vector<std::shared_ptr<restbed::Resource>>();
+
+    _logger->trace("The network engine is configuring its API resource.");
+    auto resource = std::make_shared<restbed::Resource>();
+    resource->set_path("api/v1/net");
+    resource->set_method_handler(
+            "GET", [this](const std::shared_ptr<restbed::Session>& session) { return this->teller(session); });
+    _logger->trace("-- Setting /net");
+    _logger->info("The network engine is now starting all its services.");
+    resources->push_back(resource);
+
+    return resources;
 }
 
 const std::atomic<bool>& NetworkEngine::is_running() const {
