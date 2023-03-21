@@ -123,8 +123,13 @@ void OperativeSystem::snap() {
         temporary_process.status = parse_state_type(process.get_status().state);
         // temporary_process.time = std::chrono::duration<long, std::micro>(std::chrono::seconds(system_info.uptime) -
         // std::chrono::seconds(process.get_stat().starttime/CLOCKS_PER_SEC));
-        auto command_line = process.get_cmdline();
-        temporary_process.command = std::accumulate(command_line.begin(), command_line.end(), std::string {});
+        auto command_line_vector = process.get_cmdline();
+        std::string command_line;
+        for (const auto& item : command_line_vector) {
+            command_line += item + " ";
+        }
+        command_line.pop_back();
+        temporary_process.command = command_line.c_str();
         temporary_process.threads = process.get_status().threads;
 
         _processes[temporary_process.id] = temporary_process;
@@ -195,20 +200,17 @@ rapidjson::Document OperativeSystem::json() const {
     value.SetObject();
     json_document.AddMember("processes", value, allocator);
     for (const auto& [pid, process] : _processes) {
-        std::cout << pid << " process has string " << std::to_string(pid).c_str() << "." << std::endl;
         std::string pid_string = std::to_string(pid);
-        //value.SetString(pid_string.c_str(), pid_string.size(), allocator);
         value.SetObject();
         rapidjson::Value name;
         name.SetString(pid_string.c_str(), pid_string.size(), allocator);
         json_document["processes"].AddMember(name, value, allocator);
-        std::cout << pid_string.c_str() << std::endl;
         value.SetString(rapidjson::GenericStringRef(process.user.c_str()));
-        json_document["processes"][name].AddMember("user", value, allocator);
+        json_document["processes"][pid_string.c_str()].AddMember("user", value, allocator);
         value.SetDouble(process.cpu_usage);
-        json_document["processes"][name].AddMember("cpu-usage", value, allocator);
+        json_document["processes"][pid_string.c_str()].AddMember("cpu-usage", value, allocator);
         value.SetDouble(process.memory_usage);
-        json_document["processes"][name].AddMember("memory-usage", value, allocator);
+        json_document["processes"][pid_string.c_str()].AddMember("memory-usage", value, allocator);
 
         switch (process.status) {
             case ProcessStatus::Running:
@@ -245,14 +247,14 @@ rapidjson::Document OperativeSystem::json() const {
                 value.SetString("idle");
                 break;
         }
-        json_document["processes"][name].AddMember("status", value, allocator);
+        json_document["processes"][pid_string.c_str()].AddMember("status", value, allocator);
 
         value.SetInt64(process.time.count());
-        json_document["processes"][name].AddMember("time", value, allocator);
+        json_document["processes"][pid_string.c_str()].AddMember("time", value, allocator);
         value.SetString(rapidjson::GenericStringRef(process.command.c_str()));
-        json_document["processes"][name].AddMember("command", value, allocator);
+        json_document["processes"][pid_string.c_str()].AddMember("command", value, allocator);
         value.SetInt(process.threads);
-        json_document["processes"][name].AddMember("thread", value, allocator);
+        json_document["processes"][pid_string.c_str()].AddMember("thread", value, allocator);
     }
 
     return json_document;

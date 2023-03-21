@@ -16,8 +16,7 @@ CPU::CPU() {
     // While the file is good to read, read blocks of data.
     while (cpuinfo.good()) {
         std::string line;
-        int unit = 0;
-        unit_parsing_tree.clear();
+        int unit = -1;
 
         while (true) {
             // Get title of attribute. If none, get out, since this must the EOB.
@@ -26,14 +25,24 @@ CPU::CPU() {
                 break;
             }
             std::string key = trim(line);
+            if (key == "processor" && unit != -1) {
+                // Add the register onto the main parsing tree.
+                parsing_tree[unit++] = unit_parsing_tree;
+                unit_parsing_tree.clear();
+            }
+            if (unit == -1) {
+                unit++;
+            }
             unit_parsing_tree[key] = "";
 
             // Add the value to the given key in the map.
+            cpuinfo.get();
             getline(cpuinfo, unit_parsing_tree[key]);
         }
 
-        // Add the register onto the main parsing tree.
-        parsing_tree[unit++] = unit_parsing_tree;
+        parsing_tree[unit] = unit_parsing_tree;
+
+        std::cout << "processor is " << unit_parsing_tree["processor"] << std::endl;
     }
     cpuinfo.close();
 
@@ -203,6 +212,7 @@ rapidjson::Document CPU::json() const {
     for (const auto& flag : _flags) {
         flags += flag + " ";
     }
+    flags.pop_back();
     value.SetString(flags.c_str(), flags.size(), allocator);
     json_document.AddMember("flags", value, allocator);
 
@@ -210,6 +220,7 @@ rapidjson::Document CPU::json() const {
     for (const auto& bug : _bugs) {
         bugs += bug + " ";
     }
+    bugs.pop_back();
     value.SetString(bugs.c_str(), bugs.size(), allocator);
     json_document.AddMember("bugs", value, allocator);
 
@@ -219,13 +230,17 @@ rapidjson::Document CPU::json() const {
     json_document.AddMember("cores", value, allocator);
     for (const auto& [core_id, core] : _cores) {
         value.SetObject();
-        json_document["cores"].AddMember(rapidjson::GenericStringRef(std::to_string(core_id).c_str()), value, allocator);
+        rapidjson::Value name;
+        std::string core_id_string = std::to_string(core_id);
+        name.SetString(core_id_string.c_str(), core_id_string.size(), allocator);
+        json_document["cores"].AddMember(name, value, allocator);
         value.SetDouble(core.frequency.value_or(NAN));
-        json_document["cores"][std::to_string(core_id).c_str()].AddMember("frequency", value, allocator);
-        value.SetString(rapidjson::GenericStringRef(core.cache_size.value_or("").c_str()));
-        json_document["cores"][std::to_string(core_id).c_str()].AddMember("cache-size", value, allocator);
+        json_document["cores"][core_id_string.c_str()].AddMember("frequency", value, allocator);
+        std::string cache_size = core.cache_size.value_or("");
+        value.SetString(cache_size.c_str(), cache_size.size(), allocator);
+        json_document["cores"][core_id_string.c_str()].AddMember("cache-size", value, allocator);
         value.SetBool(core.has_fpu.value_or(false));
-        json_document["cores"][std::to_string(core_id).c_str()].AddMember("has-fpu", value, allocator);
+        json_document["cores"][core_id_string.c_str()].AddMember("has-fpu", value, allocator);
     }
 
     value.SetObject();
