@@ -199,18 +199,18 @@ rapidjson::Document CPU::json() const {
     value.SetString(rapidjson::GenericStringRef(_microcode->c_str()));
     json_document.AddMember("microcode", value, allocator);
 
-    std::string flags;
+    std::string flags = "";
     for (const auto& flag : _flags) {
         flags += flag + " ";
     }
-    value.SetString(rapidjson::GenericStringRef(flags.c_str()));
+    value.SetString(flags.c_str(), flags.size(), allocator);
     json_document.AddMember("flags", value, allocator);
 
-    std::string bugs;
+    std::string bugs = "";
     for (const auto& bug : _bugs) {
         bugs += bug + " ";
     }
-    value.SetString(rapidjson::GenericStringRef(bugs.c_str()));
+    value.SetString(bugs.c_str(), bugs.size(), allocator);
     json_document.AddMember("bugs", value, allocator);
 
     value.SetDouble(_bogomips);

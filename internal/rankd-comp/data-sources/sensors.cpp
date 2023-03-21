@@ -319,151 +319,170 @@ rapidjson::Document Sensors::json() const {
   json_document.SetObject();
   auto& allocator = json_document.GetAllocator();
 
+  // Create temporary value.
+  rapidjson::Value value;
+
   for (const auto& [name, sensor] : _sensors) {
-    json_document[name.c_str()].SetObject();
-    json_document[name.c_str()]["address"].SetInt(sensor.address());
+    value.SetObject();
+    json_document.AddMember(rapidjson::GenericStringRef(name.c_str()), value, allocator);
+    value.SetInt(sensor.address());
+    json_document[name.c_str()].AddMember("address", value, allocator);
 
     switch (sensor.bus_type()) {
       case BusType::ANY:
-        json_document[name.c_str()]["bus-type"].SetString("any"); break;
+        value.SetString("any"); break;
       case BusType::I2C:
-        json_document[name.c_str()]["bus-type"].SetString("i2c"); break;
+        value.SetString("i2c"); break;
       case BusType::ISA:
-        json_document[name.c_str()]["bus-type"].SetString("isa"); break;
+        value.SetString("isa"); break;
       case BusType::PCI:
-        json_document[name.c_str()]["bus-type"].SetString("pci"); break;
+        value.SetString("pci"); break;
       case BusType::SPI:
-        json_document[name.c_str()]["bus-type"].SetString("spi"); break;
+        value.SetString("spi"); break;
       case BusType::VIRT:
-        json_document[name.c_str()]["bus-type"].SetString("virt"); break;
+        value.SetString("virt"); break;
       case BusType::ACPI:
-        json_document[name.c_str()]["bus-type"].SetString("acpi"); break;
+        value.SetString("acpi"); break;
       case BusType::HID:
-        json_document[name.c_str()]["bus-type"].SetString("hid"); break;
+        value.SetString("hid"); break;
       case BusType::MDIO:
-        json_document[name.c_str()]["bus-type"].SetString("mdio"); break;
+        value.SetString("mdio"); break;
       case BusType::SCSI:
-        json_document[name.c_str()]["bus-type"].SetString("scsi"); break;
+        value.SetString("scsi"); break;
     }
+    json_document[name.c_str()].AddMember("bus-type", value, allocator);
 
-    json_document[name.c_str()]["path"].SetString(rapidjson::GenericStringRef(sensor.path().c_str()));
-    json_document[name.c_str()]["prefix"].SetString(rapidjson::GenericStringRef(sensor.prefix().c_str()));
+    value.SetString(rapidjson::GenericStringRef(sensor.path().c_str()));
+    json_document[name.c_str()].AddMember("path", value, allocator);
+    value.SetString(rapidjson::GenericStringRef(sensor.prefix().c_str()));
+    json_document[name.c_str()].AddMember("prefix", value, allocator);
 
-    json_document[name.c_str()]["features"].SetObject();
-    for (const auto& [topic, value] : sensor.features()) {
-      json_document[name.c_str()]["features"][topic.c_str()].SetObject();
+    value.SetObject();
+    json_document[name.c_str()].AddMember("features", value, allocator);
+    for (const auto& [topic, topic_value] : sensor.features()) {
+      value.SetObject();
+      json_document[name.c_str()]["features"].AddMember(rapidjson::GenericStringRef(topic.c_str()), value, allocator);
 
-      switch (value.type()) {
+      switch (topic_value.type()) {
         case FeatureType::IN:
-          json_document[name.c_str()]["features"][topic.c_str()]["type"].SetString("in"); break;
+          value.SetString("in"); break;
         case FeatureType::FAN:
-          json_document[name.c_str()]["features"][topic.c_str()]["type"].SetString("fan"); break;
+          value.SetString("fan"); break;
         case FeatureType::TEMPERATURE:
-          json_document[name.c_str()]["features"][topic.c_str()]["type"].SetString("temperature"); break;
+          value.SetString("temperature"); break;
         case FeatureType::POWER:
-          json_document[name.c_str()]["features"][topic.c_str()]["type"].SetString("power"); break;
+          value.SetString("power"); break;
         case FeatureType::ENERGY:
-          json_document[name.c_str()]["features"][topic.c_str()]["type"].SetString("energy"); break;
+          value.SetString("energy"); break;
         case FeatureType::CURRENT:
-          json_document[name.c_str()]["features"][topic.c_str()]["type"].SetString("current"); break;
+          value.SetString("current"); break;
         case FeatureType::HUMIDITY:
-          json_document[name.c_str()]["features"][topic.c_str()]["type"].SetString("humidity"); break;
+          value.SetString("humidity"); break;
         case FeatureType::VID:
-          json_document[name.c_str()]["features"][topic.c_str()]["type"].SetString("vid"); break;
+          value.SetString("vid"); break;
         case FeatureType::INTRUSION:
-          json_document[name.c_str()]["features"][topic.c_str()]["type"].SetString("intrusion"); break;
+          value.SetString("intrusion"); break;
         case FeatureType::BEEP:
-          json_document[name.c_str()]["features"][topic.c_str()]["type"].SetString("beep"); break;
+          value.SetString("beep"); break;
         case FeatureType::UNKNOWN:
-          json_document[name.c_str()]["features"][topic.c_str()]["type"].SetString("unknown"); break;
+          value.SetString("unknown"); break;
       }
+      json_document[name.c_str()]["features"][topic.c_str()].AddMember("type", value, allocator);
 
-    json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"].SetObject();
-      for (const auto& [subtopic, subvalue] : value.subfeatures()) {
-        json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()].SetObject();
-        json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["number"].SetInt(subvalue.number());
+      value.SetObject();
+    json_document[name.c_str()]["features"][topic.c_str()].AddMember("subfeatures", value, allocator);
+      for (const auto& [subtopic, subvalue] : topic_value.subfeatures()) {
+        value.SetObject();
+        json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"].AddMember(rapidjson::GenericStringRef(subtopic.c_str()), value, allocator);
+        value.SetInt(subvalue.number());
+        json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()].AddMember("number", value, allocator);
 
         switch (subvalue.type()) {
           case SubfeatureType::INPUT:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("input"); break;
+              value.SetString("input"); break;
           case SubfeatureType::INPUT_LOWEST:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("input lowest"); break;
+              value.SetString("input lowest"); break;
           case SubfeatureType::INPUT_HIGHEST:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("input highest"); break;
+              value.SetString("input highest"); break;
           case SubfeatureType::CAP:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("cap"); break;
+              value.SetString("cap"); break;
           case SubfeatureType::CAP_HYSTERESIS:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("cap hysteresis"); break;
+              value.SetString("cap hysteresis"); break;
           case SubfeatureType::CAP_ALARM:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("cap alarm"); break;
+              value.SetString("cap alarm"); break;
           case SubfeatureType::MIN:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("min"); break;
+              value.SetString("min"); break;
           case SubfeatureType::MIN_HYSTERESIS:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("min hysteresis"); break;
+              value.SetString("min hysteresis"); break;
           case SubfeatureType::MIN_ALARM:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("min alarm"); break;
+              value.SetString("min alarm"); break;
           case SubfeatureType::MAX:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("max"); break;
+              value.SetString("max"); break;
           case SubfeatureType::MAX_HYSTERESIS:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("max hysteresis"); break;
+              value.SetString("max hysteresis"); break;
           case SubfeatureType::MAX_ALARM:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("max alarm"); break;
+              value.SetString("max alarm"); break;
           case SubfeatureType::AVERAGE:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("average"); break;
+              value.SetString("average"); break;
           case SubfeatureType::LOWEST:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("lowest"); break;
+              value.SetString("lowest"); break;
           case SubfeatureType::HIGHEST:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("highest"); break;
+              value.SetString("highest"); break;
           case SubfeatureType::AVERAGE_LOWEST:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("average lowest"); break;
+              value.SetString("average lowest"); break;
           case SubfeatureType::AVERAGE_HIGHEST:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("average highest"); break;
+              value.SetString("average highest"); break;
           case SubfeatureType::AVERAGE_INTERVAL:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("average interval"); break;
+              value.SetString("average interval"); break;
           case SubfeatureType::CRITICAL:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("critical"); break;
+              value.SetString("critical"); break;
           case SubfeatureType::CRITICAL_HYSTERESIS:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("critical hysteresis"); break;
+              value.SetString("critical hysteresis"); break;
           case SubfeatureType::CRITICAL_ALARM:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("critical alarm"); break;
+              value.SetString("critical alarm"); break;
           case SubfeatureType::L_CRITICAL:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("l critical"); break;
+              value.SetString("l critical"); break;
           case SubfeatureType::L_CRITICAL_HYSTERESIS:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("l critical hysteresis"); break;
+              value.SetString("l critical hysteresis"); break;
           case SubfeatureType::L_CRITICAL_ALARM:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("l critical alarm"); break;
+              value.SetString("l critical alarm"); break;
           case SubfeatureType::ALARM:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("alarm"); break;
+              value.SetString("alarm"); break;
           case SubfeatureType::FAULT:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("fault"); break;
+              value.SetString("fault"); break;
           case SubfeatureType::EMERGENCY:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("emergency"); break;
+              value.SetString("emergency"); break;
           case SubfeatureType::EMERGENCY_HYSTERESIS:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("emergency hysteresis"); break;
+              value.SetString("emergency hysteresis"); break;
           case SubfeatureType::EMERGENCY_ALARM:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("emergency alarm"); break;
+              value.SetString("emergency alarm"); break;
           case SubfeatureType::TYPE:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("type"); break;
+              value.SetString("type"); break;
           case SubfeatureType::OFFSET:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("offset"); break;
+              value.SetString("offset"); break;
           case SubfeatureType::DIV:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("div"); break;
+              value.SetString("div"); break;
           case SubfeatureType::BEEP:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("beep"); break;
+              value.SetString("beep"); break;
           case SubfeatureType::PULSES:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("pulses"); break;
+              value.SetString("pulses"); break;
           case SubfeatureType::VID:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("vid"); break;
+              value.SetString("vid"); break;
           case SubfeatureType::ENABLE:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("enable"); break;
+              value.SetString("enable"); break;
           case SubfeatureType::UNKNOWN:
-              json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["type"].SetString("unknown"); break;
+              value.SetString("unknown"); break;
         }
+        json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()].AddMember("type", value, allocator);
 
-        json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["value"].SetDouble(subvalue.value());
-        json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["is-compute-mapped"].SetBool(subvalue.is_compute_mapped());
-        json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["is-readable"].SetBool(subvalue.is_readable());
-        json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()]["is-writable"].SetBool(subvalue.is_writable());
+        value.SetDouble(subvalue.value());
+        json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()].AddMember("value", value, allocator);
+        value.SetBool(subvalue.is_compute_mapped());
+        json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()].AddMember("is-compute-mapped", value, allocator);
+        value.SetBool(subvalue.is_readable());
+        json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()].AddMember("is-readable", value, allocator);
+        value.SetBool(subvalue.is_writable());
+        json_document[name.c_str()]["features"][topic.c_str()]["subfeatures"][subtopic.c_str()].AddMember("is-writable", value, allocator);
       }
     }
   }

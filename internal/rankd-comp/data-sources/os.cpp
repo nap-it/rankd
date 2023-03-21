@@ -168,63 +168,84 @@ rapidjson::Document OperativeSystem::json() const {
     json_document.SetObject();
     auto& allocator = json_document.GetAllocator();
 
-    json_document["kernel"].SetObject();
-    json_document["kernel"]["sysname"].SetString(rapidjson::GenericStringRef(_kernel.sysname.c_str()));
-    json_document["kernel"]["nodename"].SetString(rapidjson::GenericStringRef(_kernel.nodename.c_str()));
-    json_document["kernel"]["release"].SetString(rapidjson::GenericStringRef(_kernel.release.c_str()));
-    json_document["kernel"]["version"].SetString(rapidjson::GenericStringRef(_kernel.version.c_str()));
-    json_document["kernel"]["machine"].SetString(rapidjson::GenericStringRef(_kernel.machine.c_str()));
-    json_document["uptime"].SetInt64(_uptime.count());
-    json_document["load-1m"].SetDouble(_load1m);
-    json_document["load-5m"].SetDouble(_load5m);
-    json_document["load-15m"].SetDouble(_load15m);
+    // Create a temporary value.
+    rapidjson::Value value;
 
-    json_document["processes"].SetObject();
+    value.SetObject();
+    json_document.AddMember("kernel", value, allocator);
+    value.SetString(rapidjson::GenericStringRef(_kernel.sysname.c_str()));
+    json_document["kernel"].AddMember("sysname", value, allocator);
+    value.SetString(rapidjson::GenericStringRef(_kernel.nodename.c_str()));
+    json_document["kernel"].AddMember("nodename", value, allocator);
+    value.SetString(rapidjson::GenericStringRef(_kernel.release.c_str()));
+    json_document["kernel"].AddMember("release", value, allocator);
+    value.SetString(rapidjson::GenericStringRef(_kernel.version.c_str()));
+    json_document["kernel"].AddMember("version", value, allocator);
+    value.SetString(rapidjson::GenericStringRef(_kernel.machine.c_str()));
+    json_document["kernel"].AddMember("machine", value, allocator);
+    value.SetInt64(_uptime.count());
+    json_document.AddMember("uptime", value, allocator);
+    value.SetDouble(_load1m);
+    json_document.AddMember("load-1m", value, allocator);
+    value.SetDouble(_load5m);
+    json_document.AddMember("load-5m", value, allocator);
+    value.SetDouble(_load15m);
+    json_document.AddMember("load-15m", value, allocator);
+
+    value.SetObject();
+    json_document.AddMember("processes", value, allocator);
     for (const auto& [pid, process] : _processes) {
-        json_document["processes"][pid].SetObject();
-        json_document["processes"][pid]["user"].SetString(rapidjson::GenericStringRef(process.user.c_str()));
-        json_document["processes"][pid]["cpu-usage"].SetDouble(process.cpu_usage);
-        json_document["processes"][pid]["memory-usage"].SetDouble(process.memory_usage);
+        value.SetObject();
+        json_document["processes"].AddMember(rapidjson::GenericStringRef(std::to_string(pid).c_str()), value, allocator);
+        value.SetString(rapidjson::GenericStringRef(process.user.c_str()));
+        json_document["processes"][std::to_string(pid).c_str()].AddMember("user", value, allocator);
+        value.SetDouble(process.cpu_usage);
+        json_document["processes"][std::to_string(pid).c_str()].AddMember("cpu-usage", value, allocator);
+        value.SetDouble(process.memory_usage);
+        json_document["processes"][std::to_string(pid).c_str()].AddMember("memory-usage", value, allocator);
 
         switch (process.status) {
             case ProcessStatus::Running:
-                json_document["processes"][pid]["status"].SetString("running");
+                value.SetString("running");
                 break;
             case ProcessStatus::Sleeping:
-                json_document["processes"][pid]["status"].SetString("sleeping");
+                value.SetString("sleeping");
                 break;
             case ProcessStatus::DiskSleep:
-                json_document["processes"][pid]["status"].SetString("disk sleep");
+                value.SetString("disk sleep");
                 break;
             case ProcessStatus::Stopped:
-                json_document["processes"][pid]["status"].SetString("stopped");
+                value.SetString("stopped");
                 break;
             case ProcessStatus::TracingStop:
-                json_document["processes"][pid]["status"].SetString("tracing stop");
+                value.SetString("tracing stop");
                 break;
             case ProcessStatus::Zombie:
-                json_document["processes"][pid]["status"].SetString("zombie");
+                value.SetString("zombie");
                 break;
             case ProcessStatus::Dead:
-                json_document["processes"][pid]["status"].SetString("dead");
+                value.SetString("dead");
                 break;
             case ProcessStatus::Wakekill:
-                json_document["processes"][pid]["status"].SetString("wakekill");
+                value.SetString("wakekill");
                 break;
             case ProcessStatus::Waking:
-                json_document["processes"][pid]["status"].SetString("waking");
+                value.SetString("waking");
                 break;
             case ProcessStatus::Parked:
-                json_document["processes"][pid]["status"].SetString("parked");
+                value.SetString("parked");
                 break;
             case ProcessStatus::Idle:
-                json_document["processes"][pid]["status"].SetString("idle");
+                value.SetString("idle");
                 break;
         }
+        json_document["processes"][std::to_string(pid).c_str()].AddMember("status", value, allocator);
 
-        json_document["processes"][pid]["time"].SetInt64(process.time.count());
-        json_document["processes"][pid]["command"].SetString(rapidjson::GenericStringRef(process.command.c_str()));
-        json_document["processes"][pid]["thread"].SetInt(process.threads);
+        json_document["processes"][std::to_string(pid).c_str()].AddMember("time", value, allocator);
+        value.SetString(rapidjson::GenericStringRef(process.command.c_str()));
+        json_document["processes"][std::to_string(pid).c_str()].AddMember("command", value, allocator);
+        value.SetInt(process.threads);
+        json_document["processes"][std::to_string(pid).c_str()].AddMember("thread", value, allocator);
     }
 
     return json_document;
