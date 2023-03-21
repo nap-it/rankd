@@ -26,12 +26,12 @@ void ApiController::operator()() {
 
     while (_is_running) {
         for (const auto& resource : _api_resources) {
-            _api_service->publish(resource);
+            _api_service.publish(resource);
         }
 
         if (!_api_resources.empty()) {
             _logger->info("The API controller has loaded and started all of its services. A total of {:d} endpoints.", _api_resources.size());
-            _api_service->start(_api_settings);
+            _api_service.start(_api_settings);
             _logger->info("The API controller has suspended its thread.");
         }
     }

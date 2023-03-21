@@ -2,7 +2,6 @@
 
 void NetworkEngine::operator()() {
     while (_is_running) {
-        _logger->info("Network engine is operating.");
         // TODO
 
         std::this_thread::sleep_for(std::chrono::milliseconds(_thread_waiting_milliseconds));

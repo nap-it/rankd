@@ -91,7 +91,9 @@ int main(int argc, char** argv) {
     time_engine->execute();
     api_controller->execute();
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::seconds(1000));
+    }
 
     computing_engine->stop();
     network_engine->stop();

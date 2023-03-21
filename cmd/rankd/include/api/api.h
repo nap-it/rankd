@@ -34,7 +34,7 @@ private:
     ApiController() = default;
     std::thread _thread;
     std::atomic<bool> _is_running = false;
-    std::shared_ptr<restbed::Service> _api_service;
+    restbed::Service _api_service;
     std::shared_ptr<restbed::Settings> _api_settings;
     std::vector<std::shared_ptr<restbed::Resource>> _api_resources;
     std::shared_ptr<spdlog::logger> _logger = spdlog::get("rankd-logger");

@@ -37,10 +37,6 @@ CPU::CPU() {
     }
     cpuinfo.close();
 
-    for (auto [k, v] : parsing_tree[0]) {
-        std::cout << "key is \"" << k << "\"" << std::endl;
-    }
-
     _identifier = 0;       // TODO Get information on this identifier.
     _byte_order = LITTLE;  // TODO Get this information.
     _vendor_id =
