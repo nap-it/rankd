@@ -1,5 +1,7 @@
 #include "components/engine-computing.h"
 
+#include <iostream>
+
 void ComputingEngine::operator()() {
     while (_is_running) {
         // TODO
@@ -87,10 +89,11 @@ void ComputingEngine::tell_cpu(const std::shared_ptr<restbed::Session>& session)
 
     _cpu.snap();
 
-    auto json_document = _cpu.json();
+    rapidjson::Document json_document = _cpu.json();
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
     json_document.Accept(writer);
+
 
     session->close(restbed::OK, buffer.GetString(),
                    {{"Content-Length", std::to_string(buffer.GetLength())}, {"Connection", "close"}});

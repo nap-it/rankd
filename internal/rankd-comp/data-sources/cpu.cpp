@@ -174,51 +174,82 @@ rapidjson::Document CPU::json() const {
     json_document.SetObject();
     auto& allocator = json_document.GetAllocator();
 
-    json_document["id"].SetInt(_identifier);
+    // Create a temporary value to retain what is going to the JSON document.
+    rapidjson::Value value;
+
+    value.SetInt(_identifier);
+    json_document.AddMember("id", value, allocator);
+
     if (_byte_order == LITTLE) {
-        json_document["endianess"].SetString("little endian");
+        value.SetString("little endian");
     } else {
-        json_document["endianess"].SetString("big endian");
+        value.SetString("big endian");
     }
-    json_document["vendor"].SetString(rapidjson::GenericStringRef(_vendor_id.value_or("").c_str()));
-    json_document["family"].SetString(rapidjson::GenericStringRef(_family.value_or("").c_str()));
-    json_document["model"].SetString(rapidjson::GenericStringRef(_model.value_or("").c_str()));
-    json_document["model-name"].SetString(rapidjson::GenericStringRef(_model_name.value_or("").c_str()));
-    json_document["stepping"].SetString(rapidjson::GenericStringRef(_stepping.value_or("").c_str()));
-    json_document["microcode"].SetString(rapidjson::GenericStringRef(_microcode.value_or("").c_str()));
+    json_document.AddMember("endianness", value, allocator);
+    value.SetString(rapidjson::GenericStringRef(_vendor_id->c_str()));
+    json_document.AddMember("vendor", value, allocator);
+    value.SetString(rapidjson::GenericStringRef(_family->c_str()));
+    json_document.AddMember("family", value, allocator);
+    value.SetString(rapidjson::GenericStringRef(_model->c_str()));
+    json_document.AddMember("model", value, allocator);
+    value.SetString(rapidjson::GenericStringRef(_model_name->c_str()));
+    json_document.AddMember("model-name", value, allocator);
+    value.SetString(rapidjson::GenericStringRef(_stepping->c_str()));
+    json_document.AddMember("stepping", value, allocator);
+    value.SetString(rapidjson::GenericStringRef(_microcode->c_str()));
+    json_document.AddMember("microcode", value, allocator);
 
     std::string flags;
     for (const auto& flag : _flags) {
         flags += flag + " ";
     }
-    json_document["flags"].SetString(rapidjson::GenericStringRef(flags.c_str()));
+    value.SetString(rapidjson::GenericStringRef(flags.c_str()));
+    json_document.AddMember("flags", value, allocator);
 
     std::string bugs;
     for (const auto& bug : _bugs) {
         bugs += bug + " ";
     }
-    json_document["bugs"].SetString(rapidjson::GenericStringRef(bugs.c_str()));
+    value.SetString(rapidjson::GenericStringRef(bugs.c_str()));
+    json_document.AddMember("bugs", value, allocator);
 
-    json_document["bogomips"].SetDouble(_bogomips);
-    json_document["cores"].SetObject();
+    value.SetDouble(_bogomips);
+    json_document.AddMember("bogomips", value, allocator);
+    value.SetObject();
+    json_document.AddMember("cores", value, allocator);
     for (const auto& [core_id, core] : _cores) {
-        json_document["cores"][core_id].SetObject();
-        json_document["cores"][core_id]["frequency"].SetDouble(core.frequency.value_or(NAN));
-        json_document["cores"][core_id]["cache-size"].SetString(rapidjson::GenericStringRef(core.cache_size.value_or("").c_str()));
-        json_document["cores"][core_id]["has-fpu"].SetBool(core.has_fpu.value_or(false));
+        value.SetObject();
+        json_document["cores"].AddMember(rapidjson::GenericStringRef(std::to_string(core_id).c_str()), value, allocator);
+        value.SetDouble(core.frequency.value_or(NAN));
+        json_document["cores"][std::to_string(core_id).c_str()].AddMember("frequency", value, allocator);
+        value.SetString(rapidjson::GenericStringRef(core.cache_size.value_or("").c_str()));
+        json_document["cores"][std::to_string(core_id).c_str()].AddMember("cache-size", value, allocator);
+        value.SetBool(core.has_fpu.value_or(false));
+        json_document["cores"][std::to_string(core_id).c_str()].AddMember("has-fpu", value, allocator);
     }
 
-    json_document["stats"].SetObject();
-    json_document["stats"]["system"].SetUint64(_snapshot.system);
-    json_document["stats"]["user"].SetUint64(_snapshot.user);
-    json_document["stats"]["nice"].SetUint64(_snapshot.nice);
-    json_document["stats"]["irqs"].SetUint64(_snapshot.irqs);
-    json_document["stats"]["softirqs"].SetUint64(_snapshot.softirqs);
-    json_document["stats"]["iowait"].SetUint64(_snapshot.iowait);
-    json_document["stats"]["idle"].SetUint64(_snapshot.idle);
-    json_document["stats"]["steal"].SetUint64(_snapshot.steal);
-    json_document["stats"]["in-use"].SetDouble(_snapshot.in_use);
-    json_document["stats"]["total"].SetDouble(_snapshot.total);
+    value.SetObject();
+    json_document.AddMember("stats", value, allocator);
+    value.SetUint64(_snapshot.system);
+    json_document["stats"].AddMember("system", value, allocator);
+    value.SetUint64(_snapshot.user);
+    json_document["stats"].AddMember("user", value, allocator);
+    value.SetUint64(_snapshot.nice);
+    json_document["stats"].AddMember("nice", value, allocator);
+    value.SetUint64(_snapshot.irqs);
+    json_document["stats"].AddMember("irqs", value, allocator);
+    value.SetUint64(_snapshot.softirqs);
+    json_document["stats"].AddMember("softirqs", value, allocator);
+    value.SetUint64(_snapshot.iowait);
+    json_document["stats"].AddMember("iowait", value, allocator);
+    value.SetUint64(_snapshot.idle);
+    json_document["stats"].AddMember("idle", value, allocator);
+    value.SetUint64(_snapshot.steal);
+    json_document["stats"].AddMember("steal", value, allocator);
+    value.SetDouble(_snapshot.in_use);
+    json_document["stats"].AddMember("in-use", value, allocator);
+    value.SetDouble(_snapshot.total);
+    json_document["stats"].AddMember("total", value, allocator);
 
     return json_document;
 }
