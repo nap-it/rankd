@@ -1,6 +1,8 @@
 #ifndef RANKD_LINUX_MEMORY_H
 #define RANKD_LINUX_MEMORY_H
 
+#define RAPIDJSON_HAS_STDSTRING 1
+
 #include <cstdlib>
 #include <fstream>
 #include <map>

@@ -1,6 +1,8 @@
 #ifndef RANKD_STORAGE_H
 #define RANKD_STORAGE_H
 
+#define RAPIDJSON_HAS_STDSTRING 1
+
 #include <mntent.h>
 #include <sys/statvfs.h>
 

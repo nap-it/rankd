@@ -12,6 +12,8 @@
 #include <sstream>
 #include <string>
 
+#define RAPIDJSON_HAS_STDSTRING 1
+
 // RapidJSON inclusions.
 #include "document.h"
 #include "stringbuffer.h"

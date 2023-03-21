@@ -1,6 +1,8 @@
 #ifndef RANKD_OS_H
 #define RANKD_OS_H
 
+#define RAPIDJSON_HAS_STDSTRING 1
+
 #include <pwd.h>
 #include <sys/sysinfo.h>
 #include <sys/utsname.h>

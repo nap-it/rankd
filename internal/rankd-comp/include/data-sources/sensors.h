@@ -1,6 +1,8 @@
 #ifndef RANKD_SENSORS_H
 #define RANKD_SENSORS_H
 
+#define RAPIDJSON_HAS_STDSTRING 1
+
 #include <map>
 #include <string>
 #include <utility>
