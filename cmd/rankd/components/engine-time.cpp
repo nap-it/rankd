@@ -30,17 +30,41 @@ void TimeEngine::teller(const std::shared_ptr<restbed::Session>& session) {
     session->close(restbed::OK, "", {{"Content-Length", std::to_string(0)}, {"Connection", "close"}});
 }
 
+void TimeEngine::tell_ptp(const std::shared_ptr<restbed::Session>& session) {
+    const auto request = session->get_request();
+    _logger->info("A request was received for CPU information.");
+
+    _ptp.snap();
+
+    rapidjson::Document json_document = _ptp.json();
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    json_document.Accept(writer);
+
+    session->close(restbed::OK, buffer.GetString(),
+                   {{"Content-Length", std::to_string(buffer.GetLength())}, {"Connection", "close"}});
+}
+
 std::vector<std::shared_ptr<restbed::Resource>>* TimeEngine::get_resources() {
     auto* resources = new std::vector<std::shared_ptr<restbed::Resource>>();
 
     _logger->trace("The time engine is configuring its API resource.");
+
     auto resource = std::make_shared<restbed::Resource>();
     resource->set_path("api/v1/time");
     resource->set_method_handler(
             "GET", [this](const std::shared_ptr<restbed::Session>& session) { return this->teller(session); });
     _logger->trace("-- Setting /time");
-    _logger->info("The time engine is now starting all its services.");
     resources->push_back(resource);
+
+    resource = std::make_shared<restbed::Resource>();
+    resource->set_path("api/v1/time/ptp");
+    resource->set_method_handler(
+            "GET", [this](const std::shared_ptr<restbed::Session>& session) { return this->tell_ptp(session); });
+    _logger->trace("-- Setting /time/ptp");
+    resources->push_back(resource);
+
+    _logger->info("The time engine is now starting all its services.");
 
     return resources;
 }

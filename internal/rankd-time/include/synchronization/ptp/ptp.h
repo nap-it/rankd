@@ -1,6 +1,13 @@
 #ifndef RANKD_TIME_SYNC_PTP_PTP_H
 #define RANKD_TIME_SYNC_PTP_PTP_H
 
+#define RAPIDJSON_HAS_STDSTRING 1
+
+// RapidJSON inclusions.
+#include "document.h"
+#include "stringbuffer.h"
+#include "writer.h"
+
 #include <cstring>
 #include <map>
 #include <string>
@@ -77,25 +84,15 @@ public:
   [[nodiscard]] const std::string &grand_master_identity() const {
     return _grand_master_identity;
   }
+  [[nodiscard]] rapidjson::Document json() const;
   friend std::ostream &operator<<(std::ostream &os, const PTP &ptp) {
-    os << "_running: " << ptp._running
-       << " _applying_on_system: " << ptp._applying_on_system
-       << " _master_offset: " << ptp._master_offset
-       << " _ingress_time: " << ptp._ingress_time
-       << " _cumulative_scaled_rate_offset: "
-       << ptp._cumulative_scaled_rate_offset
-       << " _scaled_last_grand_master_phase_change: "
-       << ptp._scaled_last_grand_master_phase_change
-       << " _grand_master_time_base_indicator: "
-       << ptp._grand_master_time_base_indicator
-       << " _last_grand_master_phase_change_ns_msb: "
-       << ptp._last_grand_master_phase_change_ns_msb
-       << " _last_grand_master_phase_change_ns_lsb: "
-       << ptp._last_grand_master_phase_change_ns_lsb
-       << " _last_grand_master_phase_change_fractional_ns: "
-       << ptp._last_grand_master_phase_change_fractional_ns
-       << " _grand_master_present: " << ptp._grand_master_present
-       << " _grand_master_identity: " << ptp._grand_master_identity;
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    auto json_document = ptp.json();
+    json_document.Accept(writer);
+
+    os << buffer.GetString();
+
     return os;
   }
 

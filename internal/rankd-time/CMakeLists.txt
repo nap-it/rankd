@@ -28,7 +28,7 @@ endif()
 # Make the rankd-time library (librankd-net).
 set(RANKD_TIME include)
 add_library(rankd-time SHARED lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
-target_include_directories(rankd-time PUBLIC include vendor/ptp)
+target_include_directories(rankd-time PUBLIC include vendor/ptp vendor/rapidjson)
 target_link_libraries(rankd-time pmc)
 
 # All users to compile this library need, at least, C++20.

@@ -16,3 +16,6 @@
 [submodule "internal/rankd-comp/vendor/rapidjson"]
 	path = internal/rankd-comp/vendor/rapidjson
 	url = https://code.nap.av.it.pt/external-tools/rapidjson
+[submodule "internal/rankd-time/vendor/rapidjson"]
+	path = internal/rankd-time/vendor/rapidjson
+	url = https://code.nap.av.it.pt/external-tools/rapidjson
