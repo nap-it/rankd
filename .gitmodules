@@ -19,3 +19,6 @@
 [submodule "internal/rankd-time/vendor/rapidjson"]
 	path = internal/rankd-time/vendor/rapidjson
 	url = https://code.nap.av.it.pt/external-tools/rapidjson
+[submodule "internal/rankd-time/vendor/ptp/excelfore-gptp"]
+	path = internal/rankd-time/vendor/ptp/excelfore-gptp
+	url = https://code.nap.av.it.pt/external-tools/excelfore-gptp.git
