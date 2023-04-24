@@ -1,5 +1,4 @@
 #include "synchronization/ptp/ptp.h"
-#include "excelfore-gptp/gptpmasterclock.h"
 
 [[maybe_unused]] static std::vector<std::string> timestamping_labels = {
         "hardware-transmit",      // 0 SOF_TIMESTAMPING_TX_HARDWARE
@@ -416,7 +415,7 @@ void PTP::snap() {
         return;
     }
 #ifdef _EXCELFORE_GPTP
-    gptpmasterclock_getts64();
+
 #endif
 
 }

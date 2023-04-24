@@ -26,6 +26,7 @@ extern "C" {
 
 #ifdef _EXCELFORE_GPTP
 #include "excelfore-gptp.h"
+#include "excelfore-gptp/gptpmasterclock.h"
 #endif
 };
 
