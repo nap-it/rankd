@@ -6,6 +6,8 @@ project(rankd-net
 set(HEADER_LIST
         include/net-lib.h
         include/data-sources/yanpit.h
+        include/data-sources/yanpit/consts.h
+        include/data-sources/yanpit/structs.h
         )
 set(SOURCE_LIST
         data-sources/yanpit.cpp
@@ -14,7 +16,7 @@ set(SOURCE_LIST
 # Make the rankd-net library (librankd-net).
 #set(RANKD_NET include)
 add_library(rankd-net lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
-target_include_directories(rankd-net PUBLIC include vendor/restbed/source)
+target_include_directories(rankd-net PUBLIC include vendor/restbed/source vendor/paho.mqtt.cpp/src)
 #target_link_libraries(rankd-net PRIVATE )
 
 # All users to compile this library need, at least, C++20.
