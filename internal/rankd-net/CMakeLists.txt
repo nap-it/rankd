@@ -4,14 +4,17 @@ project(rankd-net
         LANGUAGES CXX C)
 
 set(HEADER_LIST
+        include/net-lib.h
+        include/data-sources/yanpit.h
         )
 set(SOURCE_LIST
+        data-sources/yanpit.cpp
         )
 
 # Make the rankd-net library (librankd-net).
 #set(RANKD_NET include)
 add_library(rankd-net lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
-target_include_directories(rankd-net PUBLIC include)
+target_include_directories(rankd-net PUBLIC include vendor/restbed/source)
 #target_link_libraries(rankd-net PRIVATE )
 
 # All users to compile this library need, at least, C++20.
