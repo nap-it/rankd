@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+message Gps {
+    double longitude = 1;
+    double latitude = 2;
+    double track = 3;
+    double speed = 4;
+}
+
+enum ConnectionState {
+    DISCONNECTED = 0;
+    CONNECTED_CELLULAR = 1;
+    CONNECTED_WAVE = 2;
+    ERRONEOUS_STATE = 3;
+}
+
+message NeighborStation {
+    int32 identification = 1;
+    Gps location = 2;
+    bool in_range = 3;
+    int64 timestamp = 4;
+    int32 signal = 5;
+    int32 average_signal = 6;
+    double azimuth = 7;
+    double tx_rate = 8;
+    int32 inactive_time = 9;
+    double i_throughput = 10;
+    double d_throughput = 11;
+    int64 rx_bytes = 12;
+    int64 tx_bytes = 13;
+    int32 tx_retries = 14;
+    int32 tx_fails = 15;
+}
+
+message State {
+    Gps location = 1;
+    ConnectionState connection_state = 2;
+    NeighborStation neighbor_station = 3;
+}
+
+enum HandoverType {
+    REGULAR_HANDOVER = 0;
+    SLOW_HANDOVER = 1;
+    ERRONEOUS_HANDOVER = 2;
+}
+
+message Handover {
+    ConnectionState source_state = 1;
+    int32 source_gateway_id = 2;
+    ConnectionState destination_state = 3;
+    int32 destination_gateway_id = 4;
+    HandoverType type = 5;
+    int32 average_signal = 6;
+    double azimuth = 7;
+    Gps location = 8;
+}
+
+message Ncm {
+    int64 timestamp = 1;
+    State state = 2;
+    Handover handover = 3;
+    repeated NeighborStation stations = 4;
+}
