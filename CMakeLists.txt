@@ -19,6 +19,10 @@ find_package(PkgConfig REQUIRED)
 ## Load vendor packages.
 set(GLOBAL_VENDOR_DIRS "${PROJECT_SOURCE_DIR}/vendor")
 
+## Set API protobuf directory.
+set(API_PROTO_DIR "${PROJECT_SOURCE_DIR}/api/proto")
+add_subdirectory(api)
+
 add_subdirectory(internal)
 add_subdirectory(cmd)
 add_subdirectory(tests)
