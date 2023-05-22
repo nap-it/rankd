@@ -1,0 +1,64 @@
+module Ncm {
+    struct Gps {
+        double longitude;
+        double latitude;
+        double track;
+        double speed;
+    };
+
+    enum ConnectionState {
+        DISCONNECTED,
+        CONNECTED_CELLULAR,
+        CONNECTED_WAVE,
+        ERRONEOUS_STATE
+    };
+
+    struct NeighborStation {
+        int32 identification;
+        Gps location;
+        boolean in_range;
+        int64 timestamp;
+        int32 signal;
+        int32 average_signal;
+        double azimuth;
+        double tx_rate;
+        int32 inactive_time;
+        double i_throughput;
+        double d_throughput;
+        int64 rx_bytes;
+        int64 tx_bytes;
+        int32 tx_retries;
+        int32 tx_fails;
+    };
+
+    enum HandoverType {
+         REGULAR_HANDOVER,
+         SLOW_HANDOVER,
+         ERRONEOUS_HANDOVER
+    };
+
+    struct Handover {
+        ConnectionState source_state;
+        int32 source_gateway_id;
+        ConnectionState destination_state;
+        int32 destination_gateway_id;
+        HandoverType type;
+        int32 average_signal;
+        double azimuth;
+        Gps location;
+    };
+
+    struct State {
+        Gps location;
+        ConnectionState connection_state;
+        int32 neighbor_station;
+    };
+
+    @topic
+    struct NcmStatus {
+        @key uint64 timestamp;
+        State state_item;
+        Handover handover_item;
+        sequence<NeighborStation> stations;
+    };
+};

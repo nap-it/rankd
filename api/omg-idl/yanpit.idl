@@ -1,0 +1,29 @@
+module Yanpit {
+    struct IperfStatus {
+        uint32 running_instances;
+    };
+
+    struct ActiveTools {
+        IperfStatus iperf;
+    };
+
+    struct NcmStatus {
+        boolean is_running;
+    };
+
+    struct LocalnetStatus {
+        boolean is_running;
+    };
+
+    struct PassiveTools {
+        NcmStatus ncm;
+        LocalnetStatus localnet;
+    };
+
+    @topic
+    struct YanpitStatus {
+        @key uint64 timestamp;
+        ActiveTools active_tools;
+        PassiveTools passive_tools;
+    };
+};

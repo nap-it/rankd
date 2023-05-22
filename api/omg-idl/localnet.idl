@@ -1,0 +1,33 @@
+module Localnet {
+    struct NetworkInterface {
+        string mac_address;
+        sequence<string> ip4_addresses;
+        sequence<string> ip6_addresses;
+        boolean has_carrier;
+        string duplex_type;
+        uint32 interface_index;
+        uint32 enslaved_interface_index;
+        uint32 mtu;
+        string operation_state;
+        int64 speed;
+        int64 rx_bytes;
+        int64 tx_bytes;
+        int64 rx_packets;
+        int64 tx_packets;
+        uint32 rx_errors;
+        uint32 tx_errors;
+        uint32 rx_dropped;
+        uint32 tx_dropped;
+    };
+
+    struct MapEntry {
+        @key string interface_name;
+        NetworkInterface interface_item;
+    };
+
+    @topic
+    struct LocalnetStatus {
+        @key uint64 timestamp;
+        sequence<MapEntry> interfaces;
+    };
+};

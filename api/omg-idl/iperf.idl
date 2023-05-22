@@ -1,0 +1,150 @@
+module Iperf {
+    struct ConnectionStatus {
+        int32 socket_number;
+        string local_host;
+        uint32 local_port;
+        string remote_host;
+        uint32 remote_port;
+    };
+
+    struct ConnectionIntention {
+        string host;
+        uint32 port;
+    };
+
+    struct Connection {
+        sequence<ConnectionStatus> connections;
+        ConnectionIntention intention;
+    };
+
+    enum ProtocolType {
+        TCP,
+        UDP
+    };
+
+    struct BootstrapInformation {
+        string version;
+        string system_information;
+        int32 tcp_mss_default;
+        double target_bitrate;
+        int32 sock_bufsize;
+        int32 sndbuf_actual;
+        int32 rcvbuf_actual;
+        ProtocolType protocol;
+        int32 number_of_streams;
+        int32 block_size;
+        int32 omitted_seconds;
+        int32 duration;
+        int32 bytes;
+        int32 blocks;
+        boolean reverse_mode;
+        int32 tos;
+    };
+
+    struct Header {
+        string cookie;
+        Connection connection_item;
+        BootstrapInformation information;
+        int64 starting_time;
+    };
+
+    struct Stream {
+        int32 socket_number;
+        double start;
+        double end;
+        double range;
+        uint64 bytes;
+        double bits_per_second;
+        boolean omitted;
+        boolean sender;
+    };
+
+    struct Interval {
+        sequence<Stream> streams;
+    };
+
+    struct CumulativeInterval {
+        double start;
+        double end;
+        double range;
+        uint64 bytes;
+        double bits_per_second;
+    };
+
+    struct ReportedSendingStream {
+        int32 socket_number;
+        double start;
+        double end;
+        double range;
+        uint64 bytes;
+        double bits_per_second;
+        boolean sender;
+    };
+
+    struct ReportedReceivingStream {
+        int32 socket_number;
+        double start;
+        double end;
+        double range;
+        uint64 bytes;
+        double bits_per_second;
+        boolean sender;
+    };
+
+    struct ReportedStreamsPair {
+        ReportedSendingStream sending_stream;
+        ReportedReceivingStream receiving_stream;
+    };
+
+    struct ReportedSendingSummary {
+        double start;
+        double end;
+        double range;
+        uint64 bytes;
+        double bits_per_second;
+        boolean sender;
+    };
+
+    struct ReportedReceivingSummary {
+        double start;
+        double end;
+        double range;
+        uint64 bytes;
+        double bits_per_second;
+        boolean sender;
+    };
+
+    struct ReportedSummariesPair {
+        ReportedSendingSummary sending_summary;
+        ReportedReceivingSummary receiving_summary;
+    };
+
+    struct ResourceStatistics {
+        double host_total;
+        double host_user;
+        double host_system;
+        double remote_total;
+        double remote_user;
+        double remote_system;
+    };
+
+    struct Report {
+        sequence<ReportedStreamsPair> streams;
+        ReportedSummariesPair summaries;
+        ResourceStatistics cpu_usage;
+    };
+
+    struct IperfEntity {
+        Header header_item;
+        sequence<Interval> intervals;
+        sequence<CumulativeInterval> cumulative_intervals;
+        Report end_report;
+    };
+
+    @topic
+    struct IperfStatus {
+        @key uint64 timestamp;
+        sequence<IperfEntity> servers;
+        sequence<IperfEntity> clients;
+    };
+};
