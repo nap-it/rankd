@@ -25,6 +25,3 @@
 [submodule "internal/rankd-net/vendor/restbed"]
 	path = internal/rankd-net/vendor/restbed
 	url = https://code.nap.av.it.pt/mobility-networks/restbed.git
-[submodule "internal/rankd-net/vendor/paho.mqtt.cpp"]
-	path = internal/rankd-net/vendor/paho.mqtt.cpp
-	url = https://code.nap.av.it.pt/external-tools/paho.mqtt.cpp.git
