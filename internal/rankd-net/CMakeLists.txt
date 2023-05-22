@@ -24,9 +24,9 @@ set(SOURCE_LIST
 #set(RANKD_NET include)
 include_directories(${Protobuf_INCLUDE_DIRS})
 
-add_library(rankd-net lib.cpp ${HEADER_LIST} ${SOURCE_LIST} ${PROTO_SRCS} ${PROTO_HDRS})
-target_include_directories(rankd-net PUBLIC include vendor/restbed/source vendor/paho.mqtt.cpp/src)
-target_link_libraries(rankd-net PRIVATE ${Protobuf_LIBRARIES})
+add_library(rankd-net lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
+target_include_directories(rankd-net PUBLIC include vendor/restbed/source)
+#target_link_libraries(rankd-net PRIVATE )
 
 # All users to compile this library need, at least, C++20.
 target_compile_features(rankd-net PUBLIC cxx_std_20)

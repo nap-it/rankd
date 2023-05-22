@@ -7,9 +7,6 @@
 
 #include "restbed"
 
-//#include "mqtt/client.h"
-#include "yanpit/consts.h"
-
 class YANPit {
 public:
     static YANPit* get_instance() {
