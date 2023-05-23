@@ -5,8 +5,6 @@
 #include <mutex>
 #include <thread>
 
-#include "restbed"
-
 class YANPit {
 public:
     static YANPit* get_instance() {
