@@ -22,6 +22,3 @@
 [submodule "internal/rankd-time/vendor/ptp/excelfore-gptp"]
 	path = internal/rankd-time/vendor/ptp/excelfore-gptp
 	url = https://code.nap.av.it.pt/external-tools/excelfore-gptp.git
-[submodule "internal/rankd-net/vendor/restbed"]
-	path = internal/rankd-net/vendor/restbed
-	url = https://code.nap.av.it.pt/mobility-networks/restbed.git
