@@ -23,7 +23,7 @@
 #include <fastcdr/FastBuffer.h>
 #include <fastcdr/Cdr.h>
 
-#include "reporting/dds/descriptors/iperfPubSubTypes.h"
+#include "data-sources/yanpit/dds/descriptors/iperfPubSubTypes.h"
 
 using SerializedPayload_t = eprosima::fastrtps::rtps::SerializedPayload_t;
 using InstanceHandle_t = eprosima::fastrtps::rtps::InstanceHandle_t;

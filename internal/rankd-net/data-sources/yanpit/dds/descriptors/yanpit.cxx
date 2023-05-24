@@ -26,7 +26,7 @@ char dummy;
 }  // namespace
 #endif  // _WIN32
 
-#include "reporting/dds/descriptors/yanpit.h"
+#include "data-sources/yanpit/dds/descriptors/yanpit.h"
 #include <fastcdr/Cdr.h>
 
 #include <fastcdr/exceptions/BadParamException.h>
