@@ -1,11 +1,6 @@
-#ifndef YANP_IT_DDS_H
-#define YANP_IT_DDS_H
+#ifndef RANKD_NET_DDS_H
+#define RANKD_NET_DDS_H
 
-#ifdef DDS_FEATURE
-#include "iperf.h"
-#include "localnet.h"
-#include "ncm.h"
 #include "yanpit.h"
-#endif
 
-#endif  // YANP_IT_DDS_H
+#endif  // RANKD_NET_DDS_H

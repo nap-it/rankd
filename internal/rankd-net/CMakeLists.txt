@@ -18,6 +18,7 @@ file(GLOB DDS_DESCRIPTOR_SOURCES "data-sources/yanpit/dds/descriptors/*.cxx")
 set(HEADER_LIST
         include/net-lib.h
         include/data-sources/yanpit.h
+        include/data-sources/yanpit/dds/dds.h
         ${DDS_DESCRIPTOR_HEADERS}
         )
 set(SOURCE_LIST
