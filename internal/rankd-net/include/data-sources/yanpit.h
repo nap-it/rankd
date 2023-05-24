@@ -5,6 +5,8 @@
 #include <mutex>
 #include <thread>
 
+#include "yanpit/dds/dds.h"
+
 class YANPit {
 public:
     static YANPit* get_instance() {

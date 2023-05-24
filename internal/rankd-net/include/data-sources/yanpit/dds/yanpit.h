@@ -52,7 +52,7 @@ public:
             return false;
         }
 
-        // Create the subscriptions topic.
+        // Create the subscription topic.
         _topic = _participant->create_topic("YanpitStatusTopic", "YanpitStatus", TOPIC_QOS_DEFAULT);
         if (_topic == nullptr) {
             return false;
@@ -78,10 +78,10 @@ public:
     }
     void operator()() {
         while (_running) {
-
+            // TODO
 
             // Wait for a given pre-defined time range, for another refresh.
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(_thread_sampling_rate));
         }
     }
     bool stop() {
@@ -98,7 +98,8 @@ public:
 private:
     std::thread _thread;
     std::atomic<bool> _running;
-    std::mutex _mutex;
+    std::mutex* _mutex_pointer;
+    int _thread_sampling_rate = 100;
     DomainParticipant* _participant;
     Subscriber* _subscriber;
     DataReader* _reader;
