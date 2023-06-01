@@ -53,7 +53,7 @@ public:
         }
 
         // Create the subscription topic.
-        _topic = _participant->create_topic("YanpitStatusTopic", "YanpitStatus", TOPIC_QOS_DEFAULT);
+        _topic = _participant->create_topic("YanpitStatusTopic", "Yanpit::YanpitStatus", TOPIC_QOS_DEFAULT);
         if (_topic == nullptr) {
             return false;
         }
