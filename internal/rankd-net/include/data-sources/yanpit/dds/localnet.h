@@ -1,7 +1,11 @@
-#ifndef RANKD_YANPIT_H
-#define RANKD_YANPIT_H
+//
+// Created by Rui Lopes on 07/06/2023.
+//
 
-#include "descriptors/yanpitPubSubTypes.h"
+#ifndef RANKD_LOCALNET_H
+#define RANKD_LOCALNET_H
+
+#include "descriptors/localnetPubSubTypes.h"
 
 #include <atomic>
 #include <mutex>
@@ -16,28 +20,28 @@
 
 using namespace eprosima::fastdds::dds;
 
-class YanpitSubListener : public DataReaderListener {
+class LocalnetSubListener : public DataReaderListener {
 public:
-    YanpitSubListener() {}
+    LocalnetSubListener() {}
 
-    ~YanpitSubListener() override {}
+    ~LocalnetSubListener() override {}
 
-    void on_subscription_matched(DataReader *, const SubscriptionMatchedStatus &info) override {
-
-    }
-
-    void on_data_available(DataReader *reader) override {
+    void on_subscription_matched(DataReader*, const SubscriptionMatchedStatus& info) override {
 
     }
 
-    Yanpit::YanpitStatus _message;
+    void on_data_available(DataReader* reader) override {
+
+    }
+
+    Localnet::LocalnetStatus _message;
 };
 
-class YanpitSubscriber {
+class LocalnetSubscriber {
 public:
-    YanpitSubscriber() : _participant(nullptr), _subscriber(nullptr), _reader(nullptr), _topic(nullptr) {}
+    LocalnetSubscriber() : _participant(nullptr), _subscriber(nullptr), _reader(nullptr), _topic(nullptr) {}
 
-    virtual ~YanpitSubscriber() {
+    virtual ~LocalnetSubscriber() {
         if (_reader != nullptr) {
             _subscriber->delete_datareader(_reader);
         }
@@ -50,7 +54,7 @@ public:
         DomainParticipantFactory::get_instance()->delete_participant(_participant);
     }
 
-    void share(Yanpit::YanpitStatus *data, std::mutex *mutex) {
+    void share(Localnet::LocalnetStatus* data, std::mutex* mutex) {
         _data = data;
         _mutex_pointer = mutex;
     }
@@ -64,7 +68,7 @@ public:
         }
 
         // Create the subscription topic.
-        _topic = _participant->create_topic("YanpitStatusTopic", "Yanpit::YanpitStatus", TOPIC_QOS_DEFAULT);
+        _topic = _participant->create_topic("LocalnetStatusTopic", "Localnet::LocalnetStatus", TOPIC_QOS_DEFAULT);
         if (_topic == nullptr) {
             return false;
         }
@@ -109,7 +113,6 @@ public:
 
         return true;
     }
-
 private:
     std::thread _thread;
     std::atomic<bool> _running;
@@ -118,11 +121,11 @@ private:
     Subscriber *_subscriber;
     DataReader *_reader;
     Topic *_topic;
-    YanpitSubListener _listener;
+    LocalnetSubListener _listener;
 
     // Shared-area with parent thread.
-    std::mutex *_mutex_pointer;
-    Yanpit::YanpitStatus *_data;
+    std::mutex* _mutex_pointer;
+    Localnet::LocalnetStatus* _data;
 };
 
-#endif //RANKD_YANPIT_H
+#endif //RANKD_LOCALNET_H

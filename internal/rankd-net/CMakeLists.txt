@@ -19,6 +19,9 @@ set(HEADER_LIST
         include/net-lib.h
         include/data-sources/yanpit.h
         include/data-sources/yanpit/dds/dds.h
+        include/data-sources/yanpit/dds/localnet.h
+        include/data-sources/yanpit/dds/ncm.h
+        include/data-sources/yanpit/dds/yanpit.h
         ${DDS_DESCRIPTOR_HEADERS}
         )
 set(SOURCE_LIST
