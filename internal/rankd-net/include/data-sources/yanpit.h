@@ -5,6 +5,7 @@
 #include <mutex>
 #include <thread>
 
+#include "structs/interfaces.h"
 #include "yanpit/dds/dds.h"
 
 class IperfRepresentation {
@@ -74,7 +75,7 @@ private:
     // NCM status DDS subscription.
     std::mutex* _ncm_status_mutex = nullptr;
     Ncm::NcmStatus* _ncm_status_data = nullptr;
-    NcmSubscriber _ncm_subcriber;
+    NcmSubscriber _ncm_subscriber;
 };
 
 class LocalnetRepresentation {
@@ -145,6 +146,115 @@ private:
     std::mutex* _yanpit_status_mutex = nullptr;
     Yanpit::YanpitStatus* _yanpit_status_data = nullptr;
     YanpitSubscriber _yanpit_subscriber;
+};
+
+class YanpitConnection {
+public:
+    static YanpitConnection* get_instance() {
+        static YanpitConnection instance;
+        return &instance;
+    }
+    YanpitConnection(const YanpitConnection& connection) = delete;
+    void operator=(const YanpitConnection& connection) = delete;
+
+    void operator()() {
+        while (_running) {
+            // TODO Do something.
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        }
+    }
+
+    YanpitConnection* execute() {
+        if (_running) {
+            return get_instance();
+        }
+        _running = true;
+
+        _yanpit_instance->execute();
+        _iperf_instance->execute();
+        _ncm_instance->execute();
+        _localnet_instance->execute();
+
+        _thread = std::thread(std::ref(*this));
+
+        return get_instance();
+    }
+
+    YanpitConnection* stop() {
+        if (!_running) {
+            return get_instance();
+        }
+
+        _yanpit_instance->stop();
+        _iperf_instance->stop();
+        _ncm_instance->stop();
+        _localnet_instance->stop();
+
+        _running = false;
+        _thread.join();
+
+        return get_instance();
+    }
+
+    [[nodiscard]] std::map<std::string, NetworkInterface> interfaces_information_as_map() const {
+        auto snapshot = _localnet_instance->snapshot_localnet_status();
+        std::map<std::string, NetworkInterface> interfaces;
+
+        for (const auto& interface : snapshot.interfaces()) {
+            // Create a network interface.
+            auto temporary_interface = NetworkInterface(interface.interface_name());
+
+            // Add attributes to mapped interface.
+            temporary_interface.address(interface.interface_item().mac_address());
+            temporary_interface.ip_4_addresses(interface.interface_item().ip4_addresses());
+            temporary_interface.ip_6_addresses(interface.interface_item().ip6_addresses());
+            temporary_interface.carrier(interface.interface_item().has_carrier());
+            temporary_interface.duplex_type(interface.interface_item().duplex_type());
+            temporary_interface.interface_index(interface.interface_item().interface_index());
+            temporary_interface.enslaved_interface_index(interface.interface_item().enslaved_interface_index());
+            temporary_interface.mtu(interface.interface_item().mtu());
+            temporary_interface.operation_state(interface.interface_item().operation_state());
+            temporary_interface.speed(interface.interface_item().speed());
+            temporary_interface.rx_bytes(interface.interface_item().rx_bytes());
+            temporary_interface.tx_bytes(interface.interface_item().tx_bytes());
+            temporary_interface.rx_packets(interface.interface_item().rx_packets());
+            temporary_interface.tx_packets(interface.interface_item().tx_packets());
+            temporary_interface.rx_errors(interface.interface_item().rx_errors());
+            temporary_interface.tx_errors(interface.interface_item().tx_errors());
+            temporary_interface.rx_dropped(interface.interface_item().rx_dropped());
+            temporary_interface.tx_dropped(interface.interface_item().tx_dropped());
+
+            // Add interface to map.
+            interfaces.insert({interface.interface_name(), temporary_interface});
+        }
+
+        return interfaces;
+    }
+
+    [[nodiscard]] const std::atomic<bool>& is_running() const {
+        return _running;
+    }
+
+    ~YanpitConnection() {
+        stop();
+    }
+private:
+    YanpitConnection() {
+        _yanpit_instance = YANPitRepresentation::get_instance();
+        _iperf_instance = IperfRepresentation::get_instance();
+        _ncm_instance = NcmRepresentation::get_instance();
+        _localnet_instance = LocalnetRepresentation::get_instance();
+    }
+
+    // Yanpit representation instances.
+    YANPitRepresentation* _yanpit_instance = nullptr;
+    IperfRepresentation* _iperf_instance = nullptr;
+    NcmRepresentation* _ncm_instance = nullptr;
+    LocalnetRepresentation* _localnet_instance = nullptr;
+
+    // Threading control.
+    std::atomic<bool> _running = false;
+    std::thread _thread;
 };
 
 #endif  // RANKD_NET_LIB_YANPIT_H

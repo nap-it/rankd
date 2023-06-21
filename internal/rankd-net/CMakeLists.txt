@@ -23,17 +23,17 @@ set(HEADER_LIST
         include/data-sources/yanpit/dds/ncm.h
         include/data-sources/yanpit/dds/yanpit.h
         ${DDS_DESCRIPTOR_HEADERS}
-        )
+        include/structs/interfaces.h)
 set(SOURCE_LIST
         data-sources/yanpit.cpp
         ${DDS_DESCRIPTOR_SOURCES}
+        structs/interfaces.cpp
         )
 
 # Make the rankd-net library (librankd-net).
-#set(RANKD_NET include)
-
+set(RANKD_NET include)
 add_library(rankd-net lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
-target_include_directories(rankd-net PUBLIC include)
+target_include_directories(rankd-net PUBLIC include vendor/rapidjson)
 target_link_libraries(rankd-net PRIVATE fastrtps fastcdr)
 
 # All users to compile this library need, at least, C++20.

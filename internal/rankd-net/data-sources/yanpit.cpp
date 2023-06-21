@@ -42,8 +42,8 @@ NcmRepresentation *NcmRepresentation::execute() {
     _thread = std::thread(std::ref(*this));
 
     // Start NCM DDS connection.
-    _ncm_subcriber.execute();
-    _ncm_subcriber.share(_ncm_status_data, _ncm_status_mutex);
+    _ncm_subscriber.execute();
+    _ncm_subscriber.share(_ncm_status_data, _ncm_status_mutex);
 
     return get_instance();
 }
@@ -55,7 +55,7 @@ NcmRepresentation *NcmRepresentation::stop() {
     }
 
     // 2. Stop dependencies and then this instance.
-    _ncm_subcriber.stop();
+    _ncm_subscriber.stop();
     _running = false;
     _thread.join();
 
