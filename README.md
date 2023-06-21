@@ -10,6 +10,14 @@ Rank deamon (Rankd) is an implementation of a service to retrieve information on
 
 This service has the goal to rank a machine against others, in order to allow the creation and allocation of proper paths (path reservation) after a capability negotiation, as required for a certain task to be performed under a given latency- and jitter-strict usage.
 
+## Features
+
+* **Resource Types**: The protocol supports various resource types, including computational resources (CPU, memory, storage, sensors), network resources (bandwidth, latency, packet loss, technology), and timing resources (synchronization, latency bounds, jitter).
+* **Negotiation Mechanisms**: Machines engage in negotiation processes to reach resource allocation agreements. Different negotiation models, such as auctions, bargaining, or iterative bidding, can be implemented.
+* **Flexible Communication**: Machines communicate with each other using a defined message format, exchanging information about capabilities, requirements, bids, and allocation decisions.
+* **Decision-Making Algorithms**: The protocol incorporates decision-making algorithms to evaluate bids and determine optimal resource allocations. These algorithms consider resource parameters, fairness, efficiency, and potential trade-offs between different resource types.
+* **Security and Privacy**: The protocol includes security measures to protect the integrity, confidentiality, and privacy of the negotiation process. Authentication, encryption, and access control mechanisms can be implemented.
+
 ## Getting Started with Rankd
 
 Rankd (to be pronounced _rank-ed_) while it is being developed, has a first goal to allow clients to retrieve status data from a server instance. Almost like a network management agent (such as an SNMP agent), a Rankd machine can give information about their kernel (such as version, operative system, processor precision and family, among others), and about their userspace items (such as applications being ran, by genre, or even some network capabilities).
