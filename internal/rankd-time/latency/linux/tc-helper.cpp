@@ -62,7 +62,7 @@ const struct nlmsghdr *TCNetlinkSocket::request_get_for_qdiscs() {
     return response_copy;
 }
 
-const std::vector<qdisc> TCNetlinkSocket::qdiscs(std::function<bool(const struct rtattr *)> filter) {
+std::vector<qdisc> TCNetlinkSocket::qdiscs(std::function<bool(const struct rtattr *)> filter) {
     // Check if last response exists.
     if (_last_response == nullptr or _last_response_size == 0) {
         // TODO Raise an exception or return an error code.

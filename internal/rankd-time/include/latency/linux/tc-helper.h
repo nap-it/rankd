@@ -24,7 +24,7 @@ public:
 
     const struct nlmsghdr *request_get_for_qdiscs();
 
-    const std::vector<qdisc> qdiscs(std::function<bool(const struct rtattr *)> filter = nullptr);
+    std::vector<qdisc> qdiscs(std::function<bool(const struct rtattr *)> filter = nullptr);
 
 private:
     struct nlmsghdr *_last_response = nullptr;
