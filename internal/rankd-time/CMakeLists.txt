@@ -4,10 +4,14 @@ project(rankd-time
         LANGUAGES CXX C)
 
 set(HEADER_LIST
+        include/latency/linux/tc-helper.h
+        include/latency/cbs.h
+        include/latency/tas.h
         include/synchronization/ptp/ptp.h
         include/time-lib.h
         )
 set(SOURCE_LIST
+        latency/linux/tc-helper.cpp
         synchronization/ptp/ptp.cpp
         )
 
