@@ -6,10 +6,20 @@
 #include <set>
 
 #include <linux/rtnetlink.h>
+#include <linux/pkt_sched.h>
+
+// Just for testing purposes.
+#define LINUX_TARGET
+
+#ifdef LINUX_TARGET
+#include "linux/tc-helper.h"
+#endif
 
 class CBSEntry {
 public:
+#ifdef LINUX_TARGET
     explicit CBSEntry(const struct rtattr* attribute);
+#endif
     static bool check_identity(const struct rtattr* attribute) {
         return attribute != nullptr && strcmp(static_cast<const char*>(RTA_DATA(attribute)), "cbs") == 0;
     }
@@ -23,8 +33,11 @@ private:
 
 class CBS {
 public:
-
+    CBS();
 private:
+#ifdef LINUX_TARGET
+    TCNetlinkSocket _netlink_socket{};
+#endif
     std::set<CBSEntry> _entries;
 };
 

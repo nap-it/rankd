@@ -16,7 +16,7 @@
 
 #define RESPONSE_MAX_LENGTH 8192
 
-typedef struct tcmsg *qdisc;
+typedef struct rtattr * qdisc;
 
 class TCNetlinkSocket {
 public:
@@ -24,8 +24,13 @@ public:
 
     const struct nlmsghdr *request_get_for_qdiscs();
 
-    std::vector<qdisc> qdiscs(std::function<bool(const struct rtattr *)> filter = nullptr);
+    std::vector<std::pair<qdisc, uint32_t>> qdiscs(std::function<bool(const struct rtattr *)> filter = nullptr);
 
+    ssize_t last_response_size() const;
+
+    nlmsghdr *last_response() const;
+
+    void close_socket() const;
 private:
     struct nlmsghdr *_last_response = nullptr;
     ssize_t _last_response_size;

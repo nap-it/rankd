@@ -62,33 +62,37 @@ const struct nlmsghdr *TCNetlinkSocket::request_get_for_qdiscs() {
     return response_copy;
 }
 
-std::vector<qdisc> TCNetlinkSocket::qdiscs(std::function<bool(const struct rtattr *)> filter) {
+std::vector<std::pair<qdisc, uint32_t>> TCNetlinkSocket::qdiscs(std::function<bool(const struct rtattr *)> filter) {
     // Check if last response exists.
     if (_last_response == nullptr or _last_response_size == 0) {
         // TODO Raise an exception or return an error code.
     }
 
     // Initialize a vector to be returned.
-    std::vector<struct tcmsg *> qdiscs_vector{};
+    std::vector<std::pair<qdisc, uint32_t>> qdiscs_vector{};
 
     // Run over all queueing disciplines registered in the last response.
     while (NLMSG_OK(_last_response, _last_response_size)) {
         if (_last_response->nlmsg_type == RTM_NEWQDISC) {
             auto *content = (struct tcmsg *) NLMSG_DATA(_last_response);
-            qdiscs_vector.push_back(content);
+            auto *attribute = (qdisc) (content + 1);
+            uint32_t attribute_length = _last_response->nlmsg_len - NLMSG_LENGTH(sizeof(*content));
+            qdiscs_vector.emplace_back(attribute, attribute_length);
         }
+
+        _last_response = NLMSG_NEXT(_last_response, _last_response_size);
     }
 
     // Filter results, if a filtering function is provided.
     if (filter != nullptr) {
-        std::vector<struct tcmsg *> filtered_qdiscs_vector{};
-        for (const auto &discipline: qdiscs_vector) {
-            auto *attribute = (struct rtattr *) (discipline + 1);
-            int attribute_length = _last_response->nlmsg_len - NLMSG_LENGTH(sizeof(*discipline));
+        std::vector<std::pair<qdisc, uint32_t>> filtered_qdiscs_vector{};
+        for (auto &[attribute, attribute_length]: qdiscs_vector) {
             while (RTA_OK(attribute, attribute_length)) {
-                if (filter(attribute)) {
-                    filtered_qdiscs_vector.push_back(discipline);
+                if (attribute->rta_type == TCA_KIND && filter(attribute)) {
+                    filtered_qdiscs_vector.emplace_back(attribute, attribute_length);
                 }
+
+                attribute = RTA_NEXT(attribute, attribute_length);
             }
         }
 
@@ -96,4 +100,16 @@ std::vector<qdisc> TCNetlinkSocket::qdiscs(std::function<bool(const struct rtatt
     } else {
         return qdiscs_vector;
     }
+}
+
+ssize_t TCNetlinkSocket::last_response_size() const {
+    return _last_response_size;
+}
+
+nlmsghdr *TCNetlinkSocket::last_response() const {
+    return _last_response;
+}
+
+void TCNetlinkSocket::close_socket() const {
+    close(_socket);
 }
