@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <set>
 
 #include <linux/rtnetlink.h>
 
@@ -24,7 +25,7 @@ class CBS {
 public:
 
 private:
-    CBSEntry _tas_entry;
+    std::set<CBSEntry> _entries;
 };
 
 #endif //RANKD_TIME_LAT_CBS_H
