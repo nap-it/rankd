@@ -7,6 +7,7 @@ class Message {
 public:
     // Instance handling.
     Message(const MessageType& type);
+    Message(const Header& header);
 
     // Static prototyping.
     static Header new_prototype(const char* marshalled_data);

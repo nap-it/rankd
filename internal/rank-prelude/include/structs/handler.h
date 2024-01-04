@@ -9,6 +9,7 @@
 #include "structs/handler_state.h"
 #include "structs/identifier.h"
 #include "structs/message.h"
+#include "structs/messages/all.h"
 #include "structs/requesting_capabilities.h"
 #include "structs/reservation.h"
 #include "structs/resources.h"
