@@ -1,0 +1,6 @@
+#ifndef RANK_PRELUDE_IDENTIFIER_H
+#define RANK_PRELUDE_IDENTIFIER_H
+
+typedef unsigned long UUIDv4;
+
+#endif  // RANK_PRELUDE_IDENTIFIER_H
