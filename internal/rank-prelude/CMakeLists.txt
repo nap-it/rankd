@@ -49,7 +49,7 @@ set(SOURCE_LIST
 set(RANK_PRELUDE include)
 add_library(rank-prelude prelude.cpp ${SOURCE_LIST})
 target_include_directories(rank-prelude PUBLIC include)
-#target_link_libraries(rank-prelude PRIVATE)
+target_link_libraries(rank-prelude PRIVATE pthread)
 
 target_compile_features(rank-prelude PUBLIC cxx_std_20)
 

@@ -20,6 +20,7 @@ class Handler {
 public:
     // Instance handling.
     Handler();
+    Handler(UUIDv4 uuid);
 
     // Handling actions.
     Handler* handle(const Message& message);

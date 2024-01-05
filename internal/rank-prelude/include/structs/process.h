@@ -1,6 +1,7 @@
 #ifndef RANK_PRELUDE_PROCESS_H
 #define RANK_PRELUDE_PROCESS_H
 
+#include <chrono>
 #include <string>
 #include <thread>
 #include <vector>
@@ -21,15 +22,15 @@ public:
     static Process* get_instance();
 
     // Store and handlers management.
-    bool is_bid_in_store() const;
+    bool is_bid_in_store(const UUIDv4& id) const;
     bool is_uuid_in_store(const UUIDv4& id) const;
-    bool store(const Handler& handler);
+    bool store(Handler* handler);
     void delete_handler(const UUIDv4& id);
-    Handler* create_handler(const UUIDv4* id);
-    Handler* resume_handler(const UUIDv4* id);
-    Handler* suspend_handler(const UUIDv4* id);
-    Handler* get_handler(const UUIDv4* id) const;
-    HandlerState get_handler_state(const UUIDv4* id) const;
+    Handler* create_handler(const UUIDv4& id);
+    Handler* resume_handler(const UUIDv4& id);
+    Handler* suspend_handler(const UUIDv4& id);
+    Handler* get_handler(const UUIDv4& id) const;
+    HandlerState get_handler_state(const UUIDv4& id) const;
 
     // Receiving data parsing.
     Header parse_as_message_header(const char* data);

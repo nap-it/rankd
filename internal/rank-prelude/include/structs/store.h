@@ -6,6 +6,6 @@
 #include "structs/identifier.h"
 #include "structs/handler.h"
 
-typedef std::map<UUIDv4, Handler> Store;
+typedef std::map<UUIDv4, Handler*> Store;
 
 #endif  // RANK_PRELUDE_STORE_H
