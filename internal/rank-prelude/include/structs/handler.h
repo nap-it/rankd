@@ -2,6 +2,7 @@
 #define RANK_PRELUDE_HANDLER_H
 
 #include <array>
+#include <chrono>
 #include <mutex>
 #include <thread>
 
@@ -19,8 +20,9 @@
 class Handler {
 public:
     // Instance handling.
-    Handler();
-    Handler(UUIDv4 uuid);
+    Handler(Resources* resources, TranslationTable* translation_table);
+    Handler(Resources* resources, TranslationTable* translation_table, UUIDv4 uuid);
+    Handler(Resources* resources, TranslationTable* translation_table, Header header);
 
     // Handling actions.
     Handler* handle(const Message& message);
@@ -58,7 +60,7 @@ protected:
 
 private:
     UUIDv4 _uuid;
-    Message _message;
+    Message* _message;
     HandlerState _state;
     BidSet _bids;
     std::mutex _bids_locker;
