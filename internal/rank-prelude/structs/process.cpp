@@ -113,10 +113,10 @@ UUIDv4 Process::parse_as_message_uuid(const char* data) {
     return parse_as_message_header(data).uuid();
 }
 
-std::vector<std::string> Process::get_connections_to(const std::string& target) const {
+std::vector<std::vector<uint8_t>> Process::get_connections_to(const std::string& target) const {
 }
 
-unsigned int Process::connections_cardinal(const std::vector<std::string>& connections) const {
+unsigned int Process::connections_cardinal(const std::vector<std::vector<uint8_t>>& connections) const {
     return connections.size();
 }
 
@@ -189,22 +189,22 @@ void Process::operator()() {
         Header message_header = parse_as_message_header(raw_data);
         switch (message_header.type()) {
             case MessageType::EAR:
-                handler->handle(EAR(message_header, raw_data+RANK_HEADER_LEN));
+                handler->handle(new EAR(message_header, raw_data+RANK_HEADER_LEN));
                 break;
             case MessageType::MAR:
-                handler->handle(MAR(message_header, raw_data+RANK_HEADER_LEN));
+                handler->handle(new MAR(message_header, raw_data+RANK_HEADER_LEN));
                 break;
             case MessageType::BID:
-                handler->handle(BID(message_header, raw_data+RANK_HEADER_LEN));
+                handler->handle(new BID(message_header, raw_data+RANK_HEADER_LEN));
                 break;
             case MessageType::ACC:
-                handler->handle(ACC(message_header));
+                handler->handle(new ACC(message_header));
                 break;
             case MessageType::REF:
-                handler->handle(REF(message_header));
+                handler->handle(new REF(message_header));
                 break;
             case MessageType::REP:
-                handler->handle(REP(message_header, raw_data+RANK_HEADER_LEN));
+                handler->handle(new REP(message_header, raw_data+RANK_HEADER_LEN));
                 break;
         }
 

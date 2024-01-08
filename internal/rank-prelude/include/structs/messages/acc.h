@@ -7,10 +7,18 @@
 class ACC : public Message {
 public:
     // Instance handlers.
+    ACC(const UUIDv4& uuid) : Message(Header(MessageType::ACC, uuid)) {
+    }
     ACC(const Header& header) : Message(header) {
     }
     ACC(const Header& header, const char* marshalled_data) : Message(header) {
     }
+
+    // Derived member methods.
+    const char* raw_payload() const override;
+
+    // Destructor.
+    ~ACC();
 };
 
 

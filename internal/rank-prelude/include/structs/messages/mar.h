@@ -11,6 +11,11 @@
 class MAR : public Message {
 public:
     // Instance handlers.
+    MAR(const UUIDv4& uuid, uint8_t priority, uint8_t listener_length, uint8_t* listener, uint16_t payload_length,
+        uint8_t* payload) :
+        Message(Header(MessageType::MAR, uuid)), _priority {priority}, _listener_length {listener_length}, _listener {listener},
+        _payload_length {payload_length}, _payload {payload} {
+    }
     MAR(const Header& header, uint8_t priority, uint8_t listener_length, uint8_t* listener, uint16_t payload_length,
         uint8_t* payload) :
         Message(header), _priority {priority}, _listener_length {listener_length}, _listener {listener},
@@ -20,7 +25,7 @@ public:
     }
 
     // Marshalling features.
-    std::vector<RequestingCapabilities> unmarshal() const;
+    RequestingCapabilities requirements() const;
 
     // Parsing tools.
     uint8_t expand_listener_length(uint8_t length) const;
@@ -32,6 +37,12 @@ public:
     uint8_t* listener() const;
     uint16_t payload_length() const;
     uint8_t* payload() const;
+
+    // Derived member methods.
+    const char* raw_payload() const override;
+
+    // Destructor.
+    ~MAR();
 
 private:
     uint8_t _priority;

@@ -8,7 +8,7 @@
 class Header {
 public:
     // Instance handling.
-    Header(const MessageType& type);
+    Header(const MessageType& type, const UUIDv4& uuid);
     Header(const char* marshalled_data);
 
     // Marshalling features.

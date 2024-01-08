@@ -21,9 +21,9 @@ public:
     float estimate_bid(const Reservation& reservation) const;
 
     // Reservation handling.
-    Reservation* available_for_performance(const Reservation& statement);
-    Resources* replenish_reservation(const UUIDv4& uuid);
-    Resources* mark_reservation(const UUIDv4& uuid);
+    Reservation* available_for_performance(const Reservation& statement, uint8_t priority);
+    Resources* replenish_reservation(Reservation* reservation, const UUIDv4& uuid);
+    Resources* mark_reservation(Reservation* reservation, const UUIDv4& uuid);
     std::set<Reservation> reservations() const;
     size_t reservations_size() const;
 

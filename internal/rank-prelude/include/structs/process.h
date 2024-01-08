@@ -43,8 +43,8 @@ public:
     UUIDv4 parse_as_message_uuid(const char* data);
 
     // Connections management.
-    std::vector<std::string> get_connections_to(const std::string& target) const;
-    unsigned int connections_cardinal(const std::vector<std::string>& connections) const;
+    std::vector<std::vector<uint8_t>> get_connections_to(const std::string& target) const;
+    unsigned int connections_cardinal(const std::vector<std::vector<uint8_t>>& connections) const;
 
     // Threading control mechanisms.
     Process* execute();

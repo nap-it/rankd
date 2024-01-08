@@ -6,6 +6,7 @@
 #include <mutex>
 #include <thread>
 
+#include "constants.h"
 #include "structs/bidset.h"
 #include "structs/handler_state.h"
 #include "structs/identifier.h"
@@ -14,18 +15,18 @@
 #include "structs/requesting_capabilities.h"
 #include "structs/reservation.h"
 #include "structs/resources.h"
-#include "structs/timeout_handler_spec.h"
+#include "structs/timeout_handler.h"
 #include "structs/translation_table.h"
 
 class Handler {
 public:
     // Instance handling.
-    Handler(Resources* resources, TranslationTable* translation_table);
-    Handler(Resources* resources, TranslationTable* translation_table, UUIDv4 uuid);
-    Handler(Resources* resources, TranslationTable* translation_table, Header header);
+    Handler(Resources* resources, TranslationTable* translation_table, TimeoutHandler* timeout_handler);
+    Handler(Resources* resources, TranslationTable* translation_table, TimeoutHandler* timeout_handler, UUIDv4 uuid);
+    Handler(Resources* resources, TranslationTable* translation_table, TimeoutHandler* timeout_handler, Header header);
 
     // Handling actions.
-    Handler* handle(const Message& message);
+    Handler* handle(Message* message);
     bool create_translation(const UUIDv4& to, const UUIDv4& from) const;
     const UUIDv4& locate_original_of(const UUIDv4& translated) const;
     bool is_translation_table_empty_for(const UUIDv4& uuid) const;
@@ -34,11 +35,11 @@ public:
     void new_bid(float bid, std::array<uint8_t, 16>& ipv6_address);
     void clear_bids();
     size_t cardinal_bids();
-    std::set<std::string> min_bids() const;
-    bool is_min_bid_unique(const std::set<std::string>& targets) const;
+    std::set<std::vector<uint8_t>> min_bids() const;
+    bool is_min_bid_unique(const std::set<std::vector<uint8_t>>& targets) const;
 
     // Transformation tools.
-    Reservation produce_reservation(const std::vector<RequestingCapabilities>& capabilities) const;
+    void produce_reservation(const RequestingCapabilities& capabilities) const;
 
     // Getters.
     UUIDv4 id() const;
@@ -64,7 +65,7 @@ private:
     std::mutex _bids_locker;
     Resources* _resources;
     Reservation* _reservation;
-    TimeoutHandlerSpec* _timeout_spec;
+    TimeoutHandler* _timeout_handler;
     TranslationTable* _translation_table;
     bool _running = false;
     unsigned int _waiting_time = 1000;

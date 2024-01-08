@@ -7,10 +7,18 @@
 class REF : public Message {
 public:
     // Instance handlers.
+    REF(const UUIDv4& uuid) : Message(Header(MessageType::REF, uuid)) {
+    }
     REF(const Header& header) : Message(header) {
     }
     REF(const Header& header, const char* marshalled_data) : Message(header) {
     }
+
+    // Derived member methods.
+    const char* raw_payload() const override;
+
+    // Destructor.
+    ~REF();
 };
 
 

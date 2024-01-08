@@ -12,8 +12,8 @@ public:
     static TimeoutHandler* get_instance();
 
     // Timeout controls.
-    void initiate_timeout(Handler* handler);
-    void terminate_timeout(Handler* handler);
+    void initiate_timeout(Handler* handler, uint8_t timeout);
+    void terminate_timeout(Handler* handler, uint8_t timeout);
 
     // Threading control mechanisms.
     TimeoutHandler* execute();
