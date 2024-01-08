@@ -3,6 +3,8 @@
 
 #include "structs/messages/message_type.h"
 
+#define RANK_HEADER_LEN 17
+
 class Header {
 public:
     // Instance handling.

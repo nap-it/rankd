@@ -4,26 +4,27 @@ project(rank-prelude
         LANGUAGES CXX C)
 
 set(HEADER_LIST
-    include/structs/capabilities.h
-    include/structs/current_capabilities.h
-    include/structs/handler.h
-    include/structs/handler_state.h
-    include/structs/message.h
-    include/structs/messages/acc.h
-    include/structs/messages/bid.h
-    include/structs/messages/ear.h
-    include/structs/messages/header.h
-    include/structs/messages/mar.h
-    include/structs/messages/message_type.h
-    include/structs/messages/ref.h
-    include/structs/messages/rep.h
-    include/structs/process.h
-    include/structs/requesting_capabilities.h
-    include/structs/reservation.h
-    include/structs/reservation_state.h
-    include/structs/resources.h
-    include/structs/timeout_handler.h
-    include/structs/timeout_handler_spec.h
+        include/constants.h
+        include/structs/capabilities.h
+        include/structs/current_capabilities.h
+        include/structs/handler.h
+        include/structs/handler_state.h
+        include/structs/message.h
+        include/structs/messages/acc.h
+        include/structs/messages/bid.h
+        include/structs/messages/ear.h
+        include/structs/messages/header.h
+        include/structs/messages/mar.h
+        include/structs/messages/message_type.h
+        include/structs/messages/ref.h
+        include/structs/messages/rep.h
+        include/structs/process.h
+        include/structs/requesting_capabilities.h
+        include/structs/reservation.h
+        include/structs/reservation_state.h
+        include/structs/resources.h
+        include/structs/timeout_handler.h
+        include/structs/timeout_handler_spec.h
 )
 
 set(SOURCE_LIST

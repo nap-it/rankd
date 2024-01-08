@@ -6,6 +6,11 @@
 #include <thread>
 #include <vector>
 
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
+#include "constants.h"
 #include "structs/handler_state.h"
 #include "structs/identifier.h"
 #include "structs/messages/header.h"
@@ -45,9 +50,10 @@ public:
     Process* execute();
     Process* stop();
     bool is_running() const;
-
-protected:
     void operator()();
+
+    // Destructor.
+    ~Process();
 
 private:
     Process();
@@ -58,6 +64,10 @@ private:
     unsigned int _waiting_time = 1000;
     bool _running = false;
     std::thread _thread;
+    int _socket;
+    int _socket_options = 1;
+    struct sockaddr_in _address;
+    socklen_t _address_length = sizeof(_address);
 };
 
 

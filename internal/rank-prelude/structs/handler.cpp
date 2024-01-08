@@ -35,9 +35,13 @@ void Handler::new_bid(float bid, std::array<uint8_t, 6>& mac_address) {}
 
 void Handler::new_bid(float bid, std::array<uint8_t, 16>& ipv6_address) {}
 
-void Handler::clear_bids() {}
+void Handler::clear_bids() {
+    _bids.clear();
+}
 
-size_t Handler::cardinal_bids() {}
+size_t Handler::cardinal_bids() {
+    return _bids.size();
+}
 
 std::set<std::string> Handler::min_bids() const {}
 
@@ -45,11 +49,17 @@ bool Handler::is_min_bid_unique(const std::set<std::string>& targets) const {}
 
 Reservation Handler::produce_reservation(const std::vector<RequestingCapabilities>& capabilities) const {}
 
-UUIDv4 Handler::id() const {}
+UUIDv4 Handler::id() const {
+    return _uuid;
+}
 
-HandlerState Handler::state() const {}
+HandlerState Handler::state() const {
+    return _state;
+}
 
-Reservation* Handler::associated_reservation() const {}
+Reservation* Handler::associated_reservation() const {
+    return _reservation;
+}
 
 bool Handler::is_me(std::array<uint8_t, 4>& ipv4_address) {}
 
@@ -57,11 +67,31 @@ bool Handler::is_me(std::array<uint8_t, 6>& mac_address) {}
 
 bool Handler::is_me(std::array<uint8_t, 16>& ipv6_address) {}
 
-Handler* Handler::execute() {}
+Handler* Handler::execute() {
+    if (_running) {
+        return this;
+    }
 
-Handler* Handler::stop() {}
+    _running = true;
+    _thread = std::thread(std::ref(*this));
 
-bool Handler::is_running() const {}
+    return this;
+}
+
+Handler* Handler::stop() {
+    if (!_running) {
+        return this;
+    }
+
+    _running = false;
+    _thread.join();
+
+    return this;
+}
+
+bool Handler::is_running() const {
+    return _running;
+}
 
 void Handler::operator()() {
     // Initialization for the threading mechanism.

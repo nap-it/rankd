@@ -34,7 +34,7 @@ bool Process::store(Handler* handler) {
 void Process::delete_handler(const UUIDv4& id) {
     auto* handler = get_handler(id);
     if (handler == nullptr) {
-        throw std::exception(); // TODO
+        throw std::exception();  // TODO
     }
 
     // Delete the handler as the pointer and the item in the store.
@@ -44,7 +44,7 @@ void Process::delete_handler(const UUIDv4& id) {
 
 Handler* Process::create_handler(const UUIDv4& id) {
     // Create the handler instance with the given UUID.
-    auto* handler = new Handler(id);
+    auto* handler = new Handler(_resources, &_translation_table, id);
 
     // Associate the handler item in the store.
     _store[id] = handler;
@@ -57,7 +57,7 @@ Handler* Process::resume_handler(const UUIDv4& id) {
     // Get handler from the store.
     auto* handler = get_handler(id);
     if (handler == nullptr) {
-        throw std::exception(); // TODO
+        throw std::exception();  // TODO
     }
 
     // Execute the handler's thread.
@@ -71,7 +71,7 @@ Handler* Process::suspend_handler(const UUIDv4& id) {
     // Get handler from the store.
     auto* handler = get_handler(id);
     if (handler == nullptr) {
-        throw std::exception(); // TODO
+        throw std::exception();  // TODO
     }
 
     // Stop the handler's thread.
@@ -98,7 +98,7 @@ HandlerState Process::get_handler_state(const UUIDv4& id) const {
     }
 
     // If the handler does not exist, throw exception.
-    throw std::exception(); // TODO
+    throw std::exception();  // TODO
 }
 
 Header Process::parse_as_message_header(const char* data) {
@@ -113,7 +113,8 @@ UUIDv4 Process::parse_as_message_uuid(const char* data) {
     return parse_as_message_header(data).uuid();
 }
 
-std::vector<std::string> Process::get_connections_to(const std::string& target) const {}
+std::vector<std::string> Process::get_connections_to(const std::string& target) const {
+}
 
 unsigned int Process::connections_cardinal(const std::vector<std::string>& connections) const {
     return connections.size();
@@ -146,19 +147,98 @@ bool Process::is_running() const {
 }
 
 void Process::operator()() {
-    // Initialization for the threading mechanism.
-
     while (_running) {
-        // Tasks to be performed periodically within the thread.
+        // Prepare for a new connection.
+        int new_connection = accept(_socket, (struct sockaddr*) &_address, &_address_length);
+        // If a new connection is wrongly done, simply ignore it.
+        if (new_connection < 0) {
+            continue;
+        }
+
+        // Read the data from the new connection's socket.
+        char raw_data[8192] = {0};
+        ssize_t raw_data_size = read(new_connection, raw_data, 8192 - 1);
+
+        // Get the UUID from the raw data received.
+        auto message_uuid = parse_as_message_uuid(raw_data);
+
+        // Create a meta handler.
+        Handler* handler = nullptr;
+
+        // If UUID is known (A.3)...
+        if (is_uuid_in_store(message_uuid)) {
+            // Check the state of such UUID.
+            auto uuid_state = _store[message_uuid]->state();
+
+            // If state is CLOSED, then simply close the socket and ignore.
+            if (uuid_state == HandlerState::CLOSED) {
+                close(new_connection);
+                continue;
+            } else {
+                // Otherwise, resume handling the request.
+                handler = resume_handler(message_uuid);
+            }
+        } else {
+            // If the UUID is not known in the Store, then create one and save it.
+            handler = create_handler(message_uuid);
+            _store[message_uuid] = handler;
+            handler->execute();
+        }
+
+        // Parse the raw data as a message header and pass a complete message to the handler to handle.
+        Header message_header = parse_as_message_header(raw_data);
+        switch (message_header.type()) {
+            case MessageType::EAR:
+                handler->handle(EAR(message_header, raw_data+RANK_HEADER_LEN));
+                break;
+            case MessageType::MAR:
+                handler->handle(MAR(message_header, raw_data+RANK_HEADER_LEN));
+                break;
+            case MessageType::BID:
+                handler->handle(BID(message_header, raw_data+RANK_HEADER_LEN));
+                break;
+            case MessageType::ACC:
+                handler->handle(ACC(message_header));
+                break;
+            case MessageType::REF:
+                handler->handle(REF(message_header));
+                break;
+            case MessageType::REP:
+                handler->handle(REP(message_header, raw_data+RANK_HEADER_LEN));
+                break;
+        }
+
+        // Close the new connection socket as data is already retrieved.
+        close(new_connection);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(_waiting_time));
     }
 
-    // Closing data before thread death.
+    // Close the base socket.
+    close(_socket);
+}
 
+Process::~Process() {
+    // Stop running the base thread.
+    stop();
 }
 
 Process::Process() {
-    // Initialization process.
-
+    // Initialize the socket.
+    _socket = socket(AF_INET, SOCK_STREAM, 0);  // TODO Handle also when AF_LOCAL or AF_INET6.
+    if (_socket < 0) {
+        throw std::exception();  // TODO
+    }
+    if (setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &_socket_options, sizeof(_socket_options))) {
+        throw std::exception();  // TODO
+    }
+    _address.sin_family = AF_INET;
+    _address.sin_addr.s_addr = INADDR_ANY;
+    _address.sin_port = htons(RANK_PORT);
+    if (bind(_socket, (struct sockaddr*) &_address, sizeof(_address)) < 0) {
+        throw std::exception();  // TODO
+    }
+    if (listen(_socket, 3) < 0) {
+        throw std::exception();  // TODO
+    }
 }

@@ -54,8 +54,6 @@ public:
     Handler* execute();
     Handler* stop();
     bool is_running() const;
-
-protected:
     void operator()();
 
 private:
