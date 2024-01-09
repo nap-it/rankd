@@ -8,6 +8,15 @@
 #include "structs/messages/header.h"
 #include "structs/requesting_capabilities.h"
 
+#define RANK_MAR_MESSAGE_LEN_LT_CODE_0 0
+#define RANK_MAR_MESSAGE_LEN_LT_CODE_1 1
+#define RANK_MAR_MESSAGE_LEN_LT_IP4 2
+#define RANK_MAR_MESSAGE_LEN_LT_MAC 3
+#define RANK_MAR_MESSAGE_LEN_LT_IP6 4
+#define RANK_MAR_MESSAGE_LEN_LT_DDS 5
+#define RANK_MAR_MESSAGE_LEN_LT_CODE_6 6
+#define RANK_MAR_MESSAGE_LEN_LT_CODE_7 7
+
 class MAR : public Message {
 public:
     // Instance handlers.

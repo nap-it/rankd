@@ -47,7 +47,7 @@ public:
     bool is_uuid_in_store(const UUIDv4& id) const;  // From process to handler.
 
     // Transformation tools.
-    void produce_reservation(const RequestingCapabilities& capabilities) const;
+    void produce_reservation(const RequestingCapabilities& capabilities, uint8_t priority, const std::vector<uint8_t>& listener);
 
     // Getters.
     UUIDv4 id() const;

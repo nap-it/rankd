@@ -24,7 +24,7 @@ public:
     void header(const char* marshalled_data);
 
     // Destructor.
-    ~Message();
+    virtual ~Message();
 private:
     size_t _length;
     Header _header;

@@ -17,6 +17,9 @@ public:
     uint8_t listener_length() const;
     uint8_t* listener() const;
 
+    // Setters.
+    Reservation* mark_listener(const std::vector<uint8_t>& listener);
+
     // State changers.
     void wait_for_sacrifice();
     void reserve();

@@ -112,7 +112,7 @@ size_t Handler::cardinal_bids() {
 
 std::set<std::vector<uint8_t>> Handler::min_bids() {
     // Copy the bids set to a safe-to-modify variable.
-    BidSet bids_copy{};
+    BidSet bids_copy {};
     {
         std::lock_guard<std::mutex> lock(_bids_locker);
         bids_copy = _bids;
@@ -124,7 +124,7 @@ std::set<std::vector<uint8_t>> Handler::min_bids() {
     auto minimum_bid = minimum_bid_item->first;
 
     // Create the set to be returned.
-    std::set<std::vector<uint8_t>> minimum_bids{};
+    std::set<std::vector<uint8_t>> minimum_bids {};
 
     // Iterate over all the given bids and attempt to find smaller than current minimum and all equal bids.
     for (const auto& bid : bids_copy) {
@@ -158,7 +158,13 @@ bool Handler::is_uuid_in_store(const UUIDv4& id) const {
     return _store->contains(id);
 }
 
-void Handler::produce_reservation(const RequestingCapabilities& capabilities) const {
+void Handler::produce_reservation(const RequestingCapabilities& capabilities, uint8_t priority,
+                                  const std::vector<uint8_t>& listener) {
+    // Create a new reservation object via a pointer.
+    _reservation = new Reservation(capabilities, priority);
+
+    // Mark listener as the listener of this reservation.
+    _reservation->mark_listener(listener);
 }
 
 UUIDv4 Handler::id() const {
@@ -232,6 +238,10 @@ void Handler::operator()() {
                                 ip4_address[byte] = listener_field[byte];
                             }
                             i_am_listener = is_me(ip4_address);
+
+                            // Update inner reservation with the requirements of the message.
+                            produce_reservation(ear_message->requirements(), ear_message->priority(),
+                                                std::vector<uint8_t>(ip4_address.begin(), ip4_address.end()));
                         } break;
                         case RANK_EAR_MESSAGE_LEN_LT_MAC: {
                             std::array<uint8_t, 6> mac_address {};
@@ -239,6 +249,10 @@ void Handler::operator()() {
                                 mac_address[byte] = listener_field[byte];
                             }
                             i_am_listener = is_me(mac_address);
+
+                            // Update inner reservation with the requirements of the message.
+                            produce_reservation(ear_message->requirements(), ear_message->priority(),
+                                                std::vector<uint8_t>(mac_address.begin(), mac_address.end()));
                         } break;
                         case RANK_EAR_MESSAGE_LEN_LT_IP6: {
                             std::array<uint8_t, 16> ip6_address {};
@@ -246,13 +260,15 @@ void Handler::operator()() {
                                 ip6_address[byte] = listener_field[byte];
                             }
                             i_am_listener = is_me(ip6_address);
+
+                            // Update inner reservation with the requirements of the message.
+                            produce_reservation(ear_message->requirements(), ear_message->priority(),
+                                                std::vector<uint8_t>(ip6_address.begin(), ip6_address.end()));
                         } break;
                         default:
                             throw std::exception();  // TODO
                     }
 
-                    // Update inner reservation with the requirements of the message.
-                    produce_reservation(ear_message->requirements());
                     if (i_am_listener) {
                         // (B.1.1.1) Can R be performed with priority p?
                         auto* position = _resources->available_for_performance(*_reservation, ear_message->priority());
@@ -378,7 +394,42 @@ void Handler::operator()() {
                     // Change state to AUCTION_BIDDING.
                     _state = HandlerState::AUCTION_BIDDING;
 
-                    produce_reservation(mar_message->requirements());
+                    auto listener_field = mar_message->listener();
+                    auto listener_field_length = mar_message->listener_length();
+                    switch (listener_field_length) {
+                        case RANK_MAR_MESSAGE_LEN_LT_IP4: {
+                            std::array<uint8_t, 4> ip4_address {};
+                            for (int byte = 0; byte != 4; byte++) {
+                                ip4_address[byte] = listener_field[byte];
+                            }
+
+                            // Update inner reservation with the requirements of the message.
+                            produce_reservation(mar_message->requirements(), mar_message->priority(),
+                                                std::vector<uint8_t>(ip4_address.begin(), ip4_address.end()));
+                        } break;
+                        case RANK_MAR_MESSAGE_LEN_LT_MAC: {
+                            std::array<uint8_t, 6> mac_address {};
+                            for (int byte = 0; byte != 6; byte++) {
+                                mac_address[byte] = listener_field[byte];
+                            }
+
+                            // Update inner reservation with the requirements of the message.
+                            produce_reservation(mar_message->requirements(), mar_message->priority(),
+                                                std::vector<uint8_t>(mac_address.begin(), mac_address.end()));
+                        } break;
+                        case RANK_MAR_MESSAGE_LEN_LT_IP6: {
+                            std::array<uint8_t, 16> ip6_address {};
+                            for (int byte = 0; byte != 16; byte++) {
+                                ip6_address[byte] = listener_field[byte];
+                            }
+
+                            // Update inner reservation with the requirements of the message.
+                            produce_reservation(mar_message->requirements(), mar_message->priority(),
+                                                std::vector<uint8_t>(ip6_address.begin(), ip6_address.end()));
+                        } break;
+                        default:
+                            throw std::exception();  // TODO
+                    }
 
                     // (C.1) Can R be performed with priority p?
                     auto* position = _resources->available_for_performance(*_reservation, mar_message->priority());
