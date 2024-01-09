@@ -6,6 +6,6 @@
 #include <string>
 #include <vector>
 
-typedef std::set<std::pair<uint8_t, std::vector<uint8_t>>> BidSet;
+typedef std::set<std::pair<float, std::vector<uint8_t>>> BidSet;
 
 #endif  // RANK_PRELUDE_BIDSET_H

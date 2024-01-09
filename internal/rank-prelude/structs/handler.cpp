@@ -85,12 +85,21 @@ bool Handler::is_translation_table_empty() {
 }
 
 void Handler::new_bid(float bid, std::array<uint8_t, 4>& ipv4_address) {
+    // Safely add the bid to the set of bids.
+    std::lock_guard<std::mutex> lock(_bids_locker);
+    _bids.insert(std::make_pair(bid, std::vector<uint8_t>(ipv4_address.begin(), ipv4_address.end())));
 }
 
 void Handler::new_bid(float bid, std::array<uint8_t, 6>& mac_address) {
+    // Safely add the bid to the set of bids.
+    std::lock_guard<std::mutex> lock(_bids_locker);
+    _bids.insert(std::make_pair(bid, std::vector<uint8_t>(mac_address.begin(), mac_address.end())));
 }
 
 void Handler::new_bid(float bid, std::array<uint8_t, 16>& ipv6_address) {
+    // Safely add the bid to the set of bids.
+    std::lock_guard<std::mutex> lock(_bids_locker);
+    _bids.insert(std::make_pair(bid, std::vector<uint8_t>(ipv6_address.begin(), ipv6_address.end())));
 }
 
 void Handler::clear_bids() {
@@ -101,10 +110,39 @@ size_t Handler::cardinal_bids() {
     return _bids.size();
 }
 
-std::set<std::vector<uint8_t>> Handler::min_bids() const {
+std::set<std::vector<uint8_t>> Handler::min_bids() {
+    // Copy the bids set to a safe-to-modify variable.
+    BidSet bids_copy{};
+    {
+        std::lock_guard<std::mutex> lock(_bids_locker);
+        bids_copy = _bids;
+    }
+
+    // Assume the first item in bids is the minimum one.
+    auto minimum_bid_item = bids_copy.begin();
+    bids_copy.erase(minimum_bid_item);
+    auto minimum_bid = minimum_bid_item->first;
+
+    // Create the set to be returned.
+    std::set<std::vector<uint8_t>> minimum_bids{};
+
+    // Iterate over all the given bids and attempt to find smaller than current minimum and all equal bids.
+    for (const auto& bid : bids_copy) {
+        if (bid.first < minimum_bid) {
+            minimum_bid = bid.first;
+            minimum_bids.clear();
+            minimum_bids.insert(bid.second);
+        } else if (bid.first == minimum_bid) {
+            minimum_bids.insert(bid.second);
+        }
+    }
+
+    // Return the minimum bids new targets set.
+    return minimum_bids;
 }
 
 bool Handler::is_min_bid_unique(const std::set<std::vector<uint8_t>>& targets) const {
+    return targets.size() == 1;
 }
 
 bool Handler::is_bid_in_store(const UUIDv4& id) const {
@@ -300,7 +338,7 @@ void Handler::operator()() {
                                         _state = HandlerState::PRE_RESERVED;
 
                                         // (B.1.2.2.2.2) Begin timer for EAR timeout.
-                                        _timeout_handler->initiate_timeout(std::ref(*this), RANK_EAR_TO_EAR_TIMEOUT);
+                                        _timeout_handler->initiate_timeout(this, RANK_EAR_TO_EAR_TIMEOUT);
                                     } break;
                                     default: {
                                         // If more than one connection is found...
@@ -317,7 +355,7 @@ void Handler::operator()() {
                                         _state = HandlerState::PRE_RESERVED;
 
                                         // (B.1.2.2.1.2) Begin timer for MAR timeout.
-                                        _timeout_handler->initiate_timeout(std::ref(*this), RANK_MAR_TO_MAR_TIMEOUT);
+                                        _timeout_handler->initiate_timeout(this, RANK_MAR_TO_MAR_TIMEOUT);
                                     } break;
                                 }
                             } else {
@@ -359,7 +397,7 @@ void Handler::operator()() {
                         _resources->mark_pre_reservation(_reservation, _uuid);
 
                         // (C.1.2.4) Begin timer for BID timeout.
-                        _timeout_handler->initiate_timeout(std::ref(*this), RANK_BID_TO_BID_TIMEOUT);
+                        _timeout_handler->initiate_timeout(this, RANK_BID_TO_BID_TIMEOUT);
                     } else {
                         // (C.1.1.1) Create zeroed-bid message and send it.
                         BID bid_message = BID(_uuid, 0);
@@ -405,7 +443,7 @@ void Handler::operator()() {
                             _state = HandlerState::PRE_RESERVED;
 
                             // (D.3.2.1.1.2) Begin timer for EAR timeout.
-                            _timeout_handler->initiate_timeout(std::ref(*this), RANK_EAR_TO_EAR_TIMEOUT);
+                            _timeout_handler->initiate_timeout(this, RANK_EAR_TO_EAR_TIMEOUT);
 
                             // (D.3.2.1.1.3) Delete UUID from the Store.
                             stop();
@@ -416,7 +454,6 @@ void Handler::operator()() {
                                 // (D.3.2.1.2.1) Create a new UUID for each min(B) node and (D.3.2.1.2.2) Save
                                 // translations UUID to UUID* in TranslationTable.
                                 auto new_uuid = create_translation(_uuid);
-                                _translation_table[new_uuid] = _uuid;
 
                                 // (D.3.2.1.2.3) Create EAR message and send it to each min(B) node, with UUID*.
                                 EAR ear_message = EAR(new_uuid, _reservation->priority(),
@@ -429,7 +466,7 @@ void Handler::operator()() {
                                 _state = HandlerState::PRE_RESERVED;
 
                                 // (D.3.2.1.2.4) Begin timer for EAR timeout.
-                                _timeout_handler->initiate_timeout(std::ref(*this), RANK_EAR_TO_EAR_TIMEOUT);
+                                _timeout_handler->initiate_timeout(this, RANK_EAR_TO_EAR_TIMEOUT);
 
                                 // (D.3.2.1.2.5) Delete UUID from the Store.
                                 stop();
@@ -557,7 +594,7 @@ void Handler::operator()() {
                             REP new_rep_message = REP(_uuid, rep_message->listener_length(), rep_message->listener());
 
                             // (G.1.2.1.2.2) Begin timer for REP timeout.
-                            _timeout_handler->initiate_timeout(std::ref(*this), RANK_REP_TO_REP_TIMEOUT);
+                            _timeout_handler->initiate_timeout(this, RANK_REP_TO_REP_TIMEOUT);
 
                             // (G.1.2.1.2.3) Is UUID in the TranslationTable?
                             UUIDv4 original_uuid = _uuid;
