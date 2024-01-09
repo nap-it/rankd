@@ -274,7 +274,7 @@ void Handler::operator()() {
                         auto* position = _resources->available_for_performance(*_reservation, ear_message->priority());
                         if (position != nullptr) {
                             // (B.1.1.1.1.1) Reserve R with UUID in Store.
-                            _resources->mark_reservation(_reservation, ear_message->uuid());
+                            _resources->mark_reservation(_reservation);
 
                             // (B.1.1.1.1.2) Create an ACC message and send it.
                             ACC acc_message = ACC(_uuid);
@@ -302,7 +302,7 @@ void Handler::operator()() {
                                     _resources->available_for_performance(*_reservation, ear_message->priority());
                             if (position != nullptr) {
                                 // (B.1.2.1.1.2) Pre-reserve R with UUID in Store.
-                                _resources->mark_pre_reservation(_reservation, ear_message->uuid());
+                                _resources->mark_pre_reservation(_reservation);
 
                                 // (B.1.2.1.2.1) Get connections towards listener(s).
                                 std::vector<uint8_t> target {};
@@ -362,7 +362,7 @@ void Handler::operator()() {
                                         for (const auto& intermediate : connections_to_target) {
                                             MAR mar_message =
                                                     MAR(_uuid, ear_message->priority(), ear_message->listener_length(),
-                                                        intermediate.data(), ear_message->payload_length(),
+                                                        const_cast<uint8_t*>(intermediate.data()), ear_message->payload_length(),
                                                         ear_message->payload());
                                             // TODO Send message through process-created socket?
                                         }
@@ -445,7 +445,7 @@ void Handler::operator()() {
                         _state = HandlerState::PRE_RESERVED;
 
                         // (C.1.2.3) Pre-reserve R with UUID in the store.
-                        _resources->mark_pre_reservation(_reservation, _uuid);
+                        _resources->mark_pre_reservation(_reservation);
 
                         // (C.1.2.4) Begin timer for BID timeout.
                         _timeout_handler->initiate_timeout(this, RANK_BID_TO_BID_TIMEOUT);
@@ -530,7 +530,7 @@ void Handler::operator()() {
                     auto acc_message = dynamic_cast<ACC*>(_message);
 
                     // (E.1) Set pre-reservation as reserved on UUID in Store.
-                    _resources->mark_reservation(_reservation, _uuid);
+                    _resources->mark_reservation(_reservation);
 
                     // (E.2) Is UUID in the TranslationTable?
                     if (!is_translation_table_empty_for(_uuid)) {

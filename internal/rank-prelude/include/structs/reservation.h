@@ -1,6 +1,8 @@
 #ifndef RANK_PRELUDE_RESERVATION_H
 #define RANK_PRELUDE_RESERVATION_H
 
+#include <cassert>
+
 #include "structs/identifier.h"
 #include "structs/requesting_capabilities.h"
 #include "structs/reservation_state.h"
@@ -8,6 +10,7 @@
 class Reservation {
 public:
     // Instance handling.
+    Reservation(const Reservation& reservation);
     Reservation(const RequestingCapabilities& capabilities, uint8_t priority);
 
     // Getters.
@@ -16,6 +19,7 @@ public:
     ReservationState state() const;
     uint8_t listener_length() const;
     uint8_t* listener() const;
+    UUIDv4 uuid() const;
 
     // Setters.
     Reservation* mark_listener(const std::vector<uint8_t>& listener);
@@ -28,10 +32,13 @@ public:
     void replenish();
     void mark_pre_reserved();
     void mark_reserved();
-    void mark_virtually_pre_reserved();
 
     // Operators.
-    bool operator<(const Reservation& reservation);
+    bool operator<(const Reservation& reservation) const;
+    bool operator==(const Reservation& reservation) const;
+
+    // Destructor.
+    ~Reservation();
 private:
     ReservationState _state;
     uint8_t _priority;

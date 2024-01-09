@@ -1,10 +1,13 @@
 #ifndef RANK_PRELUDE_RESOURCES_H
 #define RANK_PRELUDE_RESOURCES_H
 
+#include <algorithm>
 #include <mutex>
 #include <set>
 #include <thread>
 #include <vector>
+
+#include "constants.h"
 
 #include "structs/current_capabilities.h"
 #include "structs/identifier.h"
@@ -20,11 +23,14 @@ public:
     float estimate_bid(const RequestingCapabilities& capabilities) const;
     float estimate_bid(const Reservation& reservation) const;
 
+    // Resource estimation.
+    float estimate_current_resources_on_requirements(const RequestingCapabilities& requirements) const;
+
     // Reservation handling.
     Reservation* available_for_performance(const Reservation& statement, uint8_t priority);
-    Resources* replenish_reservation(Reservation* reservation, const UUIDv4& uuid);
-    Resources* mark_reservation(Reservation* reservation, const UUIDv4& uuid);
-    Resources* mark_pre_reservation(Reservation* reservation, const UUIDv4& uuid);
+    Resources* replenish_reservation(Reservation* reservation);
+    Resources* mark_reservation(Reservation* reservation);
+    Resources* mark_pre_reservation(Reservation* reservation);
     std::set<Reservation> reservations() const;
     size_t reservations_size() const;
 

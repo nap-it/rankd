@@ -17,6 +17,7 @@ public:
 
     // Operators.
     bool operator<(const Capabilities& prototype) const;
+    bool operator==(const Capabilities& prototype) const;
 private:
     std::optional<double> _bandwidth;
 };
