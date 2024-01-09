@@ -5,19 +5,6 @@ Process* Process::get_instance() {
     return instance;
 }
 
-bool Process::is_bid_in_store(const UUIDv4& id) const {
-    // If the store does not have the UUID, return false; otherwise check if pre-reserved.
-    if (!is_uuid_in_store(id)) {
-        return false;
-    } else {
-        return _store.at(id)->state() == HandlerState::PRE_RESERVED;
-    }
-}
-
-bool Process::is_uuid_in_store(const UUIDv4& id) const {
-    return _store.contains(id);
-}
-
 bool Process::store(Handler* handler) {
     // If the store already contains this handler UUID, then return false.
     if (is_uuid_in_store(handler->id())) {
@@ -25,7 +12,10 @@ bool Process::store(Handler* handler) {
     }
 
     // Save the handler in the store.
-    _store[handler->id()] = handler;
+    {
+        std::lock_guard<std::mutex> lock(_store_locker);
+        _store[handler->id()] = handler;
+    }
 
     // Return true as it was seen for the first time now.
     return true;
@@ -39,15 +29,20 @@ void Process::delete_handler(const UUIDv4& id) {
 
     // Delete the handler as the pointer and the item in the store.
     delete handler;
+    std::lock_guard<std::mutex> lock(_store_locker);
     _store.erase(id);
 }
 
 Handler* Process::create_handler(const UUIDv4& id) {
     // Create the handler instance with the given UUID.
-    auto* handler = new Handler(_resources, &_translation_table, id);
+    auto* handler = new Handler(_resources, &_translation_table, &_translation_table_locker, _timeout_handler, &_store,
+                                &_store_locker, id);
 
     // Associate the handler item in the store.
-    _store[id] = handler;
+    {
+        std::lock_guard<std::mutex> lock(_store_locker);
+        _store[id] = handler;
+    }
 
     // Return reference from the handler within the context of the store.
     return handler;
@@ -81,16 +76,17 @@ Handler* Process::suspend_handler(const UUIDv4& id) {
     return handler;
 }
 
-Handler* Process::get_handler(const UUIDv4& id) const {
+Handler* Process::get_handler(const UUIDv4& id) {
     // If the store has the UUID, then return its handler; otherwise nullptr.
     if (is_uuid_in_store(id)) {
+        std::lock_guard<std::mutex> lock(_store_locker);
         return _store.at(id);
     } else {
         return nullptr;
     }
 }
 
-HandlerState Process::get_handler_state(const UUIDv4& id) const {
+HandlerState Process::get_handler_state(const UUIDv4& id) {
     // Get the handler with the given UUID.
     auto* handler = get_handler(id);
     if (handler != nullptr) {
@@ -99,6 +95,11 @@ HandlerState Process::get_handler_state(const UUIDv4& id) const {
 
     // If the handler does not exist, throw exception.
     throw std::exception();  // TODO
+}
+
+bool Process::is_uuid_in_store(const UUIDv4& id) {
+    std::lock_guard<std::mutex> lock(_store_locker);
+    return _store.contains(id);
 }
 
 Header Process::parse_as_message_header(const char* data) {
@@ -111,13 +112,6 @@ MessageType Process::parse_as_message_type(const char* data) {
 
 UUIDv4 Process::parse_as_message_uuid(const char* data) {
     return parse_as_message_header(data).uuid();
-}
-
-std::vector<std::vector<uint8_t>> Process::get_connections_to(const std::string& target) const {
-}
-
-unsigned int Process::connections_cardinal(const std::vector<std::vector<uint8_t>>& connections) const {
-    return connections.size();
 }
 
 Process* Process::execute() {
@@ -189,13 +183,13 @@ void Process::operator()() {
         Header message_header = parse_as_message_header(raw_data);
         switch (message_header.type()) {
             case MessageType::EAR:
-                handler->handle(new EAR(message_header, raw_data+RANK_HEADER_LEN));
+                handler->handle(new EAR(message_header, raw_data + RANK_HEADER_LEN));
                 break;
             case MessageType::MAR:
-                handler->handle(new MAR(message_header, raw_data+RANK_HEADER_LEN));
+                handler->handle(new MAR(message_header, raw_data + RANK_HEADER_LEN));
                 break;
             case MessageType::BID:
-                handler->handle(new BID(message_header, raw_data+RANK_HEADER_LEN));
+                handler->handle(new BID(message_header, raw_data + RANK_HEADER_LEN));
                 break;
             case MessageType::ACC:
                 handler->handle(new ACC(message_header));
@@ -204,7 +198,7 @@ void Process::operator()() {
                 handler->handle(new REF(message_header));
                 break;
             case MessageType::REP:
-                handler->handle(new REP(message_header, raw_data+RANK_HEADER_LEN));
+                handler->handle(new REP(message_header, raw_data + RANK_HEADER_LEN));
                 break;
         }
 
@@ -224,6 +218,10 @@ Process::~Process() {
 }
 
 Process::Process() {
+    // Initialize the inner structures.
+    _resources = Resources::get_instance();
+    _timeout_handler = TimeoutHandler::get_instance();
+
     // Initialize the socket.
     _socket = socket(AF_INET, SOCK_STREAM, 0);  // TODO Handle also when AF_LOCAL or AF_INET6.
     if (_socket < 0) {

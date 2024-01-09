@@ -10,16 +10,20 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+class Handler;
+
 #include "constants.h"
+#include "structs/store.h"
+#include "structs/timeout_table.h"
+#include "structs/translation_table.h"
+
+#include "structs/handler.h"
 #include "structs/handler_state.h"
 #include "structs/identifier.h"
 #include "structs/messages/header.h"
 #include "structs/messages/message_type.h"
 #include "structs/resources.h"
-#include "structs/store.h"
 #include "structs/timeout_handler.h"
-#include "structs/timeout_table.h"
-#include "translation_table.h"
 
 class Process {
 public:
@@ -27,24 +31,19 @@ public:
     static Process* get_instance();
 
     // Store and handlers management.
-    bool is_bid_in_store(const UUIDv4& id) const;
-    bool is_uuid_in_store(const UUIDv4& id) const;
     bool store(Handler* handler);
     void delete_handler(const UUIDv4& id);
     Handler* create_handler(const UUIDv4& id);
     Handler* resume_handler(const UUIDv4& id);
     Handler* suspend_handler(const UUIDv4& id);
-    Handler* get_handler(const UUIDv4& id) const;
-    HandlerState get_handler_state(const UUIDv4& id) const;
+    Handler* get_handler(const UUIDv4& id);
+    HandlerState get_handler_state(const UUIDv4& id);
+    bool is_uuid_in_store(const UUIDv4& uuid);
 
     // Receiving data parsing.
     Header parse_as_message_header(const char* data);
     MessageType parse_as_message_type(const char* data);
     UUIDv4 parse_as_message_uuid(const char* data);
-
-    // Connections management.
-    std::vector<std::vector<uint8_t>> get_connections_to(const std::string& target) const;
-    unsigned int connections_cardinal(const std::vector<std::vector<uint8_t>>& connections) const;
 
     // Threading control mechanisms.
     Process* execute();
@@ -60,13 +59,15 @@ private:
     Resources* _resources;
     TimeoutHandler* _timeout_handler;
     Store _store;
+    std::mutex _store_locker;
     TranslationTable _translation_table;
+    std::mutex _translation_table_locker;
     unsigned int _waiting_time = 1000;
     bool _running = false;
     std::thread _thread;
     int _socket;
     int _socket_options = 1;
-    struct sockaddr_in _address;
+    struct sockaddr_in _address{};
     socklen_t _address_length = sizeof(_address);
 };
 

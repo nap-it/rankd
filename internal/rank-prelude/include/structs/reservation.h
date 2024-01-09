@@ -12,8 +12,10 @@ public:
 
     // Getters.
     uint8_t priority() const;
-    RequestingCapabilities capabilities() const;
+    RequestingCapabilities requirements() const;
     ReservationState state() const;
+    uint8_t listener_length() const;
+    uint8_t* listener() const;
 
     // State changers.
     void wait_for_sacrifice();
@@ -32,6 +34,8 @@ private:
     uint8_t _priority;
     RequestingCapabilities _capabilities;
     UUIDv4 _uuid;
+    uint8_t _listener_length;
+    uint8_t* _listener;
 };
 
 

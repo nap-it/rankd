@@ -8,6 +8,11 @@
 
 #include "constants.h"
 #include "structs/bidset.h"
+#include "structs/store.h"
+#include "structs/translation_table.h"
+
+class TimeoutHandler;
+
 #include "structs/handler_state.h"
 #include "structs/identifier.h"
 #include "structs/message.h"
@@ -16,20 +21,21 @@
 #include "structs/reservation.h"
 #include "structs/resources.h"
 #include "structs/timeout_handler.h"
-#include "structs/translation_table.h"
 
 class Handler {
 public:
     // Instance handling.
-    Handler(Resources* resources, TranslationTable* translation_table, TimeoutHandler* timeout_handler);
-    Handler(Resources* resources, TranslationTable* translation_table, TimeoutHandler* timeout_handler, UUIDv4 uuid);
-    Handler(Resources* resources, TranslationTable* translation_table, TimeoutHandler* timeout_handler, Header header);
+    Handler(Resources* resources, TranslationTable* translation_table, std::mutex* translation_table_mutex,
+            TimeoutHandler* timeout_handler, Store* store, std::mutex* store_mutex, const UUIDv4& uuid);
+    Handler(Resources* resources, TranslationTable* translation_table, std::mutex* translation_table_mutex,
+            TimeoutHandler* timeout_handler, Store* store, std::mutex* store_mutex, const Header& header);
 
     // Handling actions.
     Handler* handle(Message* message);
-    bool create_translation(const UUIDv4& to, const UUIDv4& from) const;
-    const UUIDv4& locate_original_of(const UUIDv4& translated) const;
-    bool is_translation_table_empty_for(const UUIDv4& uuid) const;
+    UUIDv4 create_translation(const UUIDv4& original);
+    UUIDv4 locate_original_of(const UUIDv4& translated);
+    bool is_translation_table_empty_for(const UUIDv4& uuid);
+    bool is_translation_table_empty();
     void new_bid(float bid, std::array<uint8_t, 4>& ipv4_address);
     void new_bid(float bid, std::array<uint8_t, 6>& mac_address);
     void new_bid(float bid, std::array<uint8_t, 16>& ipv6_address);
@@ -37,6 +43,8 @@ public:
     size_t cardinal_bids();
     std::set<std::vector<uint8_t>> min_bids() const;
     bool is_min_bid_unique(const std::set<std::vector<uint8_t>>& targets) const;
+    bool is_bid_in_store(const UUIDv4& id) const;   // From process to handler.
+    bool is_uuid_in_store(const UUIDv4& id) const;  // From process to handler.
 
     // Transformation tools.
     void produce_reservation(const RequestingCapabilities& capabilities) const;
@@ -59,14 +67,17 @@ public:
 
 private:
     UUIDv4 _uuid;
-    Message* _message;
+    Message* _message = nullptr;
     HandlerState _state;
     BidSet _bids;
     std::mutex _bids_locker;
-    Resources* _resources;
-    Reservation* _reservation;
-    TimeoutHandler* _timeout_handler;
-    TranslationTable* _translation_table;
+    Resources* _resources = nullptr;
+    Reservation* _reservation = nullptr;
+    Store* _store = nullptr;
+    std::mutex* _store_locker = nullptr;
+    TimeoutHandler* _timeout_handler = nullptr;
+    TranslationTable* _translation_table = nullptr;
+    std::mutex* _translation_table_locker = nullptr;
     bool _running = false;
     unsigned int _waiting_time = 1000;
     std::thread _thread;

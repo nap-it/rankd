@@ -4,7 +4,8 @@
 #include <map>
 
 #include "structs/identifier.h"
-#include "structs/handler.h"
+
+class Handler;
 
 typedef std::map<UUIDv4, Handler*> Store;
 

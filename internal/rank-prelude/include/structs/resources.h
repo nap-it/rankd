@@ -17,23 +17,29 @@ public:
     static Resources* get_instance();
 
     // Bid estimation.
-    float estimate_bid(const std::vector<RequestingCapabilities>& capabilities) const;
+    float estimate_bid(const RequestingCapabilities& capabilities) const;
     float estimate_bid(const Reservation& reservation) const;
 
     // Reservation handling.
     Reservation* available_for_performance(const Reservation& statement, uint8_t priority);
     Resources* replenish_reservation(Reservation* reservation, const UUIDv4& uuid);
     Resources* mark_reservation(Reservation* reservation, const UUIDv4& uuid);
+    Resources* mark_pre_reservation(Reservation* reservation, const UUIDv4& uuid);
     std::set<Reservation> reservations() const;
     size_t reservations_size() const;
+
+    // Connections management. From Process to Resources.
+    std::vector<std::vector<uint8_t>> get_connections_to(const std::string& target) const;
+    unsigned int connections_cardinal(const std::vector<std::vector<uint8_t>>& connections) const;
 
     // Threading control mechanisms.
     Resources* execute();
     Resources* stop();
     bool is_running() const;
-
-protected:
     void operator()();
+
+    // Destructor.
+    ~Resources();
 
 private:
     Resources();

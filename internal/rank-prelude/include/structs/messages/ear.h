@@ -35,6 +35,8 @@ public:
 
     // Marshalling features.
     RequestingCapabilities requirements() const;
+    static uint16_t make_payload_length(const RequestingCapabilities& capabilities);
+    static uint8_t* make_payload(const RequestingCapabilities& capabilities);
 
     // Parsing tools.
     uint8_t expand_listener_length(uint8_t length) const;

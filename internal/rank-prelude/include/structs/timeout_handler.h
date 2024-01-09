@@ -19,8 +19,11 @@ public:
     TimeoutHandler* execute();
     TimeoutHandler* stop();
     bool is_running() const;
-protected:
     void operator()();
+
+    // Destructor.
+    ~TimeoutHandler();
+
 private:
     TimeoutHandler();
     TimeoutTable _timeout_table;

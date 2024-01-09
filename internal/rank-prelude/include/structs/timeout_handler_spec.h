@@ -12,7 +12,6 @@ public:
     TimeoutHandlerSpec* execute();
     TimeoutHandlerSpec* stop();
     bool is_running() const;
-protected:
     void operator()();
 private:
     TimeoutHandlerSpec();

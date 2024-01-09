@@ -1,21 +1,38 @@
 #include "structs/handler.h"
 
-Handler::Handler(Resources* resources, TranslationTable* translation_table, TimeoutHandler* timeout_handler) {
+Handler::Handler(Resources* resources, TranslationTable* translation_table, std::mutex* translation_table_mutex,
+                 TimeoutHandler* timeout_handler, Store* store, std::mutex* store_mutex, const UUIDv4& uuid) {
+    // Update all attributes from caller.
+    _uuid = uuid;
+    _bids = {};
+
+    // Update inner structures from caller.
+    _resources = resources;
+    _store = store;
+    _store_locker = store_mutex;
+    _translation_table = translation_table;
+    _translation_table_locker = translation_table_mutex;
+    _timeout_handler = timeout_handler;
+
+    // Initialize other attributes.
+    _reservation = nullptr;
+
+    // Change handler's state to Ready.
+    _state = HandlerState::READY;
 }
 
-Handler::Handler(Resources* resources, TranslationTable* translation_table, TimeoutHandler* timeout_handler,
-                 UUIDv4 uuid) {
-}
-
-Handler::Handler(Resources* resources, TranslationTable* translation_table, TimeoutHandler* timeout_handler,
-                 Header header) {
+Handler::Handler(Resources* resources, TranslationTable* translation_table, std::mutex* translation_table_mutex,
+                 TimeoutHandler* timeout_handler, Store* store, std::mutex* store_mutex, const Header& header) {
     // Update all attributes from caller.
     _uuid = header.uuid();
     _bids = {};
 
     // Update inner structures from caller.
     _resources = resources;
+    _store = store;
+    _store_locker = store_mutex;
     _translation_table = translation_table;
+    _translation_table_locker = translation_table_mutex;
     _timeout_handler = timeout_handler;
 
     // Initialize other attributes.
@@ -28,15 +45,43 @@ Handler::Handler(Resources* resources, TranslationTable* translation_table, Time
 Handler* Handler::handle(Message* message) {
     // Update the message pointer.
     _message = message;
+
+    return this;
 }
 
-bool Handler::create_translation(const UUIDv4& to, const UUIDv4& from) const {
+UUIDv4 Handler::create_translation(const UUIDv4& original) {
+    // Generate a new UUID.
+    UUIDv4 new_uuid = generate_new_uuid();
+
+    // Save translation in the TranslationTable.
+    {
+        std::lock_guard<std::mutex> lock(*_translation_table_locker);
+        _translation_table->insert({new_uuid, original});
+    }
+
+    // Return the new UUID.
+    return new_uuid;
 }
 
-const UUIDv4& Handler::locate_original_of(const UUIDv4& translated) const {
+UUIDv4 Handler::locate_original_of(const UUIDv4& translated) {
+    // If there is no such thing as the UUID in translated, in TranslationTable, return 0.
+    if (is_translation_table_empty_for(translated)) {
+        return 0;
+    }
+
+    // Otherwise, safely return the value in the TranslationTable.
+    std::lock_guard<std::mutex> lock(*_translation_table_locker);
+    return _translation_table->at(translated);
 }
 
-bool Handler::is_translation_table_empty_for(const UUIDv4& uuid) const {
+bool Handler::is_translation_table_empty_for(const UUIDv4& uuid) {
+    std::lock_guard<std::mutex> lock(*_translation_table_locker);
+    return !_translation_table->contains(uuid);
+}
+
+bool Handler::is_translation_table_empty() {
+    std::lock_guard<std::mutex> lock(*_translation_table_locker);
+    return _translation_table->empty();
 }
 
 void Handler::new_bid(float bid, std::array<uint8_t, 4>& ipv4_address) {
@@ -60,6 +105,19 @@ std::set<std::vector<uint8_t>> Handler::min_bids() const {
 }
 
 bool Handler::is_min_bid_unique(const std::set<std::vector<uint8_t>>& targets) const {
+}
+
+bool Handler::is_bid_in_store(const UUIDv4& id) const {
+    // If the store does not have the UUID, return false; otherwise check if pre-reserved.
+    if (!is_uuid_in_store(id)) {
+        return false;
+    } else {
+        return _store->at(id)->state() == HandlerState::PRE_RESERVED;
+    }
+}
+
+bool Handler::is_uuid_in_store(const UUIDv4& id) const {
+    return _store->contains(id);
 }
 
 void Handler::produce_reservation(const RequestingCapabilities& capabilities) const {
@@ -159,7 +217,7 @@ void Handler::operator()() {
                     produce_reservation(ear_message->requirements());
                     if (i_am_listener) {
                         // (B.1.1.1) Can R be performed with priority p?
-                        auto* position = _resources->available_for_performance(*_reservation);
+                        auto* position = _resources->available_for_performance(*_reservation, ear_message->priority());
                         if (position != nullptr) {
                             // (B.1.1.1.1.1) Reserve R with UUID in Store.
                             _resources->mark_reservation(_reservation, ear_message->uuid());
@@ -213,10 +271,11 @@ void Handler::operator()() {
                                     default:
                                         throw std::exception();  // TODO
                                 }
-                                std::vector<std::vector<uint8_t>> connections_to_target = get_connections_to(target);
+                                std::vector<std::vector<uint8_t>> connections_to_target =
+                                        _resources->get_connections_to(target);
 
                                 // (B.1.2.2) Depending on the cardinal of connections...
-                                switch (connections_cardinal(connections_to_target)) {
+                                switch (_resources->connections_cardinal(connections_to_target)) {
                                     case 0: {
                                         // If no connection is found...
                                         // (B.1.2.2.3.1) Create REF message and send it.
@@ -354,10 +413,9 @@ void Handler::operator()() {
                         } else {
                             // As it is not unique...
                             for (const auto& bid_target : _bids) {
-                                // (D.3.2.1.2.1) Create a new UUID for each min(B) node.
-                                // TODO UUIDv4 new_uuid = ...
-
-                                // (D.3.2.1.2.2) Save translations UUID to UUID* in TranslationTable.
+                                // (D.3.2.1.2.1) Create a new UUID for each min(B) node and (D.3.2.1.2.2) Save
+                                // translations UUID to UUID* in TranslationTable.
+                                auto new_uuid = create_translation(_uuid);
                                 _translation_table[new_uuid] = _uuid;
 
                                 // (D.3.2.1.2.3) Create EAR message and send it to each min(B) node, with UUID*.
