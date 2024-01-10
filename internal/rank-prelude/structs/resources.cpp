@@ -10,10 +10,10 @@ float Resources::estimate_bid(const RequestingCapabilities& capabilities) const 
 }
 
 float Resources::estimate_bid(const Reservation& reservation) const {
-    float node_resources = 0;
-    float proximity = 0;
-    float hysteresis = 0;
-    float current_resources = 0;
+    float node_resources = 0; // TODO
+    float proximity = 0; // TODO
+    float hysteresis = 0; // TODO
+    float current_resources = 0; // TODO
     float fairness = reservation.priority() / RANK_MAX_PRIORITY;
 
     return node_resources * (proximity + hysteresis)/2 * current_resources * (fairness/RANK_MAX_PRIORITY);

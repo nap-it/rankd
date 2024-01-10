@@ -77,6 +77,7 @@ void Reservation::mark_reserved() {
 }
 
 bool Reservation::operator<(const Reservation& reservation) const {
+    return _priority < reservation.priority() and _uuid < reservation.uuid();
 }
 
 bool Reservation::operator==(const Reservation& reservation) const {
