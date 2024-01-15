@@ -8,7 +8,7 @@
 class CurrentCapabilities : public Capabilities {
 public:
 private:
-    std::optional<double> _bandwidth_threshold;
+
 };
 
 
