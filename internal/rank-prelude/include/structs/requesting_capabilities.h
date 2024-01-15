@@ -3,7 +3,27 @@
 
 #include "structs/capabilities.h"
 
-class RequestingCapabilities : public Capabilities {};
+class RequestingCapabilities : public Capabilities {
+public:
+    // Constructors.
+    RequestingCapabilities() : Capabilities() {
+    }
+    RequestingCapabilities(const std::string& yang_document) { // TODO in JSON.
+
+    }
+
+    // Item's management.
+    void add_item(const std::pair<CapabilityItemType, std::any&>& item, uint8_t place);
+    void downgrade_item(uint8_t place, uint8_t to_place = UINT8_MAX);
+    void upgrade_item(uint8_t place, uint8_t to_place = 0);
+    const std::pair<CapabilityItemType, std::any&>& get_item(uint8_t place);
+    void remove_item(uint8_t place);
+
+    // Getters.
+    std::map<uint8_t, std::pair<CapabilityItemType, std::any&>> ordered_items();
+private:
+    std::map<uint8_t, std::pair<CapabilityItemType, std::any&>> _ordered_items;
+};
 
 
 #endif  // RANK_PRELUDE_REQUESTINGCAPABILITIES_H

@@ -1,7 +1,11 @@
 #ifndef RANK_PRELUDE_CAPABILITIES_H
 #define RANK_PRELUDE_CAPABILITIES_H
 
+#include <any>
+#include <map>
 #include <optional>
+
+#include "structs/capability_item_type.h"
 
 class Capabilities {
 public:
@@ -9,17 +13,18 @@ public:
     static const char* marshal();
     static void unmarshal(const char* marshalled);
 
-    // Getters.
-    std::optional<double> bandwidth() const;
+    // Summary producers.
+    std::map<CapabilityItemType, std::any> produce_yang();
 
-    // Setters.
-    void bandwidth(double value);
+    // Getters.
+    std::map<CapabilityItemType, std::any> items();
 
     // Operators.
     bool operator<(const Capabilities& prototype) const;
     bool operator==(const Capabilities& prototype) const;
+
 private:
-    std::optional<double> _bandwidth;
+    std::map<CapabilityItemType, std::any> _items{};
 };
 
 
