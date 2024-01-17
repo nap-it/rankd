@@ -22,3 +22,9 @@
 [submodule "internal/rankd-time/vendor/ptp/excelfore-gptp"]
 	path = internal/rankd-time/vendor/ptp/excelfore-gptp
 	url = https://code.nap.av.it.pt/external-tools/excelfore-gptp.git
+[submodule "internal/rank-prelude/vendor/rapidjson"]
+	path = internal/rank-prelude/vendor/rapidjson
+	url = https://code.nap.av.it.pt/external-tools/rapidjson.git
+[submodule "internal/rank-prelude/vendor/libyang-cpp"]
+	path = internal/rank-prelude/vendor/libyang-cpp
+	url = https://code.nap.av.it.pt/external-tools/libyang-cpp.git

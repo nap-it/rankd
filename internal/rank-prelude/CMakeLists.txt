@@ -25,6 +25,11 @@ set(HEADER_LIST
         include/structs/resources.h
         include/structs/timeout_handler.h
         include/structs/timeout_handler_spec.h
+        include/utils/marshalling.h
+        include/utils/marshalling/serialization.h
+        include/utils/marshalling/transformation.h
+        include/utils/marshalling/validation.h
+        include/utils/marshalling/validation/yang.h
 )
 
 set(SOURCE_LIST
@@ -48,9 +53,13 @@ set(SOURCE_LIST
 )
 
 set(RANK_PRELUDE include)
-add_library(rank-prelude prelude.cpp ${SOURCE_LIST})
+add_library(rank-prelude prelude.cpp ${SOURCE_LIST} ${HEADER_LIST})
 target_include_directories(rank-prelude PUBLIC include)
 target_link_libraries(rank-prelude PRIVATE pthread)
+
+# Add external projects (vendor).
+add_subdirectory(vendor)
+target_include_directories(rank-prelude PUBLIC vendor/libyang-cpp/include vendor/rapidjson)
 
 target_compile_features(rank-prelude PUBLIC cxx_std_20)
 
