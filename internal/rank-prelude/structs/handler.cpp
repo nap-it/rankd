@@ -179,15 +179,6 @@ Reservation* Handler::associated_reservation() const {
     return _reservation;
 }
 
-bool Handler::is_me(std::array<uint8_t, 4>& ipv4_address) {
-}
-
-bool Handler::is_me(std::array<uint8_t, 6>& mac_address) {
-}
-
-bool Handler::is_me(std::array<uint8_t, 16>& ipv6_address) {
-}
-
 Handler* Handler::execute() {
     if (_running) {
         return this;

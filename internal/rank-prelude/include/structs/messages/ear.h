@@ -5,17 +5,11 @@
 #include <vector>
 
 #include "structs/message.h"
+#include "structs/messages/constants.h"
 #include "structs/messages/header.h"
 #include "structs/requesting_capabilities.h"
 
-#define RANK_EAR_MESSAGE_LEN_LT_CODE_0 0
-#define RANK_EAR_MESSAGE_LEN_LT_CODE_1 1
-#define RANK_EAR_MESSAGE_LEN_LT_IP4 2
-#define RANK_EAR_MESSAGE_LEN_LT_MAC 3
-#define RANK_EAR_MESSAGE_LEN_LT_IP6 4
-#define RANK_EAR_MESSAGE_LEN_LT_DDS 5
-#define RANK_EAR_MESSAGE_LEN_LT_CODE_6 6
-#define RANK_EAR_MESSAGE_LEN_LT_CODE_7 7
+#include "utils/messaging.h"
 
 class EAR : public Message {
 public:
@@ -35,8 +29,6 @@ public:
 
     // Marshalling features.
     RequestingCapabilities requirements() const;
-    static uint16_t make_payload_length(const RequestingCapabilities& capabilities);
-    static uint8_t* make_payload(const RequestingCapabilities& capabilities);
 
     // Parsing tools.
     uint8_t expand_listener_length(uint8_t length) const;

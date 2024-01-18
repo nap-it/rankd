@@ -22,6 +22,8 @@ class TimeoutHandler;
 #include "structs/resources.h"
 #include "structs/timeout_handler.h"
 
+#include "utils/identity.h"
+
 class Handler {
 public:
     // Instance handling.
@@ -53,11 +55,6 @@ public:
     UUIDv4 id() const;
     HandlerState state() const;
     Reservation* associated_reservation() const;
-
-    // Static tools.
-    static bool is_me(std::array<uint8_t, 4>& ipv4_address);
-    static bool is_me(std::array<uint8_t, 6>& mac_address);
-    static bool is_me(std::array<uint8_t, 16>& ipv6_address);
 
     // Threading control mechanisms.
     Handler* execute();

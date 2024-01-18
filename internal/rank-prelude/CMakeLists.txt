@@ -12,6 +12,7 @@ set(HEADER_LIST
         include/structs/message.h
         include/structs/messages/acc.h
         include/structs/messages/bid.h
+        include/structs/messages/constants.h
         include/structs/messages/ear.h
         include/structs/messages/header.h
         include/structs/messages/mar.h
@@ -30,6 +31,8 @@ set(HEADER_LIST
         include/utils/marshalling/transformation.h
         include/utils/marshalling/validation.h
         include/utils/marshalling/validation/yang.h
+        include/utils/identity.h
+        include/utils/messaging.h
 )
 
 set(SOURCE_LIST
