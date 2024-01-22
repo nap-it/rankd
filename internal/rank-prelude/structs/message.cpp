@@ -32,7 +32,7 @@ void Message::header(const Header& header) {
     _header = header;
 }
 
-void Message::header(const char* marshalled_data) {
+void Message::header(const uint8_t* marshalled_data) {
     _header = Header(marshalled_data);
 }
 

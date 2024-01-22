@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-std::vector<std::vector<uint8_t>> get_connections_to(const std::string& target);
+std::vector<std::vector<uint8_t>> get_connections_to(const std::vector<uint8_t>& target);
 
 unsigned int connections_cardinal(const std::vector<std::vector<uint8_t>>& connections);
 

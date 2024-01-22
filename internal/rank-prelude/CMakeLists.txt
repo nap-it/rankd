@@ -40,6 +40,7 @@ set(SOURCE_LIST
         structs/capabilities.cpp
         structs/current_capabilities.cpp
         structs/handler.cpp
+        structs/identifier.cpp
         structs/message.cpp
         structs/messages/acc.cpp
         structs/messages/bid.cpp
@@ -54,6 +55,14 @@ set(SOURCE_LIST
         structs/resources.cpp
         structs/timeout_handler.cpp
         structs/timeout_handler_spec.cpp
+        utils/identity.cpp
+        utils/marshalling.cpp
+        utils/marshalling/transformation.cpp
+        utils/marshalling/serialization.cpp
+        utils/marshalling/validation.cpp
+        utils/marshalling/validation/yang.cpp
+        utils/messaging.cpp
+        utils/neighboring.cpp
 )
 
 set(RANK_PRELUDE include)
@@ -63,8 +72,10 @@ target_link_libraries(rank-prelude PRIVATE pthread)
 
 # Add external projects (vendor).
 add_subdirectory(vendor)
-target_include_directories(rank-prelude PUBLIC vendor/libyang-cpp/include vendor/rapidjson)
+target_include_directories(rank-prelude PUBLIC vendor/libyang-cpp/include vendor/rapidjson vendor/doctest/doctest)
 
 target_compile_features(rank-prelude PUBLIC cxx_std_20)
+
+add_subdirectory(tests)
 
 source_group(TREE "${PROJECT_SOURCE_DIR}" PREFIX "Header Files" FILES ${HEADER_LIST})

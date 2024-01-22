@@ -102,15 +102,15 @@ bool Process::is_uuid_in_store(const UUIDv4& id) {
     return _store.contains(id);
 }
 
-Header Process::parse_as_message_header(const char* data) {
-    return Message::new_prototype(data);
+Header Process::parse_as_message_header(const uint8_t* data) {
+    return new_prototype(data);
 }
 
-MessageType Process::parse_as_message_type(const char* data) {
+MessageType Process::parse_as_message_type(const uint8_t* data) {
     return parse_as_message_header(data).type();
 }
 
-UUIDv4 Process::parse_as_message_uuid(const char* data) {
+UUIDv4 Process::parse_as_message_uuid(const uint8_t* data) {
     return parse_as_message_header(data).uuid();
 }
 
@@ -150,7 +150,7 @@ void Process::operator()() {
         }
 
         // Read the data from the new connection's socket.
-        char raw_data[8192] = {0};
+        uint8_t raw_data[8192] = {0};
         ssize_t raw_data_size = read(new_connection, raw_data, 8192 - 1);
 
         // Get the UUID from the raw data received.

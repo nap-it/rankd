@@ -15,7 +15,7 @@ public:
     REP(const Header& header, uint8_t listener_length, uint8_t* listener) :
         Message(header), _listener_length {listener_length}, _listener {listener} {
     }
-    REP(const Header& header, const char* marshalled_data) : Message(header) {
+    REP(const Header& header, const uint8_t* marshalled_data) : Message(header) {
     }
 
     // Parsing tools.

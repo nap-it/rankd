@@ -11,7 +11,7 @@ public:
     }
     ACC(const Header& header) : Message(header) {
     }
-    ACC(const Header& header, const char* marshalled_data) : Message(header) {
+    ACC(const Header& header, const uint8_t* marshalled_data) : Message(header) {
     }
 
     // Derived member methods.

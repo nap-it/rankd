@@ -25,6 +25,8 @@ class Handler;
 #include "structs/resources.h"
 #include "structs/timeout_handler.h"
 
+#include "utils/messaging.h"
+
 class Process {
 public:
     // Instance handling.
@@ -41,9 +43,9 @@ public:
     bool is_uuid_in_store(const UUIDv4& uuid);
 
     // Receiving data parsing.
-    Header parse_as_message_header(const char* data);
-    MessageType parse_as_message_type(const char* data);
-    UUIDv4 parse_as_message_uuid(const char* data);
+    Header parse_as_message_header(const uint8_t* data);
+    MessageType parse_as_message_type(const uint8_t* data);
+    UUIDv4 parse_as_message_uuid(const uint8_t* data);
 
     // Threading control mechanisms.
     Process* execute();

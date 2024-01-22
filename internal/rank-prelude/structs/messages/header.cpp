@@ -10,14 +10,14 @@ Header::Header(const uint8_t* marshalled_data) {
     _version = header._version;
     _type = header._type;
     _reserved_field = header._reserved_field;
-    _uuid = header._uuid
+    _uuid = header._uuid;
 }
 
 Header::Header(const Header& header) {
     _version = header._version;
     _type = header._type;
     _reserved_field = header._reserved_field;
-    _uuid = header._uuid
+    _uuid = header._uuid;
 }
 
 Header::Header() {}

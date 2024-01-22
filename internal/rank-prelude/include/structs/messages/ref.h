@@ -11,7 +11,7 @@ public:
     }
     REF(const Header& header) : Message(header) {
     }
-    REF(const Header& header, const char* marshalled_data) : Message(header) {
+    REF(const Header& header, const uint8_t* marshalled_data) : Message(header) {
     }
 
     // Derived member methods.

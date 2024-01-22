@@ -25,7 +25,7 @@ public:
         Message(header), _priority {priority}, _listener_length {listener_length}, _listener {listener},
         _payload_length {payload_length}, _payload {payload} {
     }
-    MAR(const Header& header, const char* marshalled_data) : Message(header) {
+    MAR(const Header& header, const uint8_t* marshalled_data) : Message(header) {
     }
 
     // Marshalling features.

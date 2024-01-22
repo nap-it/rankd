@@ -28,3 +28,6 @@
 [submodule "internal/rank-prelude/vendor/libyang-cpp"]
 	path = internal/rank-prelude/vendor/libyang-cpp
 	url = https://code.nap.av.it.pt/external-tools/libyang-cpp.git
+[submodule "internal/rank-prelude/vendor/doctest"]
+	path = internal/rank-prelude/vendor/doctest
+	url = https://code.nap.av.it.pt/external-tools/doctest.git
