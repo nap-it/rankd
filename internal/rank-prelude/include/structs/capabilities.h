@@ -9,15 +9,8 @@
 
 class Capabilities {
 public:
-    // Marshalling features.
-    static const char* marshal();
-    static void unmarshal(const char* marshalled);
-
-    // Summary producers.
-    std::map<CapabilityItemType, std::any> produce_yang();
-
     // Getters.
-    std::map<CapabilityItemType, std::any> items();
+    std::map<CapabilityItemType, std::any> items() const;
 
     // Operators.
     bool operator<(const Capabilities& prototype) const;

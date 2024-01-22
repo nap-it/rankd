@@ -317,10 +317,10 @@ void Handler::operator()() {
                                         throw std::exception();  // TODO
                                 }
                                 std::vector<std::vector<uint8_t>> connections_to_target =
-                                        _resources->get_connections_to(target);
+                                        get_connections_to(target);
 
                                 // (B.1.2.2) Depending on the cardinal of connections...
-                                switch (_resources->connections_cardinal(connections_to_target)) {
+                                switch (connections_cardinal(connections_to_target)) {
                                     case 0: {
                                         // If no connection is found...
                                         // (B.1.2.2.3.1) Create REF message and send it.
@@ -353,8 +353,8 @@ void Handler::operator()() {
                                         for (const auto& intermediate : connections_to_target) {
                                             MAR mar_message =
                                                     MAR(_uuid, ear_message->priority(), ear_message->listener_length(),
-                                                        const_cast<uint8_t*>(intermediate.data()), ear_message->payload_length(),
-                                                        ear_message->payload());
+                                                        const_cast<uint8_t*>(intermediate.data()),
+                                                        ear_message->payload_length(), ear_message->payload());
                                             // TODO Send message through process-created socket?
                                         }
 
@@ -477,8 +477,8 @@ void Handler::operator()() {
                             // (D.3.2.1.1.1) As it is unique, send an EAR message to it.
                             EAR ear_message = EAR(_uuid, _reservation->priority(), _reservation->listener_length(),
                                                   _reservation->listener(),
-                                                  EAR::make_payload_length(_reservation->requirements()),
-                                                  EAR::make_payload(_reservation->requirements()));
+                                                  make_payload_length(_reservation->requirements()),
+                                                  make_payload(_reservation->requirements()));
                             // TODO Send this message.
 
                             // Change the state to PRE_RESERVED.
@@ -500,8 +500,8 @@ void Handler::operator()() {
                                 // (D.3.2.1.2.3) Create EAR message and send it to each min(B) node, with UUID*.
                                 EAR ear_message = EAR(new_uuid, _reservation->priority(),
                                                       _reservation->listener_length(), _reservation->listener(),
-                                                      EAR::make_payload_length(_reservation->requirements()),
-                                                      EAR::make_payload(_reservation->requirements()));
+                                                      make_payload_length(_reservation->requirements()),
+                                                      make_payload(_reservation->requirements()));
                                 // TODO Send this message.
 
                                 // Change the state to PRE_RESERVED.

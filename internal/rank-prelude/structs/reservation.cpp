@@ -1,9 +1,18 @@
 #include "structs/reservation.h"
 
 Reservation::Reservation(const Reservation& reservation) {
+    _state = ReservationState::CREATED;
+    _priority = reservation.priority();
+    _capabilities = reservation.requirements();
+    _uuid = reservation.uuid();
+    _listener_length = reservation.listener_length();
+    _listener = reservation.listener();
 }
 
 Reservation::Reservation(const RequestingCapabilities& capabilities, uint8_t priority) {
+    _state = ReservationState::CREATED;
+    _priority = priority;
+    _capabilities = capabilities;
 }
 
 uint8_t Reservation::priority() const {

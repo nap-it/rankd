@@ -8,9 +8,6 @@ public:
     // Constructors.
     RequestingCapabilities() : Capabilities() {
     }
-    RequestingCapabilities(const std::string& yang_document) { // TODO in JSON.
-
-    }
 
     // Item's management.
     void add_item(const std::pair<CapabilityItemType, std::any&>& item, uint8_t place);
@@ -20,7 +17,7 @@ public:
     void remove_item(uint8_t place);
 
     // Getters.
-    std::map<uint8_t, std::pair<CapabilityItemType, std::any&>> ordered_items();
+    std::map<uint8_t, std::pair<CapabilityItemType, std::any&>> ordered_items() const;
 private:
     std::map<uint8_t, std::pair<CapabilityItemType, std::any&>> _ordered_items;
 };

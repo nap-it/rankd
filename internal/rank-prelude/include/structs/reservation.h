@@ -44,9 +44,9 @@ private:
     ReservationState _state;
     uint8_t _priority;
     RequestingCapabilities _capabilities;
-    UUIDv4 _uuid;
-    uint8_t _listener_length;
-    uint8_t* _listener;
+    UUIDv4 _uuid{};
+    uint8_t _listener_length{};
+    uint8_t* _listener{};
 };
 
 
