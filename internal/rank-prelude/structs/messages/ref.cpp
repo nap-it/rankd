@@ -1,5 +1,5 @@
-//
-// Created by Rui Lopes on 04/01/2024.
-//
+#include "structs/messages/ref.h"
 
-#include "ref.h"
+const uint8_t* REF::raw_payload() const {}
+
+REF::~REF() {}

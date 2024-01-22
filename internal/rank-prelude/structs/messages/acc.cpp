@@ -1,6 +1,5 @@
-//
-// Created by Rui Lopes on 04/01/2024.
-//
+#include "structs/messages/acc.h"
 
-#include "acc.h"
+const uint8_t* ACC::raw_payload() const {}
 
+ACC::~ACC() {}

@@ -6,7 +6,7 @@
 class TimeoutHandlerSpec {
 public:
     // Instance handling.
-    static TimeoutHandlerSpec* get_instance();
+    TimeoutHandlerSpec();
 
     // Threading control mechanisms.
     TimeoutHandlerSpec* execute();
@@ -14,7 +14,6 @@ public:
     bool is_running() const;
     void operator()();
 private:
-    TimeoutHandlerSpec();
     unsigned int _waiting_time = 1000;
     bool _running = false;
     std::thread _thread;

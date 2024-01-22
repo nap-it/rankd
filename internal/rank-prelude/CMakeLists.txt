@@ -31,6 +31,7 @@ set(HEADER_LIST
         include/utils/marshalling/transformation.h
         include/utils/marshalling/validation.h
         include/utils/marshalling/validation/yang.h
+        include/utils/neighboring.h
         include/utils/identity.h
         include/utils/messaging.h
 )

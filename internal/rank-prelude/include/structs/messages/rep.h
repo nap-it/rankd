@@ -27,7 +27,7 @@ public:
     uint8_t* listener() const;
 
     // Derived member methods.
-    const char* raw_payload() const override;
+    const uint8_t* raw_payload() const override;
 
     // Destructor.
     ~REP();
