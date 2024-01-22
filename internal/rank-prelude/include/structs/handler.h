@@ -7,9 +7,13 @@
 #include <thread>
 
 #include "constants.h"
+
 #include "structs/bidset.h"
 #include "structs/store.h"
 #include "structs/translation_table.h"
+
+#include "utils/messaging.h"
+#include "utils/neighboring.h"
 
 class TimeoutHandler;
 

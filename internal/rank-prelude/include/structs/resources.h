@@ -2,8 +2,8 @@
 #define RANK_PRELUDE_RESOURCES_H
 
 #include <algorithm>
+#include <list>
 #include <mutex>
-#include <set>
 #include <thread>
 #include <vector>
 
@@ -23,20 +23,13 @@ public:
     float estimate_bid(const RequestingCapabilities& capabilities) const;
     float estimate_bid(const Reservation& reservation) const;
 
-    // Resource estimation.
-    float estimate_current_resources_on_requirements(const RequestingCapabilities& requirements) const;
-
     // Reservation handling.
     Reservation* available_for_performance(const Reservation& statement, uint8_t priority);
     Resources* replenish_reservation(Reservation* reservation);
     Resources* mark_reservation(Reservation* reservation);
     Resources* mark_pre_reservation(Reservation* reservation);
-    std::set<Reservation> reservations() const;
+    std::list<Reservation> reservations() const;
     size_t reservations_size() const;
-
-    // Connections management. From Process to Resources.
-    std::vector<std::vector<uint8_t>> get_connections_to(const std::string& target) const;
-    unsigned int connections_cardinal(const std::vector<std::vector<uint8_t>>& connections) const;
 
     // Threading control mechanisms.
     Resources* execute();
@@ -49,13 +42,12 @@ public:
 
 private:
     Resources();
-    std::set<Reservation> _reservations;
+    std::list<Reservation> _reservations;
     CurrentCapabilities _current_capabilities;
     unsigned int _waiting_time = 1000;
     bool _running = false;
     std::thread _thread;
     std::mutex _reservations_mutex;
 };
-
 
 #endif  // RANK_PRELUDE_RESOURCES_H

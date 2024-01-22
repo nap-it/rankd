@@ -39,6 +39,7 @@ public:
 
     // Destructor.
     ~Reservation();
+
 private:
     ReservationState _state;
     uint8_t _priority;
