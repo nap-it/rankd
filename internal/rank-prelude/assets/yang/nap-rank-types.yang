@@ -1,0 +1,59 @@
+module nap-rank-types {
+    // Header of this document.
+    yang-version "1.1";
+    namespace "urn:nap:rank";
+    prefix "rank";
+
+    import ieee802-dot1q-sched {
+        prefix sched;
+    }
+
+    import ieee802-dot1q-cbsa {
+        prefix cbsa;
+    }
+
+    // Revision section.
+    organization "Network Architectures and Protocols, Instituto de Telecomunicações, Aveiro";
+    contact "ruieduardo.fa.lopes@av.it.pt";
+    description "The module for describing Rank protocol data types.";
+
+    revision 2024-01-23 {
+        description "Initial version on Rank v0.1.0, revision E";
+    }
+
+    // Definitions section.
+    container rank-requirement {
+        choice requirement {
+            case net-bandwidth {
+                leaf configuration {
+                    type string;
+                }
+            }
+            case net-dds {
+                leaf configuration {
+                    type boolean;
+                }
+            }
+            case time-tas {
+                leaf configuration {
+                    type ieee802-dot1q-sched;
+                }
+            }
+            case time-cbs {
+                leaf configuration {
+                    type ieee802-dot1q-cbsa;
+                }
+            }
+            case comp-cpu-usage {
+                leaf configuration {
+                    type string;
+                }
+            }
+            case comp-memory {
+                leaf configuration {
+                    type string;
+                }
+            }
+        }
+    }
+}
