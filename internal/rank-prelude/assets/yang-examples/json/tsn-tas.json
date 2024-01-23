@@ -1,0 +1,72 @@
+{
+  "ieee802-dot1q-sched:gate-parameter-table": {
+    "queue-max-sdu-table": [
+      {
+        "traffic-class": 1,
+        "queue-max-sdu": 1,
+        "transmission-overrun": 0
+      }
+    ],
+    "gate-enabled": true,
+    "admin-gate-states": 255,
+    "oper-gate-states": false
+  },
+  "admin-control-list": {
+    "base-gate-control-entries": [
+      {
+        "index": 0,
+        "operation-name": "set",
+        "time-interval-value": 123
+      },{
+        "index": 3,
+        "operation-name": "set",
+        "time-interval-value": 321
+      }
+    ]
+  },
+  "oper-control-list": {
+    "base-gate-control-entries": [
+      {
+        "index": 2,
+        "operation-name": "set",
+        "time-interval-value": 45
+      }
+    ]
+  },
+  "admin-cycle-time": {
+    "numerator": 12,
+    "denominator": 1
+  },
+  "oper-cycle-time": {
+    "numerator": 12,
+    "denominator": 1
+  },
+  "admin-cycle-time-extension": 1000,
+  "oper-cycle-time-extension": 1000,
+  "admin-base-time": {
+    "seconds": 1,
+    "nanoseconds": 1000
+  },
+  "oper-base-time": {
+    "seconds": 1,
+    "nanoseconds": 1000
+  },
+  "config-change": true,
+  "config-change-time": {
+    "seconds": 1,
+    "nanoseconds": 1000
+  },
+  "tick-granularity": 100,
+  "current-time": {
+    "seconds": 1,
+    "nanoseconds": 1000
+  },
+  "config-pending": false,
+  "config-change-error": 100,
+  "supported-list-max": 100,
+  "supported-cycle-max": {
+    "numerator": 12,
+    "denominator": 1
+  },
+  "supported-interval-max": 1000
+}

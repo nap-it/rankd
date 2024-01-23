@@ -1,0 +1,11 @@
+{
+  "ieee802-dot1q-cbsa:cbsa-parameters": {
+    "cbsa-parameter-table": [
+      {
+        "traffic-class" : 1,
+        "admin-idle-slope" : 92000,
+        "oper-idle-slope": 1231
+      }
+    ]
+  }
+}
