@@ -33,6 +33,8 @@ set(HEADER_LIST
         include/utils/marshalling/validation/yang.h
         include/utils/neighboring.h
         include/utils/identity.h
+        include/utils/identity/network.h
+        include/utils/identity/session.h
         include/utils/messaging.h
 )
 
@@ -56,6 +58,8 @@ set(SOURCE_LIST
         structs/timeout_handler.cpp
         structs/timeout_handler_spec.cpp
         utils/identity.cpp
+        utils/identity/network.cpp
+        utils/identity/session.cpp
         utils/marshalling.cpp
         utils/marshalling/transformation.cpp
         utils/marshalling/serialization.cpp

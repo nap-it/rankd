@@ -1,4 +1,4 @@
-#include "utils/identity.h"
+#include "utils/identity/network.h"
 
 #include <array>
 #include <iostream>
@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
     return res + client_stuff_return_code; // the result from doctest is propagated here as well
 }
 
-TEST_SUITE("rank-prelude-utils-identity") {
+TEST_SUITE("rank-prelude-utils-identity-network") {
     TEST_CASE("rank-prelude-utils-identity-ip4") {
         auto ipv4_example1 = std::array<uint8_t, 4>({127, 0, 0, 1});
         auto ipv4_example2 = std::array<uint8_t, 4>({123, 123, 123, 123});
