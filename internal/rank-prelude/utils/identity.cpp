@@ -74,25 +74,28 @@ bool is_me(std::array<uint8_t, 16>& ipv6_address) {
     getifaddrs(&addresses);
 
     for (struct ifaddrs *address = addresses; address != nullptr; address = address->ifa_next) {
-        if (address->ifa_addr && address->ifa_addr->sa_family == AF_PACKET) {
-            // In address->ifa_name the name of the current interface can be accessed.
+        struct in6_addr* address_pointer = nullptr;
+        if (address->ifa_addr == nullptr) {
+            continue;
+        }
 
-            // Create a socket to communicate with the kernel asking for the IP address.
-            int socket_fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_IP);
-            struct ifreq interface_request{};
-            strcpy(interface_request.ifr_name, address->ifa_name);
-            ioctl(socket_fd, SIOCGIFADDR, &interface_request);
-            close(socket_fd);
+        if (address->ifa_addr->sa_family == AF_INET6) {
+            address_pointer = &((struct sockaddr_in6*) address->ifa_addr)->sin6_addr;
+        } else {
+            continue;
+        }
 
-            std::array<uint8_t, 16> ip{};
-            auto raw_ip = ((sockaddr_in6*) &interface_request.ifr_addr)->sin6_addr;
-            for (int i = 0; i != 16; ++i) {
-                ip[i] = raw_ip.s6_addr[i];
-            }
+        if (address_pointer == nullptr) {
+            continue;
+        }
 
-            if (ip == ipv6_address) {
-                return true;
-            }
+        std::array<uint8_t, 16> ip{};
+        for (int i = 0; i != 16; ++i) {
+            ip[i] = address_pointer->s6_addr[i];
+        }
+
+        if (ip == ipv6_address) {
+            return true;
         }
     }
 #endif
