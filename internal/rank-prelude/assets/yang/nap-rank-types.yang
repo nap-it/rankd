@@ -23,34 +23,37 @@ module nap-rank-types {
 
     // Definitions section.
     container rank-requirement {
+        leaf name {
+            type string;
+        }
         choice requirement {
             case net-bandwidth {
-                leaf configuration {
+                leaf net-bandwidth {
                     type string;
                 }
             }
             case net-dds {
-                leaf configuration {
+                leaf net-dds {
                     type boolean;
                 }
             }
             case time-tas {
-                leaf configuration {
+                leaf time-tas {
                     type ieee802-dot1q-sched;
                 }
             }
             case time-cbs {
-                leaf configuration {
+                leaf time-cbs {
                     type ieee802-dot1q-cbsa;
                 }
             }
             case comp-cpu-usage {
-                leaf configuration {
+                leaf comp-cpu-usage {
                     type string;
                 }
             }
             case comp-memory {
-                leaf configuration {
+                leaf comp-memory {
                     type string;
                 }
             }

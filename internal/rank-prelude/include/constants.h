@@ -12,4 +12,15 @@
 #define RANK_MAX_PRIORITY 8
 #define RANK_CURRENT_RESOURCES_EVAL_THRESHOLD 2/3
 
+#include "utils/hashing.h"
+
+constexpr unsigned int RANK_YANG_KEY_TIME_TAS = FnvHash("time-tas");
+constexpr unsigned int RANK_YANG_KEY_TIME_CBS = FnvHash("time-cbs");
+
+constexpr unsigned int RANK_YANG_KEY_NET_BANDWIDTH = FnvHash("net-bandwidth");
+constexpr unsigned int RANK_YANG_KEY_NET_DDS = FnvHash("net-dds");
+
+constexpr unsigned int RANK_YANG_KEY_COMP_CPUUSAGE = FnvHash("comp-cpu-usage");
+constexpr unsigned int RANK_YANG_KEY_COMP_MEMORY = FnvHash("comp-memory");
+
 #endif  // RANK_PRELUDE_CONSTANTS_H
