@@ -3,7 +3,10 @@
 
 #include <cstdint>
 
+#include "cbor.h"
+
 #include "rapidjson/document.h"
+#include "rapidjson/writer.h"
 
 uint8_t* serialize_json(const rapidjson::Document& json);
 

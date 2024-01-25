@@ -5,6 +5,6 @@
 
 #include "rapidjson/document.h"
 
-const rapidjson::Document& validate_yang(const rapidjson::Document& json);
+bool validate_yang(const rapidjson::Document* json);
 
 #endif // RANK_PRELUDE_MARSHALLING_VALIDATION_H

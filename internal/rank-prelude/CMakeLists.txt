@@ -76,7 +76,8 @@ target_link_libraries(rank-prelude PRIVATE pthread)
 
 # Add external projects (vendor).
 add_subdirectory(vendor)
-target_include_directories(rank-prelude PUBLIC vendor/libyang-cpp/include vendor/rapidjson vendor/doctest/doctest)
+target_include_directories(rank-prelude PUBLIC vendor/libyang-cpp/include vendor/rapidjson vendor/doctest/doctest vendor/cbor-cpp/src)
+target_link_libraries(rank-prelude PRIVATE cborcpp)
 
 target_compile_features(rank-prelude PUBLIC cxx_std_20)
 

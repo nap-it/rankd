@@ -31,3 +31,6 @@
 [submodule "internal/rank-prelude/vendor/doctest"]
 	path = internal/rank-prelude/vendor/doctest
 	url = https://code.nap.av.it.pt/external-tools/doctest.git
+[submodule "internal/rank-prelude/vendor/cbor-cpp"]
+	path = internal/rank-prelude/vendor/cbor-cpp
+	url = https://code.nap.av.it.pt/external-tools/cbor-cpp.git
