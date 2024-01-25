@@ -2,6 +2,7 @@
 #define RANK_PRELUDE_RESERVATION_H
 
 #include <cassert>
+#include <cstdint>
 
 #include "structs/identifier.h"
 #include "structs/requesting_capabilities.h"

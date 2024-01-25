@@ -1,6 +1,8 @@
 #ifndef RANK_PRELUDE_REQUESTINGCAPABILITIES_H
 #define RANK_PRELUDE_REQUESTINGCAPABILITIES_H
 
+#include <cstdint>
+
 #include "structs/capabilities.h"
 
 class RequestingCapabilities : public Capabilities {

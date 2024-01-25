@@ -10,4 +10,8 @@ The structure of the project, as for the rest of the Rank repository, follows th
 
 * `assets`: this directory has some files that are served as a convenient repository or other code examples;
 * `docs`: this directory has some documentation artifacts such as articles on the internals of the Rank protocol, as well as some diagrams;
-* `include`: this directory has all the header files within the Rank project, directly related to the 
+* `include`: this directory has all the header files within the Rank project, directly related to the Rank protocol main library;
+* `structs`: this directory has all the implementation of the main structures and enumerations of the Rank's data model;
+* `tests`: this directory has some functional tests to units implemented in this library such as utils;
+* `utils`: this directory has utility and helper functions that functions as companion tools to the Rank protocol;
+* `vendor`: this directory has external tools and dependencies, implementation-wise, to this project.

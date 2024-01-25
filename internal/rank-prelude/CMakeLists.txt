@@ -26,6 +26,7 @@ set(HEADER_LIST
         include/structs/resources.h
         include/structs/timeout_handler.h
         include/structs/timeout_handler_spec.h
+        include/utils/hashing.h
         include/utils/marshalling.h
         include/utils/marshalling/serialization.h
         include/utils/marshalling/transformation.h
