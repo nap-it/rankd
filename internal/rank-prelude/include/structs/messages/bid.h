@@ -18,7 +18,7 @@ public:
     float value() const;
 
     // Derived member methods.
-    const uint8_t* raw_payload() const override;
+    const std::array<uint8_t, RANK_HEADER_LEN> raw_payload() const override;
 
     // Destructor.
     ~BID();

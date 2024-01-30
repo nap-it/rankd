@@ -1,6 +1,7 @@
 #ifndef RANK_PRELUDE_MESSAGE_H
 #define RANK_PRELUDE_MESSAGE_H
 
+#include <array>
 #include <cstdint>
 
 #include "structs/identifier.h"
@@ -17,7 +18,7 @@ public:
     MessageType type() const;
     UUIDv4 uuid() const;
     size_t size() const;
-    virtual const uint8_t* raw_payload() const = 0;
+    virtual const std::array<uint8_t, RANK_HEADER_LEN> raw_payload() const = 0;
 
     // Setters.
     void header(const Header& header);

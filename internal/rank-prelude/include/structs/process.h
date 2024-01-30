@@ -43,9 +43,9 @@ public:
     bool is_uuid_in_store(const UUIDv4& uuid);
 
     // Receiving data parsing.
-    Header parse_as_message_header(const uint8_t* data);
-    MessageType parse_as_message_type(const uint8_t* data);
-    UUIDv4 parse_as_message_uuid(const uint8_t* data);
+    Header parse_as_message_header(const std::vector<uint8_t>& data);
+    MessageType parse_as_message_type(const std::vector<uint8_t>& data);
+    UUIDv4 parse_as_message_uuid(const std::vector<uint8_t>& data);
 
     // Threading control mechanisms.
     Process* execute();
