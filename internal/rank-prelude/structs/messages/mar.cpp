@@ -38,6 +38,6 @@ std::vector<uint8_t> MAR::payload() const {
     return _payload;
 }
 
-const uint8_t* MAR::raw_payload() const {}
+const std::array<uint8_t, RANK_HEADER_LEN> MAR::raw_payload() const {}
 
 MAR:: ~MAR() {}

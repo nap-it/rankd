@@ -102,15 +102,20 @@ bool Process::is_uuid_in_store(const UUIDv4& id) {
     return _store.contains(id);
 }
 
-Header Process::parse_as_message_header(const uint8_t* data) {
-    return new_prototype(data);
+Header Process::parse_as_message_header(const std::vector<uint8_t>& data) {
+    assert(data.size() >= RANK_HEADER_LEN);
+
+    std::array<uint8_t, RANK_HEADER_LEN> data_bytes{};
+    std::copy_n(data.begin(), RANK_HEADER_LEN, data_bytes.begin());
+
+    return new_prototype(data_bytes);
 }
 
-MessageType Process::parse_as_message_type(const uint8_t* data) {
+MessageType Process::parse_as_message_type(const std::vector<uint8_t>& data) {
     return parse_as_message_header(data).type();
 }
 
-UUIDv4 Process::parse_as_message_uuid(const uint8_t* data) {
+UUIDv4 Process::parse_as_message_uuid(const std::vector<uint8_t>& data) {
     return parse_as_message_header(data).uuid();
 }
 
@@ -152,9 +157,13 @@ void Process::operator()() {
         // Read the data from the new connection's socket.
         uint8_t raw_data[8192] = {0};
         ssize_t raw_data_size = read(new_connection, raw_data, 8192 - 1);
+        std::vector<uint8_t> data(raw_data_size, 0);
+        for (int i = 0; i != raw_data_size; i++) {
+            data[i] = raw_data[i];
+        }
 
         // Get the UUID from the raw data received.
-        auto message_uuid = parse_as_message_uuid(raw_data);
+        auto message_uuid = parse_as_message_uuid(data);
 
         // Create a meta handler.
         Handler* handler = nullptr;
@@ -180,7 +189,7 @@ void Process::operator()() {
         }
 
         // Parse the raw data as a message header and pass a complete message to the handler to handle.
-        Header message_header = parse_as_message_header(raw_data);
+        Header message_header = parse_as_message_header(data);
         std::vector<uint8_t> message_body(raw_data_size - RANK_HEADER_LEN);
         std::memcpy(message_body.data(), raw_data+RANK_HEADER_LEN, raw_data_size-RANK_HEADER_LEN);
 

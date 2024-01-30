@@ -1,5 +1,5 @@
 #include "structs/messages/acc.h"
 
-const uint8_t* ACC::raw_payload() const {}
+const std::array<uint8_t, RANK_HEADER_LEN> ACC::raw_payload() const {}
 
 ACC::~ACC() {}
