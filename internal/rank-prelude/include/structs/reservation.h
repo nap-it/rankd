@@ -19,7 +19,7 @@ public:
     RequestingCapabilities requirements() const;
     ReservationState state() const;
     uint8_t listener_length() const;
-    uint8_t* listener() const;
+    std::array<uint8_t, RANK_LISTENER_MAX_LEN> listener() const;
     UUIDv4 uuid() const;
 
     // Setters.
@@ -47,7 +47,7 @@ private:
     RequestingCapabilities _capabilities;
     UUIDv4 _uuid{};
     uint8_t _listener_length{};
-    uint8_t* _listener{};
+    std::array<uint8_t, RANK_LISTENER_MAX_LEN> _listener{};
 };
 
 

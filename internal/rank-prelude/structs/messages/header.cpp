@@ -1,11 +1,12 @@
 #include "structs/messages/header.h"
 
-Header::Header(const MessageType& type, const UUIDv4& uuid) {
+Header::Header(const uint8_t& version, const MessageType& type, const UUIDv4& uuid) {
+    _version = version;
     _type = type;
     _uuid = uuid;
 }
 
-Header::Header(const uint8_t* marshalled_data) {
+Header::Header(const std::array<uint8_t, RANK_HEADER_LEN>& marshalled_data) {
     Header header = unmarshal_header(marshalled_data);
     _version = header._version;
     _type = header._type;
@@ -22,7 +23,7 @@ Header::Header(const Header& header) {
 
 Header::Header() {}
 
-const uint8_t* Header::marshal() const {
+const std::array<uint8_t, RANK_HEADER_LEN> Header::marshal() const {
     return marshal_header(*this);
 }
 

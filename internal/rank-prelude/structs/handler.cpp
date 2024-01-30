@@ -337,7 +337,7 @@ void Handler::operator()() {
                                         // (B.1.2.2.2.1) Create EAR message and send it.
                                         EAR new_ear_message =
                                                 EAR(_uuid, ear_message->priority(), ear_message->listener_length(),
-                                                    connections_to_target.front().data(), ear_message->payload_length(),
+                                                    listener_message_format(connections_to_target.front()), ear_message->payload_length(),
                                                     ear_message->payload());
                                         // TODO Send message through process-created socket?
 
@@ -353,7 +353,7 @@ void Handler::operator()() {
                                         for (const auto& intermediate : connections_to_target) {
                                             MAR mar_message =
                                                     MAR(_uuid, ear_message->priority(), ear_message->listener_length(),
-                                                        const_cast<uint8_t*>(intermediate.data()),
+                                                        listener_message_format(intermediate),
                                                         ear_message->payload_length(), ear_message->payload());
                                             // TODO Send message through process-created socket?
                                         }

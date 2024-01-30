@@ -21,7 +21,7 @@ public:
 
     // Setters.
     void header(const Header& header);
-    void header(const uint8_t* marshalled_data);
+    void header(const std::array<uint8_t, RANK_HEADER_LEN>& marshalled_data);
 
     // Destructor.
     virtual ~Message();

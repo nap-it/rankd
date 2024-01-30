@@ -181,15 +181,18 @@ void Process::operator()() {
 
         // Parse the raw data as a message header and pass a complete message to the handler to handle.
         Header message_header = parse_as_message_header(raw_data);
+        std::vector<uint8_t> message_body(raw_data_size - RANK_HEADER_LEN);
+        std::memcpy(message_body.data(), raw_data+RANK_HEADER_LEN, raw_data_size-RANK_HEADER_LEN);
+
         switch (message_header.type()) {
             case MessageType::EAR:
-                handler->handle(new EAR(message_header, raw_data + RANK_HEADER_LEN));
+                handler->handle(new EAR(message_header, message_body));
                 break;
             case MessageType::MAR:
-                handler->handle(new MAR(message_header, raw_data + RANK_HEADER_LEN));
+                handler->handle(new MAR(message_header, message_body));
                 break;
             case MessageType::BID:
-                handler->handle(new BID(message_header, raw_data + RANK_HEADER_LEN));
+                handler->handle(new BID(message_header, message_body));
                 break;
             case MessageType::ACC:
                 handler->handle(new ACC(message_header));
@@ -198,7 +201,10 @@ void Process::operator()() {
                 handler->handle(new REF(message_header));
                 break;
             case MessageType::REP:
-                handler->handle(new REP(message_header, raw_data + RANK_HEADER_LEN));
+                handler->handle(new REP(message_header, message_body));
+                break;
+            case MessageType::NOTYPE:
+                // TODO Handle this case.
                 break;
         }
 

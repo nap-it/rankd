@@ -3,6 +3,10 @@
 
 class Header;
 
+#include <array>
+#include <vector>
+
+#include "constants.h"
 #include "structs/messages/header.h"
 
 #include "utils/marshalling/serialization.h"
@@ -13,10 +17,10 @@ class Header;
 
 uint8_t* marshal(const RequestingCapabilities& capabilities);
 
-RequestingCapabilities unmarshal(const uint8_t* data);
+RequestingCapabilities unmarshal(const std::vector<uint8_t>& data);
 
-Header unmarshal_header(const uint8_t* data);
+Header unmarshal_header(const std::array<uint8_t, RANK_HEADER_LEN>& data);
 
-uint8_t* marshal_header(const Header& header);
+std::array<uint8_t, RANK_HEADER_LEN> marshal_header(const Header& header);
 
 #endif  // RANK_PRELUDE_MARSHALLING_H

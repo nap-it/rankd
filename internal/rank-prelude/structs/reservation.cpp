@@ -31,7 +31,7 @@ uint8_t Reservation::listener_length() const {
     return _listener_length;
 }
 
-uint8_t* Reservation::listener() const {
+std::array<uint8_t, RANK_LISTENER_MAX_LEN> Reservation::listener() const {
     return _listener;
 }
 

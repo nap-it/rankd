@@ -20,15 +20,21 @@ uint8_t EAR::reserved() const {
     return _reserved;
 }
 
-uint8_t* EAR::listener() const {
-    return _listener;
+std::vector<uint8_t> EAR::listener() const {
+    std::vector<uint8_t> listener;
+
+    for (int i = 0; i != _listener_length; ++i) {
+        listener.push_back(_listener.at(i));
+    }
+
+    return listener;
 }
 
 uint16_t EAR::payload_length() const {
     return _payload_length;
 }
 
-uint8_t* EAR::payload() const {
+std::vector<uint8_t> EAR::payload() const {
     return _payload;
 }
 

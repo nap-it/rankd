@@ -1,10 +1,11 @@
 #ifndef RANK_PRELUDE_HEADER_H
 #define RANK_PRELUDE_HEADER_H
 
+#include <array>
 #include <cstdint>
 
+#include "constants.h"
 #include "structs/identifier.h"
-#include "structs/messages/constants.h"
 #include "structs/messages/message_type.h"
 
 #include "utils/marshalling.h"
@@ -12,13 +13,13 @@
 class Header {
 public:
     // Instance handling.
-    Header(const MessageType& type, const UUIDv4& uuid);
-    Header(const uint8_t* marshalled_data);
+    Header(const uint8_t& version, const MessageType& type, const UUIDv4& uuid);
+    Header(const std::array<uint8_t, RANK_HEADER_LEN>& marshalled_data);
     Header(const Header& header);
     Header();
 
     // Marshalling features.
-    const uint8_t* marshal() const;
+    const std::array<uint8_t, RANK_HEADER_LEN> marshal() const;
 
     // Getters.
     size_t size() const;
