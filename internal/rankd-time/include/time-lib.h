@@ -1,10 +1,11 @@
 #ifndef RANKD_TIME_LIB_H
 #define RANKD_TIME_LIB_H
 
-#include "synchronization/ptp/ptp.h"
+#include "data-sources/configuration/configuration.h"
+#include "data-sources/latency/latency.h"
+#include "data-sources/reliability/reliability.h"
+#include "data-sources/synchronization/synchronization.h"
 
-#ifdef RELYUM
-#include "configuration/srp/relyum/structs.h"
-#endif
+#include "standards/ieee.h"
 
 #endif // RANKD_TIME_LIB_H

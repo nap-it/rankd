@@ -4,15 +4,17 @@ project(rankd-time
         LANGUAGES CXX C)
 
 set(HEADER_LIST
-        include/latency/linux/tc-helper.h
-        include/latency/cbs.h
-        include/latency/tas.h
-        include/synchronization/ptp/ptp.h
-        include/time-lib.h
+        include/data-sources/configuration/configuration.h
+        include/data-sources/latency/latency.h
+        include/data-sources/reliability/reliability.h
+        include/data-sources/synchronization/synchronization.h
+        include/standards/ieee.h
         )
 set(SOURCE_LIST
-        latency/linux/tc-helper.cpp
-        synchronization/ptp/ptp.cpp
+        data-sources/configuration/configuration.cpp
+        data-sources/latency/latency.cpp
+        data-sources/reliability/reliability.cpp
+        data-sources/synchronization/synchronization.cpp
         )
 
 add_subdirectory(vendor)
