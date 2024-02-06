@@ -6,6 +6,7 @@ project(rankd-time
 set(HEADER_LIST
         include/data-sources/configuration/configuration.h
         include/data-sources/latency/latency.h
+        include/data-sources/latency/standards.h
         include/data-sources/reliability/reliability.h
         include/data-sources/synchronization/synchronization.h
         include/standards/ieee.h
@@ -16,6 +17,7 @@ set(SOURCE_LIST
         data-sources/latency/latency.cpp
         data-sources/reliability/reliability.cpp
         data-sources/synchronization/synchronization.cpp
+        utils/kernel.cpp
         )
 
 add_subdirectory(vendor)

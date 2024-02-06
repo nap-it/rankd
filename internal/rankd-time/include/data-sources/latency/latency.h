@@ -1,6 +1,7 @@
 #ifndef RANKDTIME_LATENCY_H
 #define RANKDTIME_LATENCY_H
 
+#include <exception>
 #include <map>
 #include <ostream>
 
@@ -20,7 +21,6 @@ class Latency {
 public:
     Latency();
     void snap();
-    friend std::ostream& operator<<(std::ostream& os, const Latency& configuration);
     ~Latency();
 private:
 #ifndef LIUNX_TC
@@ -30,7 +30,7 @@ private:
     int _socket_descriptor = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     struct sockaddr_nl* _local_point = nullptr;
 
-#elifdef RELYUM
+#elif define(RELYUM)
     void snap_tas_via_relyum();
     void snap_cbs_via_relyum();
 #endif

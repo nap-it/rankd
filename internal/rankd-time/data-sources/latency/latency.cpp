@@ -2,13 +2,7 @@
 
 Latency::Latency() {
 #ifndef LINUX_TC
-    _local_point = new struct sockaddr_nl {
-        AF_NETLINK, 0, static_cast
-
-        <__u32>(getpid()),
-
-        0
-    };
+    _local_point = new struct sockaddr_nl(AF_NETLINK, 0, static_cast<__u32>(getpid()), 0);
     if (bind(_socket_descriptor, (struct sockaddr *) _local_point, sizeof(_local_point)) < 0) {
         throw std::exception(); // TODO Handle this error due to not being able to bind. Are you root?
     }
@@ -21,7 +15,7 @@ void Latency::snap() {
 #ifndef LINUX_TC
     snap_tas_via_linux_tc();
     snap_cbs_via_linux_tc();
-#elifdef RELYUM
+#elif defined(RELYUM)
     snap_tas_via_relyum();
     snap_cbs_via_relyum();
 #endif
@@ -205,27 +199,28 @@ void Latency::snap_tas_via_linux_tc() {
                                                                                      current_time_specification.tv_nsec);
                             bool config_pending = false;
 
-                            _time_aware_shaping_rules.at(interface_index) = new TAS::SchedParameters(gate_parameter_table,       // gate_parameter_table
-                                                                                                 gate_enabled,                   // gate_enabled
-                                                                                                 255,                            // admin_gate_states
-                                                                                                 oper_gate_states,               // oper_gate_states
-                                                                                                 std::nullopt,                   // admin_control_list
-                                                                                                 oper_control_list,              // oper_control_list
-                                                                                                 std::nullopt,                   // admin_cycle_time
-                                                                                                 oper_cycle_time,                // oper_cycle_time
-                                                                                                 std::nullopt,                   // admin_cycle_time_extension
-                                                                                                 oper_cycle_time_extension,      // oper_cycle_time_extension
-                                                                                                 std::nullopt,                   // admin_base_time
-                                                                                                 oper_base_time,                 // oper_base_time
-                                                                                                 config_change,                  // config_change
-                                                                                                 std::nullopt,                   // config_change_time
-                                                                                                 std::nullopt,                   // tick_granularity
-                                                                                                 current_time,                   // currentTime
-                                                                                                 config_pending,                 // config_pending
-                                                                                                 std::nullopt,                   // config_change_error
-                                                                                                 std::nullopt,                   // supported_list_max
-                                                                                                 std::nullopt,                   // supported_cycle_max
-                                                                                                 std::nullopt);                  // supported_interval_max
+                            _time_aware_shaping_rules.at(interface_index) = new TAS::SchedParameters(
+                                    gate_parameter_table,           // gate_parameter_table
+                                    gate_enabled,                   // gate_enabled
+                                    255,                            // admin_gate_states
+                                    oper_gate_states,               // oper_gate_states
+                                    std::nullopt,                   // admin_control_list
+                                    oper_control_list,              // oper_control_list
+                                    std::nullopt,                   // admin_cycle_time
+                                    oper_cycle_time,                // oper_cycle_time
+                                    std::nullopt,                   // admin_cycle_time_extension
+                                    oper_cycle_time_extension,      // oper_cycle_time_extension
+                                    std::nullopt,                   // admin_base_time
+                                    oper_base_time,                 // oper_base_time
+                                    config_change,                  // config_change
+                                    std::nullopt,                   // config_change_time
+                                    std::nullopt,                   // tick_granularity
+                                    current_time,                   // currentTime
+                                    config_pending,                 // config_pending
+                                    std::nullopt,                   // config_change_error
+                                    std::nullopt,                   // supported_list_max
+                                    std::nullopt,                   // supported_cycle_max
+                                    std::nullopt);                  // supported_interval_max
                         }
                     }
                 }
