@@ -190,8 +190,10 @@ void Latency::snap_tas_via_linux_tc() {
                             }
                             TAS::OperCycleTime oper_cycle_time = ieee802::RationalGrouping(cycle_time, 1);
                             uint32_t oper_cycle_time_extension = cycle_time_extension;
-                            TAS::OperBaseTime oper_base_time = ieee802::PTPTimeGrouping(
-                                    (uint64_t(base_time) >> 32) & 0xffffffff, base_time & 0xffffffff);
+                            std::chrono::nanoseconds base_time_ns(base_time);
+                            auto base_time_s = std::chrono::duration_cast<std::chrono::seconds>(base_time_ns);
+                            TAS::OperBaseTime oper_base_time = ieee802::PTPTimeGrouping(base_time_s.count(),
+                                                                                        base_time_ns.count());
                             bool config_change = false;
                             timespec current_time_specification;
                             clock_gettime(CLOCK_REALTIME, &current_time_specification);
@@ -200,17 +202,17 @@ void Latency::snap_tas_via_linux_tc() {
                             bool config_pending = false;
 
                             _time_aware_shaping_rules.at(interface_index) = new TAS::SchedParameters(
-                                    gate_parameter_table,           // gate_parameter_table
+                                    std::nullopt,                   // gate_parameter_table
                                     gate_enabled,                   // gate_enabled
-                                    255,                            // admin_gate_states
+                                    oper_gate_states,               // admin_gate_states
                                     oper_gate_states,               // oper_gate_states
-                                    std::nullopt,                   // admin_control_list
+                                    oper_control_list,              // admin_control_list
                                     oper_control_list,              // oper_control_list
-                                    std::nullopt,                   // admin_cycle_time
+                                    oper_cycle_time,                // admin_cycle_time
                                     oper_cycle_time,                // oper_cycle_time
-                                    std::nullopt,                   // admin_cycle_time_extension
+                                    oper_cycle_time_extension,      // admin_cycle_time_extension
                                     oper_cycle_time_extension,      // oper_cycle_time_extension
-                                    std::nullopt,                   // admin_base_time
+                                    oper_base_time,                 // admin_base_time
                                     oper_base_time,                 // oper_base_time
                                     config_change,                  // config_change
                                     std::nullopt,                   // config_change_time

@@ -6,6 +6,7 @@
 #include <ostream>
 
 #ifndef LINUX_TC
+#include <chrono>
 #include <cstring>
 #include <unistd.h>
 #include <linux/netlink.h>
