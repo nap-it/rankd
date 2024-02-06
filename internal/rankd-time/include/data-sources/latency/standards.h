@@ -42,6 +42,7 @@ namespace TAS {
         uint32_t index;
         TypeOfOperation operation_name;
         std::optional<uint32_t> time_interval_value;
+        uint8_t gate_states_value;
     };
 
     typedef std::vector<SchedGateControlEntriesEntry> SchedGateControlEntries;

@@ -14,6 +14,7 @@
 #endif
 
 #include "standards.h"
+#include "utils/kernel.h"
 
 class Latency {
 public:

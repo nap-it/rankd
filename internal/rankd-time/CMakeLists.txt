@@ -9,6 +9,7 @@ set(HEADER_LIST
         include/data-sources/reliability/reliability.h
         include/data-sources/synchronization/synchronization.h
         include/standards/ieee.h
+        include/utils/kernel.h
         )
 set(SOURCE_LIST
         data-sources/configuration/configuration.cpp
