@@ -41,8 +41,6 @@ CPU::CPU() {
         }
 
         parsing_tree[unit] = unit_parsing_tree;
-
-        std::cout << "processor is " << unit_parsing_tree["processor"] << std::endl;
     }
     cpuinfo.close();
 

@@ -21,6 +21,14 @@ void Latency::snap() {
 #endif
 }
 
+std::map<uint8_t, TAS::TAS *> Latency::tas() {
+    return _time_aware_shaping_rules;
+}
+
+std::map<uint8_t, CBS::CBS *> Latency::cbs() {
+    return _credit_based_shaping_rules;
+}
+
 #ifndef LINUX_TC
 
 void Latency::snap_tas_via_linux_tc() {

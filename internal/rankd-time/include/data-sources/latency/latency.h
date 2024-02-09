@@ -22,6 +22,8 @@ class Latency {
 public:
     Latency();
     void snap();
+    std::map<uint8_t, TAS::TAS*> tas();
+    std::map<uint8_t, CBS::CBS*> cbs();
     ~Latency();
 private:
 #ifndef LIUNX_TC
