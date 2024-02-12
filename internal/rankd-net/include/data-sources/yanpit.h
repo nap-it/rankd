@@ -5,7 +5,7 @@
 #include <mutex>
 #include <thread>
 
-#include "structs/interfaces.h"
+#include "structs/yanpit-interfaces.h"
 #include "yanpit/dds/dds.h"
 
 class IperfRepresentation {

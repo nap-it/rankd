@@ -10,25 +10,25 @@
 #include "writer.h"
 
 #include "data-sources/yanpit.h"
-#include "structs/interfaces.h"
+#include "structs/yanpit-interfaces.h"
 
-class Network {
+class YanpitNetwork {
 public:
-    static Network* get_instance() {
-        static Network instance;
+    static YanpitNetwork* get_instance() {
+        static YanpitNetwork instance;
         return &instance;
     }
-    Network(const Network&) = delete;
-    void operator=(const Network&) = delete;
+    YanpitNetwork(const YanpitNetwork&) = delete;
+    void operator=(const YanpitNetwork&) = delete;
     void snap();
-    [[nodiscard]] std::map<std::string, NetworkInterface> interfaces() const {
+    [[nodiscard]] std::map<std::string, YanpitNetworkInterface> interfaces() const {
         return _interfaces;
     }
     [[nodiscard]] rapidjson::Document json() const;
-    friend std::ostream& operator<<(std::ostream& os, const Network& network);
+    friend std::ostream& operator<<(std::ostream& os, const YanpitNetwork& network);
 private:
-    Network();
-    std::map<std::string, NetworkInterface> _interfaces;
+    YanpitNetwork();
+    std::map<std::string, YanpitNetworkInterface> _interfaces;
     YanpitConnection* _connection = YanpitConnection::get_instance();
 };
 

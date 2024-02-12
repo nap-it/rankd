@@ -1,15 +1,15 @@
 #include "net-lib.h"
 
-Network::Network() {
+YanpitNetwork::YanpitNetwork() {
     _connection->execute();
     snap();
 }
 
-void Network::snap() {
+void YanpitNetwork::snap() {
     _interfaces = _connection->interfaces_information_as_map();
 }
 
-rapidjson::Document Network::json() const {
+rapidjson::Document YanpitNetwork::json() const {
     // Create a JSON document.
     rapidjson::Document json_document;
     json_document.SetObject();
@@ -68,7 +68,7 @@ rapidjson::Document Network::json() const {
     return json_document;
 }
 
-std::ostream& operator<<(std::ostream& os, const Network& network) {
+std::ostream& operator<<(std::ostream& os, const YanpitNetwork& network) {
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 

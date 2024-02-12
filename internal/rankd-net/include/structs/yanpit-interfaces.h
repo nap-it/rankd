@@ -1,5 +1,5 @@
-#ifndef RANKD_INTERFACES_H
-#define RANKD_INTERFACES_H
+#ifndef RANKD_YANPIT_INTERFACES_H
+#define RANKD_YANPIT_INTERFACES_H
 
 #include <map>
 #include <string>
@@ -10,9 +10,9 @@
 #include "stringbuffer.h"
 #include "writer.h"
 
-class NetworkInterface {
+class YanpitNetworkInterface {
 public:
-    NetworkInterface(const std::string& name) {
+    YanpitNetworkInterface(const std::string& name) {
         _name = name;
     }
     const std::string& name() const {
@@ -152,4 +152,4 @@ private:
 };
 
 
-#endif  // RANKD_INTERFACES_H
+#endif  // RANKD_YANPIT_INTERFACES_H

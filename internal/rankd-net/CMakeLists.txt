@@ -17,17 +17,23 @@ file(GLOB DDS_DESCRIPTOR_SOURCES "data-sources/yanpit/dds/descriptors/*.cxx")
 
 set(HEADER_LIST
         include/net-lib.h
+        include/data-sources/interfaces.h
+        include/data-sources/neighbors.h
+        include/data-sources/routes.h
         include/data-sources/yanpit.h
         include/data-sources/yanpit/dds/dds.h
         include/data-sources/yanpit/dds/localnet.h
         include/data-sources/yanpit/dds/ncm.h
         include/data-sources/yanpit/dds/yanpit.h
         ${DDS_DESCRIPTOR_HEADERS}
-        include/structs/interfaces.h)
+        include/structs/yanpit-interfaces.h)
 set(SOURCE_LIST
+        data-sources/interfaces.cpp
+        data-sources/neighbors.cpp
+        data-sources/routes.cpp
         data-sources/yanpit.cpp
         ${DDS_DESCRIPTOR_SOURCES}
-        structs/interfaces.cpp
+        structs/yanpit-interfaces.cpp
         )
 
 # Make the rankd-net library (librankd-net).
