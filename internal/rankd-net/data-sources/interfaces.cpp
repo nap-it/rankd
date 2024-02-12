@@ -110,29 +110,41 @@ void NetworkDevices::snap() {
         }
     }
 
+    close(netlink_socket);
+
+    netlink_socket = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+    if (netlink_socket < 0) {
+        throw std::exception();
+    }
+    memset(&binding_address, 0, sizeof(binding_address));
+    binding_address.nl_family = AF_NETLINK;
+    binding_address.nl_pid = getpid();
+
+    // Bind netlink socket and address.
+    if (bind(netlink_socket, (struct sockaddr*) &binding_address, sizeof(binding_address)) < 0) {
+        throw std::exception();
+    }
+
     // Construct message to request interface addresses.
     struct {
         struct nlmsghdr header;
-        struct ifaddrmsg message;
+        struct rtgenmsg message;
     } int_request;
     int_request.header.nlmsg_type = RTM_GETADDR;
     int_request.header.nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
-    int_request.header.nlmsg_len = sizeof(request);
+    int_request.header.nlmsg_len = NLMSG_LENGTH(sizeof(request.message));
     int_request.header.nlmsg_seq = time(nullptr);
-    int_request.message.ifa_family = AF_UNSPEC;
+    int_request.message.rtgen_family = AF_UNSPEC;
 
     // Place request to kernel via netlink procedures.
-    sent_bytes = send(netlink_socket, &int_request, sizeof(int_request), 0);
+    sent_bytes = send(netlink_socket, &int_request, int_request.header.nlmsg_len, 0);
     if (sent_bytes < 0) {
         throw std::exception();
     }
 
-    return;
-
     receiving = true;
     memset(&response_buffer, 0, sizeof(response_buffer));
     while (receiving) {
-        std::cerr << "Performing... " << std::endl;
         ssize_t received_bytes = recv(netlink_socket, response_buffer, sizeof(response_buffer), 0); // FIXME Blocking here...
         if (received_bytes < 0) {
             throw std::exception();
@@ -142,8 +154,6 @@ void NetworkDevices::snap() {
         while (NLMSG_OK(response, received_bytes)) {
             if (response->nlmsg_type == NLMSG_DONE) {
                 receiving = false;
-
-                std::cerr << "Quitting... " << std::endl;
                 break;
             }
 
