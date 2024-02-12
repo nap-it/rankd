@@ -1,3 +1,16 @@
-//
-// Created by Rui Lopes on 12/02/2024.
-//
+#include "data-sources/neighbors.h"
+
+NetworkNeighbors::NetworkNeighbors() {
+    _neighbors = std::map<int, NetworkNeighbor>();
+
+    snap();
+}
+
+void NetworkNeighbors::snap() {
+
+}
+
+rapidjson::Document NetworkNeighbors::json() const {
+
+}
+
