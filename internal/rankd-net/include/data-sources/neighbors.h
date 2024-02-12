@@ -1,9 +1,9 @@
 #ifndef RANKD_NET_LIB_NEIGHBORS_H
 #define RANKD_NET_LIB_NEIGHBORS_H
 
-#include <map>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include <unistd.h>
 #include <arpa/inet.h>
@@ -16,11 +16,14 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
+#include "utils/addresses.h"
+
 struct NetworkNeighbor {
     uint8_t family;
     std::string state;
-    std::string flags;
-    std::string type;
+    std::vector<std::string> flags{};
+    std::string l2_address;
+    std::string l3_address;
 };
 
 class NetworkNeighbors {
@@ -30,7 +33,7 @@ public:
     rapidjson::Document json() const;
     friend std::ostream& operator<<(std::ostream& os, const NetworkNeighbors& neighbors);
 private:
-    std::map<int, NetworkNeighbor> _neighbors;
+    std::vector<NetworkNeighbor> _neighbors;
 };
 
 #endif //RANKD_NET_LIB_NEIGHBORS_H

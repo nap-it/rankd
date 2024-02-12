@@ -26,7 +26,9 @@ set(HEADER_LIST
         include/data-sources/yanpit/dds/ncm.h
         include/data-sources/yanpit/dds/yanpit.h
         ${DDS_DESCRIPTOR_HEADERS}
-        include/data-sources/yanpit/structs/yanpit-interfaces.h)
+        include/data-sources/yanpit/structs/yanpit-interfaces.h
+        include/utils/addresses.h
+)
 set(SOURCE_LIST
         data-sources/interfaces.cpp
         data-sources/neighbors.cpp
@@ -34,6 +36,7 @@ set(SOURCE_LIST
         data-sources/yanpit.cpp
         ${DDS_DESCRIPTOR_SOURCES}
         data-sources/yanpit/structs/yanpit-interfaces.cpp
+        utils/addresses.cpp
         )
 
 # Make the rankd-net library (librankd-net).

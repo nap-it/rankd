@@ -18,9 +18,7 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
-std::string mac_to_string(unsigned char* mac);
-
-std::string ip_to_string(int family, void* addr);
+#include "utils/addresses.h"
 
 // Based on rtnl_link_stats structure from <if_link.h>.
 typedef rtnl_link_stats DeviceStatistics;

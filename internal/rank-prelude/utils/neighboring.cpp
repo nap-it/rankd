@@ -303,6 +303,7 @@ std::vector<std::vector<uint8_t>> get_connections_to(const std::vector<uint8_t> 
                                     };
                                 }
                             }
+                            break;
                             case NDA_LLADDR:
                                 possible_mac_address = {
                                         ((unsigned char *) RTA_DATA(attribute))[0],
