@@ -1,10 +1,11 @@
 #ifndef RANKD_NET_LIB_INTERFACES_H
 #define RANKD_NET_LIB_INTERFACES_H
 
-#define RAPIDJSON_HAS_STDSTRING 1
-
 #include <map>
+#include <iostream>
 #include <string>
+#include <vector>
+#include <tuple>
 
 #include <unistd.h>
 #include <arpa/inet.h>
@@ -17,39 +18,22 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
+std::string mac_to_string(unsigned char* mac);
+
+std::string ip_to_string(int family, void* addr);
+
 // Based on rtnl_link_stats structure from <if_link.h>.
-struct DeviceStatistics {
-    uint32_t rx_packets;
-    uint32_t tx_packets;
-    uint32_t rx_bytes;
-    uint32_t tx_bytes;
-    uint32_t rx_errors;
-    uint32_t tx_errors;
-    uint32_t rx_dropped;
-    uint32_t tx_dropped;
-    uint32_t multicast;
-    uint32_t collisions;
-    uint32_t rx_length_errors;
-    uint32_t rx_over_errors;
-    uint32_t rx_crc_errors;
-    uint32_t rx_frame_errors;
-    uint32_t rx_fifo_errors;
-    uint32_t rx_missed_errors;
-    uint32_t tx_aborted_errors;
-    uint32_t tx_carrier_errors;
-    uint32_t tx_fifo_errors;
-    uint32_t tx_heartbeat_errors;
-    uint32_t tx_window_errors;
-    uint32_t rx_compressed;
-    uint32_t tx_compressed;
-};
+typedef rtnl_link_stats DeviceStatistics;
 
 struct NetworkDevice {
+    int index;
+    unsigned int flags;
     std::string l2_address;
     std::string l2_broadcast_address;
     std::string name;
+    std::vector<std::pair<int, std::string>> addresses{};
     uint32_t mtu;
-    int8_t link_type;
+    int link_type;
     std::string qdisc;
     DeviceStatistics statistics;
 };
@@ -61,7 +45,7 @@ public:
     rapidjson::Document json() const;
     friend std::ostream& operator<<(std::ostream& os, const NetworkDevices& devices);
 private:
-    std::map<std::string, NetworkDevice> _devices;
+    std::map<int, NetworkDevice> _devices;
 };
 
 #endif //RANKD_NET_LIB_INTERFACES_H

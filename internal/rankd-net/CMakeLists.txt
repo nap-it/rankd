@@ -33,6 +33,7 @@ set(SOURCE_LIST
         data-sources/routes.cpp
         data-sources/yanpit.cpp
         ${DDS_DESCRIPTOR_SOURCES}
+        data-sources/yanpit/structs/yanpit-interfaces.cpp
         )
 
 # Make the rankd-net library (librankd-net).
