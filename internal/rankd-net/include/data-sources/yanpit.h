@@ -5,7 +5,7 @@
 #include <mutex>
 #include <thread>
 
-#include "structs/yanpit-interfaces.h"
+#include "yanpit/structs/yanpit-interfaces.h"
 #include "yanpit/dds/dds.h"
 
 class IperfRepresentation {
@@ -196,13 +196,13 @@ public:
         return get_instance();
     }
 
-    [[nodiscard]] std::map<std::string, NetworkInterface> interfaces_information_as_map() const {
+    [[nodiscard]] std::map<std::string, YanpitNetworkInterface> interfaces_information_as_map() const {
         auto snapshot = _localnet_instance->snapshot_localnet_status();
-        std::map<std::string, NetworkInterface> interfaces;
+        std::map<std::string, YanpitNetworkInterface> interfaces;
 
         for (const auto& interface : snapshot.interfaces()) {
             // Create a network interface.
-            auto temporary_interface = NetworkInterface(interface.interface_name());
+            auto temporary_interface = YanpitNetworkInterface(interface.interface_name());
 
             // Add attributes to mapped interface.
             temporary_interface.address(interface.interface_item().mac_address());
@@ -255,6 +255,26 @@ private:
     // Threading control.
     std::atomic<bool> _running = false;
     std::thread _thread;
+};
+
+class YanpitNetwork {
+public:
+    static YanpitNetwork* get_instance() {
+        static YanpitNetwork instance;
+        return &instance;
+    }
+    YanpitNetwork(const YanpitNetwork&) = delete;
+    void operator=(const YanpitNetwork&) = delete;
+    void snap();
+    [[nodiscard]] std::map<std::string, YanpitNetworkInterface> interfaces() const {
+        return _interfaces;
+    }
+    [[nodiscard]] rapidjson::Document json() const;
+    friend std::ostream& operator<<(std::ostream& os, const YanpitNetwork& network);
+private:
+    YanpitNetwork();
+    std::map<std::string, YanpitNetworkInterface> _interfaces;
+    YanpitConnection* _connection = YanpitConnection::get_instance();
 };
 
 #endif  // RANKD_NET_LIB_YANPIT_H

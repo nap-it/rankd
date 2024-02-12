@@ -26,14 +26,13 @@ set(HEADER_LIST
         include/data-sources/yanpit/dds/ncm.h
         include/data-sources/yanpit/dds/yanpit.h
         ${DDS_DESCRIPTOR_HEADERS}
-        include/structs/yanpit-interfaces.h)
+        include/data-sources/yanpit/structs/yanpit-interfaces.h)
 set(SOURCE_LIST
         data-sources/interfaces.cpp
         data-sources/neighbors.cpp
         data-sources/routes.cpp
         data-sources/yanpit.cpp
         ${DDS_DESCRIPTOR_SOURCES}
-        structs/yanpit-interfaces.cpp
         )
 
 # Make the rankd-net library (librankd-net).
