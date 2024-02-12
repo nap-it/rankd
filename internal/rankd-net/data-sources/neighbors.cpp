@@ -7,6 +7,8 @@ NetworkNeighbors::NetworkNeighbors() {
 }
 
 void NetworkNeighbors::snap() {
+    _neighbors.clear();
+
     struct sockaddr_nl binding_address;
     int netlink_socket = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     if (netlink_socket < 0) {
