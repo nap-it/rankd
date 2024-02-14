@@ -9,7 +9,7 @@ public:
     void snap();
     friend std::ostream& operator<<(std::ostream& os, const Reliability& configuration);
 private:
-
+    bool _json_formatted_output = false;
 };
 
 #endif //RANKDTIME_LATENCY_H

@@ -39,6 +39,7 @@ private:
 #endif
     std::map<uint8_t, TAS::TAS*> _time_aware_shaping_rules{};
     std::map<uint8_t, CBS::CBS*> _credit_based_shaping_rules{};
+    bool _json_formatted_output = false;
 };
 
 #endif //RANKDTIME_LATENCY_H
