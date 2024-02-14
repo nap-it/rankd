@@ -313,6 +313,10 @@ void Sensors::snap() {
   }
 }
 
+void Sensors::enable_json_output() {
+    _json_formatted_output = true;
+}
+
 rapidjson::Document Sensors::json() const {
   // Create a JSON document.
   rapidjson::Document json_document;
@@ -491,12 +495,42 @@ rapidjson::Document Sensors::json() const {
 }
 
 std::ostream& operator<<(std::ostream& os, const Sensors& sensors) {
-  rapidjson::StringBuffer buffer;
-  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-  auto json_document = sensors.json();
-  json_document.Accept(writer);
+    if (sensors._json_formatted_output) {
+        rapidjson::StringBuffer buffer;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+        auto json_document = sensors.json();
+        json_document.Accept(writer);
 
-  os << buffer.GetString();
+        os << buffer.GetString();
+    } else {
+        for (const auto& [name, sensor]: sensors._sensors) {
+            os << name << " sensor: " << "\n";
+            os << "\t" << "Bus Type: " << get_bus_name(sensor.bus_type()) << "\n";
+            os << "\t" << "Features: " << "\n";
+            for (const auto& [feature_name, feature]: sensor.features()) {
+                os << "\t -" << "Name: " << feature_name << "\n";
+                os << "\t  " << "Type: " << get_feature_name(feature.type()) << "\n";
+                os << "\t  " << "Value: ";
+                for (const auto& [_, subfeature] : feature.subfeatures()) {
+                    if (subfeature.type() == SubfeatureType::INPUT) {
+                        if (feature.type() == FeatureType::TEMPERATURE) { os << subfeature.value() << "ºC "; }
+                        else if (feature.type() == FeatureType::FAN) { os << subfeature.value() << " rpm "; }
+                        else if (feature.type() == FeatureType::IN) { os << subfeature.value() << " V "; }
+                        break;
+                    }
+                }
+                for (const auto& [_, subfeature] : feature.subfeatures()) {
+                    if (subfeature.type() == SubfeatureType::CRITICAL) {
+                        if (feature.type() == FeatureType::TEMPERATURE) { os << "out of " << subfeature.value() << "ºC"; }
+                        else if (feature.type() == FeatureType::FAN) { os << "out of " << subfeature.value() << " rpm"; }
+                        break;
+                    }
+                }
+                os << "\n";
+            }
+        }
+        os << std::endl;
+    }
 
   return os;
 }

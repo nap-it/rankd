@@ -161,6 +161,10 @@ const Device* Storage::root_device() const {
   return _root_storage;
 }
 
+void Storage::enable_json_output() {
+    _json_formatted_output = true;
+}
+
 rapidjson::Document Storage::json() const {
   // Create a JSON document.
   rapidjson::Document json_document;
@@ -256,12 +260,27 @@ rapidjson::Document Storage::json() const {
 }
 
 std::ostream& operator<<(std::ostream& os, const Storage& storage) {
-  rapidjson::StringBuffer buffer;
-  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-  auto json_document = storage.json();
-  json_document.Accept(writer);
+    if (storage._json_formatted_output) {
+        rapidjson::StringBuffer buffer;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+        auto json_document = storage.json();
+        json_document.Accept(writer);
 
-  os << buffer.GetString();
+        os << buffer.GetString();
+    } else {
+        os << "Root device" << " (" << storage._root_storage->path << "):" << "\n";
+        os << "\t" << "Filesystem: " << storage._root_storage->filesystem << "\n";
+        os << "\t" << "Size: " << storage._root_storage->size << " bytes" << "\n";
+        os << "\t" << "Used: " << storage._root_storage->used << " bytes" << "\n";
+        os << "\t" << "Available: " << storage._root_storage->available << " bytes" << "\n";
+        os << "\t" << "Use Percentage: " << std::setprecision(4) << storage._root_storage->use_percentage << "%" << "\n";
+        os << "Other devices: " << "\n";
+        for (const auto& [name, device] : storage.devices()) {
+            os << "\t" << "Device " << name << ((name == storage._root_storage->path) ? " (Root device)" : "") << ":" << "\n";
+            os << "\t  " << device.path << " with " << device.filesystem << " filesystem, mounted on " << device.mounted_on << ", " << std::setprecision(4) << device.use_percentage << "% used." << "\n";
+        }
+        os << std::endl;
+    }
 
   return os;
 }

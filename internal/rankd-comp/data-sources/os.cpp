@@ -167,6 +167,10 @@ const std::map<unsigned int, Process>& OperativeSystem::processes() const {
     return _processes;
 }
 
+void OperativeSystem::enable_json_output() {
+    _json_formatted_output = true;
+}
+
 rapidjson::Document OperativeSystem::json() const {
     // Create a JSON document.
     rapidjson::Document json_document;
@@ -261,12 +265,31 @@ rapidjson::Document OperativeSystem::json() const {
 }
 
 std::ostream& operator<<(std::ostream& os, const OperativeSystem& operative_system) {
-    rapidjson::StringBuffer buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    auto json_document = operative_system.json();
-    json_document.Accept(writer);
+    if (operative_system._json_formatted_output) {
+        rapidjson::StringBuffer buffer;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+        auto json_document = operative_system.json();
+        json_document.Accept(writer);
 
-    os << buffer.GetString();
+        os << buffer.GetString();
+    } else {
+        os << "Kernel Information: " << "\n";
+        os << "\t" << "System name: " << operative_system._kernel.sysname << "\n";
+        os << "\t" << "Node name: " << operative_system._kernel.nodename << "\n";
+        os << "\t" << "Release: " << operative_system._kernel.release << "\n";
+        os << "\t" << "Version: " << operative_system._kernel.version << "\n";
+        os << "\t" << "Machine: " << operative_system._kernel.machine << "\n";
+        os << "Uptime and loads:" << "\n";
+        os << "\t" << "Uptime: " << operative_system._uptime.count() << " seconds" << "\n";
+        os << "\t" << "Load (1m): " << operative_system._load1m << "\n";
+        os << "\t" << "Load (5m): " << operative_system._load5m << "\n";
+        os << "\t" << "Load (15m): " << operative_system._load15m << "\n";
+        os << "Processes: " << "(" << operative_system._processes.size() << ")" << "\n";
+        for (const auto& [pid, process] : operative_system._processes) {
+            os << "\t" << std::setw(8) << process.user << " " << std::setw(7) << pid << " " << std::setw(5) << std::setprecision(4) << process.cpu_usage << " " << std::setw(5) << std::setprecision(4) << process.memory_usage << " " << process.command << "\n";
+        }
+        os << std::endl;
+    }
 
     return os;
 }

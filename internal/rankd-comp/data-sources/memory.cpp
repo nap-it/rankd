@@ -277,6 +277,10 @@ int Memory::oom_killer_invocations() {
     return _oom_killer_invocations.value();
 }
 
+void Memory::enable_json_output() {
+    _json_formatted_output = true;
+}
+
 rapidjson::Document Memory::json() const {
     // Create a JSON document.
     rapidjson::Document json_document;
@@ -389,12 +393,22 @@ rapidjson::Document Memory::json() const {
 }
 
 std::ostream& operator<<(std::ostream& os, const Memory& memory) {
-    rapidjson::StringBuffer buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    auto json_document = memory.json();
-    json_document.Accept(writer);
+    if (memory._json_formatted_output) {
+        rapidjson::StringBuffer buffer;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+        auto json_document = memory.json();
+        json_document.Accept(writer);
 
-    os << buffer.GetString();
+        os << buffer.GetString();
+    } else {
+        if (memory._total.has_value()) os << "Total memory: " << memory._total.value() << "\n";
+        if (memory._free.has_value()) os << "Free memory: " << memory._free.value() << "\n";
+        if (memory._available.has_value()) os << "Available memory: " << memory._available.value() << "\n";
+        if (memory._swap_total.has_value()) os << "Swap memory: " << memory._swap_total.value() << "\n";
+        if (memory._swap_free.has_value()) os << "Swap free memory: " << memory._swap_free.value() << "\n";
+        if (memory._shared_memory.has_value()) os << "Shared memory: " << memory._shared_memory.value() << "\n";
+        if (memory._oom_killer_invocations.has_value()) os << "OOM killer invocations: " << memory._oom_killer_invocations.value() << "\n";
+    }
 
     return os;
 }

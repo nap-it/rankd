@@ -175,6 +175,10 @@ void CPU::snap() {
     _snapshot = stats;
 }
 
+void CPU::enable_json_output() {
+    _json_formatted_output = true;
+}
+
 rapidjson::Document CPU::json() const {
     // Create a JSON document.
     rapidjson::Document json_document;
@@ -268,12 +272,44 @@ rapidjson::Document CPU::json() const {
 }
 
 std::ostream& operator<<(std::ostream& os, const CPU& cpu) {
-    rapidjson::StringBuffer buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    auto json_document = cpu.json();
-    json_document.Accept(writer);
+    if (cpu._json_formatted_output) {
+        rapidjson::StringBuffer buffer;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+        auto json_document = cpu.json();
+        json_document.Accept(writer);
 
-    os << buffer.GetString();
+        os << buffer.GetString();
+    } else {
+        if (cpu._model.has_value()) {
+            os << "CPU model: " << cpu._model.value() << "\n";
+        }
+        os << "Endianess: " << (cpu._byte_order == LITTLE ? "little endian" : "big endian") << "\n";
+        if (cpu._stepping.has_value()) {
+            os << "Stepping: " << cpu._stepping.value() << "\n";
+        }
+        if (cpu._microcode.has_value()) {
+            os << "Microcode: " << cpu._microcode.value() << "\n";
+        }
+        os << "Flags: ";
+        for (const auto &flag: cpu._flags) {
+            os << flag << " ";
+        }
+        os << "\n";
+        os << "Bugs: ";
+        for (const auto &bug: cpu._bugs) {
+            os << bug << " ";
+        }
+        os << "\n";
+        os << "Bogomips: " << cpu._bogomips << "\n";
+        os << "Number of cores: " << cpu._cores.size() << "\n";
+        os << "Cores: " << "\n";
+        for (const auto &[index, core]: cpu._cores) {
+            os << "\t" << "Core number " << index << ": " << "\n";
+            if (core.frequency.has_value()) os << "\t  " << "Frequency: " << core.frequency.value() << "\n";
+            if (core.cache_size.has_value()) os << "\t  " << "Cache size: " << core.cache_size.value() << "\n";
+            if (core.has_fpu.has_value()) os << "\t  " << "Has FPU: " << std::boolalpha << core.has_fpu.value() << "\n";
+        }
+    }
 
     return os;
 }

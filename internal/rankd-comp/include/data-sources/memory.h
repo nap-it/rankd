@@ -68,6 +68,7 @@ public:
   [[nodiscard]] size_t huge_page_size();
   [[nodiscard]] size_t huge_tlb();
   [[nodiscard]] int oom_killer_invocations();
+  void enable_json_output();
   [[nodiscard]] rapidjson::Document json() const;
   friend std::ostream& operator<<(std::ostream& os, const Memory& memory);
 
@@ -121,6 +122,7 @@ private:
   std::optional<size_t> _huge_page_size;
   std::optional<size_t> _huge_tlb;
   std::optional<int> _oom_killer_invocations;
+  bool _json_formatted_output = false;
 };
 
 #endif // RANKD_LINUX_MEMORY_H

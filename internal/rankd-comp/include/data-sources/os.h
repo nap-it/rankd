@@ -8,6 +8,7 @@
 #include <sys/utsname.h>
 
 #include <chrono>
+#include <iomanip>
 #include <map>
 #include <numeric>
 #include <string>
@@ -68,6 +69,7 @@ public:
   [[nodiscard]] double load_5m() const;
   [[nodiscard]] double load_15m() const;
   [[nodiscard]] const std::map<unsigned int, Process> &processes() const;
+  void enable_json_output();
   [[nodiscard]] rapidjson::Document json() const;
   friend std::ostream& operator<<(std::ostream& os, const OperativeSystem& operative_system);
 private:
@@ -77,6 +79,7 @@ private:
   double _load5m;
   double _load15m;
   std::map<unsigned int, Process> _processes;
+  bool _json_formatted_output = false;
 };
 
 const float LOAD = 1.f / (1 << SI_LOAD_SHIFT);

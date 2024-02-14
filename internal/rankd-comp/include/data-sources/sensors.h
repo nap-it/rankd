@@ -193,6 +193,7 @@ public:
   Sensors();
   void snap();
   [[nodiscard]] const std::map<std::string, Sensor>& sensors() const { return _sensors; }
+  void enable_json_output();
   [[nodiscard]] rapidjson::Document json() const;
   friend std::ostream& operator<<(std::ostream& os, const Sensors& sensors);
 private:
@@ -200,6 +201,7 @@ private:
     _sensors[key] = std::move(value);
   }
   std::map<std::string, Sensor> _sensors;
+  bool _json_formatted_output = false;
 };
 
 #endif // RANKD_SENSORS_H

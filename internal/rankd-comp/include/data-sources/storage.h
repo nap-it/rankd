@@ -7,6 +7,7 @@
 #include <sys/statvfs.h>
 
 #include <fstream>
+#include <iomanip>
 #include <map>
 #include <string>
 #include <vector>
@@ -51,11 +52,13 @@ public:
   [[nodiscard]] const std::map<std::string, Device>& devices() const;
   [[nodiscard]] const Device& root_device_snap() const;
   [[nodiscard]] const Device* root_device() const;
+  void enable_json_output();
   [[nodiscard]] rapidjson::Document json() const;
   friend std::ostream& operator<<(std::ostream& os, const Storage& storage);
 private:
   std::map<std::string, Device> _devices;
   Device* _root_storage;
+  bool _json_formatted_output = false;
 };
 
 #endif // RANKD_STORAGE_H
