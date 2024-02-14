@@ -41,10 +41,12 @@ class NetworkRoutes {
 public:
     NetworkRoutes();
     void snap();
+    void enable_json_output();
     rapidjson::Document json() const;
     friend std::ostream& operator<<(std::ostream& os, const NetworkRoutes& routes);
 private:
     std::vector<NetworkRoute> _routes;
+    bool _json_formatted_output = false;
 };
 
 #endif //RANKD_NET_LIB_ROUTES_H

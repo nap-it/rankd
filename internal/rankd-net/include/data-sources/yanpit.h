@@ -275,6 +275,7 @@ private:
     YanpitNetwork();
     std::map<std::string, YanpitNetworkInterface> _interfaces;
     YanpitConnection* _connection = YanpitConnection::get_instance();
+    bool _json_formatted_output = false;
 };
 
 #endif  // RANKD_NET_LIB_YANPIT_H

@@ -30,10 +30,12 @@ class NetworkNeighbors {
 public:
     NetworkNeighbors();
     void snap();
+    void enable_json_output();
     rapidjson::Document json() const;
     friend std::ostream& operator<<(std::ostream& os, const NetworkNeighbors& neighbors);
 private:
     std::vector<NetworkNeighbor> _neighbors;
+    bool _json_formatted_output = false;
 };
 
 #endif //RANKD_NET_LIB_NEIGHBORS_H

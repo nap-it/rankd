@@ -40,10 +40,12 @@ class NetworkDevices {
 public:
     NetworkDevices();
     void snap();
+    void enable_json_output();
     rapidjson::Document json() const;
     friend std::ostream& operator<<(std::ostream& os, const NetworkDevices& devices);
 private:
     std::map<int, NetworkDevice> _devices;
+    bool _json_formatted_output = false;
 };
 
 #endif //RANKD_NET_LIB_INTERFACES_H

@@ -248,6 +248,10 @@ void NetworkRoutes::snap() {
     }
 }
 
+void NetworkRoutes::enable_json_output() {
+    _json_formatted_output = true;
+}
+
 rapidjson::Document NetworkRoutes::json() const {
     // Create a JSON Document.
     rapidjson::Document json_document;
@@ -299,12 +303,29 @@ rapidjson::Document NetworkRoutes::json() const {
 }
 
 std::ostream& operator<<(std::ostream& os, const NetworkRoutes& routes) {
-    rapidjson::StringBuffer buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    auto json_document = routes.json();
-    json_document.Accept(writer);
+    if (routes._json_formatted_output) {
+        rapidjson::StringBuffer buffer;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+        auto json_document = routes.json();
+        json_document.Accept(writer);
 
-    os << buffer.GetString();
+        os << buffer.GetString();
+    } else {
+        for (const auto& route : routes._routes) {
+            if (route.gateway.empty()) {
+                os << route.destination << "/" << route.destination_length << " -> " << route.output_interface << "\n";
+            } else {
+                os << "default -> " << route.gateway << " through " << route.output_interface << "\n";
+            }
+            if (not route.source.empty()) {
+                os << "\t" << "source: " << route.source << "/" << route.source_length << "\n";
+            }
+            os << "\t" << "protocol: " << route.route_protocol << "\n";
+            os << "\t" << "scope: " << route.scope << ", type: " << route.type << "\n";
+            os << "\t" << "tos: " << route.tos << ", priority: " << route.priority << ", metric: " << route.metric << "\n";
+            os << std::endl;
+        }
+    }
 
     return os;
 }

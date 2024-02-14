@@ -167,6 +167,10 @@ void NetworkDevices::snap() {
     close(netlink_socket);
 }
 
+void NetworkDevices::enable_json_output() {
+    _json_formatted_output = true;
+}
+
 rapidjson::Document NetworkDevices::json() const {
     // Create a JSON Document.
     rapidjson::Document json_document;
@@ -260,12 +264,32 @@ rapidjson::Document NetworkDevices::json() const {
 }
 
 std::ostream& operator<<(std::ostream& os, const NetworkDevices& devices) {
-    rapidjson::StringBuffer buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    auto json_document = devices.json();
-    json_document.Accept(writer);
+    if (devices._json_formatted_output) {
+        rapidjson::StringBuffer buffer;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+        auto json_document = devices.json();
+        json_document.Accept(writer);
 
-    os << buffer.GetString();
+        os << buffer.GetString();
+    } else {
+        for (const auto& [index, interface] : devices._devices) {
+            os << "(" << index << ") " << interface.name << ": " << "flags=" << interface.flags << "  mtu " << interface.mtu << "\n";
+            if (not interface.l2_address.empty()) {
+                os << "\t" << "link " << interface.l2_address << " broadcast " << interface.l2_broadcast_address << " link-type " << interface.link_type << "\n";
+            }
+            if (not interface.addresses.empty()) {
+                for (const auto& [family, address] : interface.addresses) {
+                    if (family == AF_INET) {
+                        os << "\t" << "inet " << address << "\n";
+                    } else if (family == AF_INET6) {
+                        os << "\t" << "inet6 " << address << "\n";
+                    }
+                }
+            }
+            os << "\t" << "qdisc " << interface.qdisc << "\n";
+            os << std::endl;
+        }
+    }
 
     return os;
 }

@@ -130,6 +130,10 @@ void NetworkNeighbors::snap() {
     close(netlink_socket);
 }
 
+void NetworkNeighbors::enable_json_output() {
+    _json_formatted_output = true;
+}
+
 rapidjson::Document NetworkNeighbors::json() const {
     // Create a JSON Document.
     rapidjson::Document json_document;
@@ -167,12 +171,30 @@ rapidjson::Document NetworkNeighbors::json() const {
 }
 
 std::ostream& operator<<(std::ostream& os, const NetworkNeighbors& neighbors) {
-    rapidjson::StringBuffer buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    auto json_document = neighbors.json();
-    json_document.Accept(writer);
+    if (neighbors._json_formatted_output) {
+        rapidjson::StringBuffer buffer;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+        auto json_document = neighbors.json();
+        json_document.Accept(writer);
 
-    os << buffer.GetString();
+        os << buffer.GetString();
+    } else {
+        for (const auto& neighbor : neighbors._neighbors) {
+            os << neighbor.l3_address << " has MAC address of " << neighbor.l2_address << " (this record is considered " << neighbor.state << ", with flags of ";
+            if (not neighbor.flags.empty()) {
+                for (int i = 0; i != neighbor.flags.size(); i++) {
+                    if (i < neighbor.flags.size() - 1) {
+                        os << neighbor.flags.at(i) << ", ";
+                    } else {
+                        os << neighbor.flags.at(i);
+                    }
+                }
+            } else {
+                os << "--";
+            }
+            os << ")\n";
+        }
+    }
 
     return os;
 }
