@@ -50,8 +50,6 @@ void NetworkRoutes::snap() {
         throw std::ios_base::failure("Netlink socket could not be used to receive data in NetworkRoutes.");
     }
 
-    std::cerr << "The response was " << received_bytes << std::endl;
-
     // Parse the response from the kernel as a netlink message header for further details.
     auto *response = (struct nlmsghdr *) response_buffer;
     while (NLMSG_OK(response, received_bytes)) {
