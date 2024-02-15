@@ -21,7 +21,7 @@ public:
     ~TimeEngine();
 private:
     TimeEngine() = default;
-    PTP _ptp = PTP::get_instance();
+    //PTP _ptp = PTP::get_instance();
 };
 
 #endif  // RANKD_ENGINE_TIME_H

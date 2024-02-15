@@ -31,7 +31,7 @@ void TimeEngine::teller(const std::shared_ptr<restbed::Session>& session) {
 }
 
 void TimeEngine::tell_ptp(const std::shared_ptr<restbed::Session>& session) {
-    const auto request = session->get_request();
+    /*const auto request = session->get_request();
     _logger->info("A request was received for CPU information.");
 
     _ptp.snap();
@@ -43,6 +43,7 @@ void TimeEngine::tell_ptp(const std::shared_ptr<restbed::Session>& session) {
 
     session->close(restbed::OK, buffer.GetString(),
                    {{"Content-Length", std::to_string(buffer.GetLength())}, {"Connection", "close"}});
+    */
 }
 
 std::vector<std::shared_ptr<restbed::Resource>>* TimeEngine::get_resources() {

@@ -1,6 +1,6 @@
 #include "configs/configs.h"
 
-Configuration* parse_configuration(const std::string& configuration_path) {
+RankdConfiguration* parse_configuration(const std::string& configuration_path) {
     // Load configuration as a TOML file in configuration_path.
     toml::parse_result config;
     try {
@@ -8,7 +8,7 @@ Configuration* parse_configuration(const std::string& configuration_path) {
     } catch (toml::parse_error& pe) {
         return nullptr;
     }
-    auto* configuration = new Configuration;
+    auto* configuration = new RankdConfiguration;
 
     // Get data on "title".
     if (config.contains("title")) {

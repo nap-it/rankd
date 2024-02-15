@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
         // Quit program with Invalid Arguments (22) error.
         exit(EINVAL);
     }*
-    Configuration* configuration = parse_configuration(configuration_file_path);
+    RankdConfiguration* configuration = parse_configuration(configuration_file_path);
     if (configuration == nullptr) {
         logger->critical("A badly-written configuration file was given.");
         std::cerr << "A badly-written configuration file was given. Please fix it and try again." << std::endl;
@@ -77,18 +77,18 @@ int main(int argc, char** argv) {
 
     auto* computing_engine = ComputingEngine::get_instance();
     auto* network_engine = NetworkEngine::get_instance();
-    auto* time_engine = TimeEngine::get_instance();
+    //auto* time_engine = TimeEngine::get_instance();
 
     auto computing_engine_resources = computing_engine->get_resources();
     auto network_engine_resources = network_engine->get_resources();
-    auto time_engine_resources = time_engine->get_resources();
+    //auto time_engine_resources = time_engine->get_resources();
     api_controller->append_resources(computing_engine_resources)
-                  ->append_resources(network_engine_resources)
-                  ->append_resources(time_engine_resources);
+                  ->append_resources(network_engine_resources);
+                  //->append_resources(time_engine_resources);
 
     computing_engine->execute();
     network_engine->execute();
-    time_engine->execute();
+    //time_engine->execute();
     api_controller->execute();
 
     while (true) {
@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
 
     computing_engine->stop();
     network_engine->stop();
-    time_engine->stop();
+    //time_engine->stop();
 
     return 0;
 }

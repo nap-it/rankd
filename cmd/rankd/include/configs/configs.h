@@ -6,10 +6,10 @@
 
 #include "toml++/toml.hpp"
 
-struct Configuration {
+struct RankdConfiguration {
     std::optional<std::string> title;
 };
 
-Configuration* parse_configuration(const std::string& configuration_path);
+RankdConfiguration* parse_configuration(const std::string& configuration_path);
 
 #endif  // RANKD_CONFIGS_H
