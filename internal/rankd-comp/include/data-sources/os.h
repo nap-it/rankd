@@ -70,6 +70,7 @@ public:
   [[nodiscard]] double load_15m() const;
   [[nodiscard]] const std::map<unsigned int, Process> &processes() const;
   void enable_json_output();
+  void disable_json_output();
   [[nodiscard]] rapidjson::Document json() const;
   friend std::ostream& operator<<(std::ostream& os, const OperativeSystem& operative_system);
 private:

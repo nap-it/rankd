@@ -31,6 +31,7 @@ public:
     NetworkNeighbors();
     void snap();
     void enable_json_output();
+    void disable_json_output();
     rapidjson::Document json() const;
     friend std::ostream& operator<<(std::ostream& os, const NetworkNeighbors& neighbors);
 private:

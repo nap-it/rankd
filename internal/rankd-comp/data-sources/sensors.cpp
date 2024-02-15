@@ -317,6 +317,10 @@ void Sensors::enable_json_output() {
     _json_formatted_output = true;
 }
 
+void Sensors::disable_json_output() {
+    _json_formatted_output = false;
+}
+
 rapidjson::Document Sensors::json() const {
   // Create a JSON document.
   rapidjson::Document json_document;

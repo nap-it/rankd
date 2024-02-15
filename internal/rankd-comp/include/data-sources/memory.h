@@ -69,6 +69,7 @@ public:
   [[nodiscard]] size_t huge_tlb();
   [[nodiscard]] int oom_killer_invocations();
   void enable_json_output();
+  void disable_json_output();
   [[nodiscard]] rapidjson::Document json() const;
   friend std::ostream& operator<<(std::ostream& os, const Memory& memory);
 

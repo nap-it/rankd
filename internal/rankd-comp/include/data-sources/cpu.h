@@ -79,6 +79,7 @@ public:
   [[nodiscard]] const std::map<int, CPUCore> &cores() const;
   [[nodiscard]] const CPUStats &snapshot() const;
   void enable_json_output();
+  void disable_json_output();
   [[nodiscard]] rapidjson::Document json() const;
   friend std::ostream& operator<<(std::ostream& os, const CPU& cpu);
 

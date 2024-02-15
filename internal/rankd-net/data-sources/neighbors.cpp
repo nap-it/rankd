@@ -9,25 +9,26 @@ NetworkNeighbors::NetworkNeighbors() {
 void NetworkNeighbors::snap() {
     _neighbors.clear();
 
-    struct sockaddr_nl binding_address;
+    struct sockaddr_nl binding_address{};
     int netlink_socket = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     if (netlink_socket < 0) {
-        throw std::exception();
+        throw std::ios_base::failure("Netlink socket could not be opened in NetworkNeighbors.");
     }
     memset(&binding_address, 0, sizeof(binding_address));
     binding_address.nl_family = AF_NETLINK;
-    binding_address.nl_pid = getpid();
+    binding_address.nl_pid = 0;
 
     // Bind netlink socket and address.
     if (bind(netlink_socket, (struct sockaddr *) &binding_address, sizeof(binding_address)) < 0) {
-        throw std::exception();
+        close(netlink_socket);
+        throw std::ios_base::failure("Netlink socket could not be bound in NetworkNeighbors.");
     }
 
     // Create request message to netlink for neighbors dump request.
     struct {
         struct nlmsghdr header;
         struct ndmsg message;
-    } request;
+    } request{};
     request.header.nlmsg_type = RTM_GETNEIGH;
     request.header.nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
     request.header.nlmsg_len = sizeof(request);
@@ -36,14 +37,16 @@ void NetworkNeighbors::snap() {
     // Place request to kernel via netlink procedures.
     ssize_t sent_bytes = send(netlink_socket, &request, sizeof(request), 0);
     if (sent_bytes < 0) {
-        throw std::exception();
+        close(netlink_socket);
+        throw std::ios_base::failure("Netlink socket could not be used to send data in NetworkNeighbors.");
     }
 
     // Receive data from kernel's netlink procedure.
     char response_buffer[8192];
     ssize_t received_bytes = recv(netlink_socket, response_buffer, sizeof(response_buffer), 0);
     if (received_bytes < 0) {
-        throw std::exception();
+        close(netlink_socket);
+        throw std::ios_base::failure("Netlink socket could not be used to receive data in NetworkNeighbors.");
     }
 
     // Parse the response from the kernel as a netlink message header for further details.
@@ -132,6 +135,10 @@ void NetworkNeighbors::snap() {
 
 void NetworkNeighbors::enable_json_output() {
     _json_formatted_output = true;
+}
+
+void NetworkNeighbors::disable_json_output() {
+    _json_formatted_output = false;
 }
 
 rapidjson::Document NetworkNeighbors::json() const {

@@ -24,6 +24,8 @@ public:
     void snap();
     std::map<uint8_t, TAS::TAS*> tas();
     std::map<uint8_t, CBS::CBS*> cbs();
+    void enable_json_output();
+    void disable_json_output();
     ~Latency();
 private:
 #ifndef LIUNX_TC

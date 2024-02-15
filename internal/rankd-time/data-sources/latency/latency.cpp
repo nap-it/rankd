@@ -32,11 +32,12 @@ std::map<uint8_t, CBS::CBS *> Latency::cbs() {
 #ifndef LINUX_TC
 
 void Latency::snap_tas_via_linux_tc() {
+    _time_aware_shaping_rules.clear();
     // Declare structure for kernel request on TC.
     struct {
         struct nlmsghdr header;
         struct tcmsg message;
-    } request;
+    } request{};
 
     // Fill up fields for request.
     request.header.nlmsg_len = sizeof(request);
@@ -242,11 +243,13 @@ void Latency::snap_tas_via_linux_tc() {
 }
 
 void Latency::snap_cbs_via_linux_tc() {
+    _credit_based_shaping_rules.clear();
+
     // Declare structure for kernel request on TC.
     struct {
         struct nlmsghdr header;
         struct tcmsg message;
-    } request;
+    } request{};
 
     // Fill up fields for request.
     request.header.nlmsg_len = sizeof(request);
@@ -303,6 +306,14 @@ void Latency::snap_cbs_via_linux_tc() {
 }
 
 #endif
+
+void Latency::enable_json_output() {
+    _json_formatted_output = true;
+}
+
+void Latency::disable_json_output() {
+    _json_formatted_output = false;
+}
 
 Latency::~Latency() {
 #ifndef LINUX_TC

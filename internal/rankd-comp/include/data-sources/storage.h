@@ -53,6 +53,7 @@ public:
   [[nodiscard]] const Device& root_device_snap() const;
   [[nodiscard]] const Device* root_device() const;
   void enable_json_output();
+  void disable_json_output();
   [[nodiscard]] rapidjson::Document json() const;
   friend std::ostream& operator<<(std::ostream& os, const Storage& storage);
 private:
