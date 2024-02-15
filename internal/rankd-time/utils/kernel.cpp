@@ -20,13 +20,13 @@ int parse_rtattr_flags(struct rtattr *tb[], int max, struct rtattr *rta,
 }
 
 // From iproute2.
-static const char *get_clock_name(clockid_t clockid) {
-    const struct static_clockid *c;
-
-    for (c = clockids_sysv; c->name; c++) {
-        if (clockid == c->clockid)
-            return c->name;
-    }
-
-    return "invalid";
-}
+//static const char *get_clock_name(clockid_t clockid) {
+//    const struct static_clockid *c;
+//
+//    for (c = clockids_sysv; c->name; c++) {
+//        if (clockid == c->clockid)
+//            return c->name;
+//    }
+//
+//    return "invalid";
+//}
