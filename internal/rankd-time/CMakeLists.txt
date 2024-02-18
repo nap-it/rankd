@@ -20,6 +20,11 @@ set(SOURCE_LIST
         utils/kernel.cpp
         )
 
+if (APU)
+set(HAVE_ONESTEP_P2P ON)
+add_definitions(-DHAVE_ONESTEP_P2P)
+endif()
+
 add_subdirectory(vendor)
 
 # Read options to enable features.
