@@ -39,6 +39,11 @@ if (APU)
     add_definitions("-DHAVE_ONESTEP_P2P")
 endif()
 
+if (DOCKER)
+    add_definitions("-DHAVE_ONESTEP_P2P")
+    add_definitions("-DHAVE_VCLOCKS")
+endif()
+
 add_library(pmc STATIC pmc.h ${pmc_src})
 set_property(TARGET pmc PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(pmc m rt pthread)

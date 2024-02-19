@@ -25,6 +25,13 @@ set(HAVE_ONESTEP_P2P ON)
 add_definitions(-DHAVE_ONESTEP_P2P)
 endif()
 
+if (DOCKER)
+    set(HAVE_ONESTEP_P2P ON)
+    set(HAVE_VCLOCKS ON)
+    add_definitions(-DHAVE_ONESTEP_P2P)
+    add_definitions(-DHAVE_VCLOCKS)
+endif()
+
 add_subdirectory(vendor)
 
 # Read options to enable features.
