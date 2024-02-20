@@ -5,6 +5,7 @@
 #include <exception>
 #include <map>
 #include <ostream>
+#include <sstream>
 
 #ifndef LINUX_TC
 
@@ -51,6 +52,8 @@ public:
 
     [[nodiscard]] rapidjson::Document json() const;
 
+    friend std::string print_latency_tas(const Latency& latency);
+    friend std::string print_latency_cbs(const Latency& latency);
     friend std::ostream &operator<<(std::ostream &os, const Latency &latency);
 
 private:
@@ -70,7 +73,7 @@ private:
     std::map<uint8_t, TAS::TAS *> _time_aware_shaping_rules{};
     std::map<uint8_t, CBS::CBS *> _credit_based_shaping_rules{};
     bool _json_formatted_output = false;
-    uint8_t _output_type = OUTPUT_LATENCY_TYPE_ALL;
+    uint8_t _output_type;
 };
 
 #endif //RANKDTIME_LATENCY_H

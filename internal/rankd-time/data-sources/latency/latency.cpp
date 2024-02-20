@@ -1,6 +1,7 @@
 #include "data-sources/latency/latency.h"
 
 Latency::Latency() {
+    _output_type = OUTPUT_LATENCY_TYPE_ALL;
 #ifndef LINUX_TC
     memset(&_local_point, 0, sizeof(_local_point));
     _local_point.nl_family = AF_NETLINK;
@@ -103,6 +104,257 @@ rapidjson::Document Latency::json() const {
     return json_document;
 }
 
+std::string print_latency_tas(const Latency& latency) {
+    std::stringstream ss;
+    ss << "Time-aware shaper (TAS) rules:" << "\n";
+    if (latency._time_aware_shaping_rules.empty()) {
+        ss << "  " << "No rules found on system." << "\n";
+    } else {
+        for (const auto &[index, rule_pointer]: latency._time_aware_shaping_rules) {
+            ss << "  " << "Rule " << index << ":" << "\n";
+            if (rule_pointer == nullptr) {
+                ss << "  " << "  " << "inaccessible" << "\n";
+            } else {
+                ss << "  " << "  " << "Schedule parameters:" << "\n";
+                ss << "  " << "  " << "  " << "Gate parameter table: " << "\n";
+                if (rule_pointer->gate_parameter_table.has_value()) {
+                    for (const auto &rule: rule_pointer->gate_parameter_table.value()) {
+                        ss << "  " << "  " << "  " << "  " << "Traffic class type: "
+                           << rule.traffic_class_type << "\n";
+                        if (rule.queue_max_sdu.has_value()) {
+                            ss << "  " << "  " << "  " << "  " << "Queue SDU max: "
+                               << rule.queue_max_sdu.value() << "\n";
+                        } else {
+                            ss << "  " << "  " << "  " << "  " << "Queue SDU max: " << "undefined"
+                               << "\n";
+                        }
+                        if (rule.transmission_overrun.has_value()) {
+                            ss << "  " << "  " << "  " << "  " << "Transmission overrun: "
+                               << rule.transmission_overrun.value() << "\n";
+                        } else {
+                            ss << "  " << "  " << "  " << "  " << "Transmission overrun: "
+                               << "undefined" << "\n";
+                        }
+                    }
+                } else {
+                    ss << "  " << "  " << "  " << "  " << "undefined" << "\n";
+                }
+
+                if (rule_pointer->gate_enabled.has_value()) {
+                    ss << "  " << "  " << "  " << "Gate enabled: " << std::boolalpha
+                       << rule_pointer->gate_enabled.value() << "\n";
+                } else {
+                    ss << "  " << "  " << "  " << "Gate enabled: " << "undefined" << "\n";
+                }
+
+                if (rule_pointer->admin_gate_states.has_value()) {
+                    ss << "  " << "  " << "  " << "Admin gate states: "
+                       << rule_pointer->admin_gate_states.value() << "\n";
+                } else {
+                    ss << "  " << "  " << "  " << "Admin gate states: " << "undefined" << "\n";
+                }
+
+                if (rule_pointer->oper_gate_states.has_value()) {
+                    ss << "  " << "  " << "  " << "Oper gate states: "
+                       << rule_pointer->oper_gate_states.value() << "\n";
+                } else {
+                    ss << "  " << "  " << "  " << "Oper gate states: " << "undefined" << "\n";
+                }
+
+                ss << "  " << "  " << "  " << "Admin control list: " << "\n";
+                if (rule_pointer->admin_control_list.has_value()) {
+                    for (const auto &item: rule_pointer->admin_control_list.value()) {
+                        ss << "  " << "  " << "  " << "  " << "Index: " << item.index << "\n";
+                        ss << "  " << "  " << "  " << "  " << "Operation name: "
+                           << TAS::type_of_operation_name(item.operation_name) << "\n";
+                        if (item.time_interval_value.has_value()) {
+                            ss << "  " << "  " << "  " << "  " << "Time interval value: "
+                               << item.time_interval_value.value() << "\n";
+                        } else {
+                            ss << "  " << "  " << "  " << "  " << "Time interval value: " << "undefined"
+                               << "\n";
+                        }
+                        ss << "  " << "  " << "  " << "  " << "Gate states value: "
+                           << item.gate_states_value << "\n";
+                    }
+                } else {
+                    ss << "  " << "  " << "  " << "  " << "undefined" << "\n";
+                }
+
+                ss << "  " << "  " << "  " << "Admin control list: " << "\n";
+                if (rule_pointer->oper_control_list.has_value()) {
+                    for (const auto &item: rule_pointer->oper_control_list.value()) {
+                        ss << "  " << "  " << "  " << "  " << "Index: " << item.index << "\n";
+                        ss << "  " << "  " << "  " << "  " << "Operation name: "
+                           << TAS::type_of_operation_name(item.operation_name) << "\n";
+                        if (item.time_interval_value.has_value()) {
+                            ss << "  " << "  " << "  " << "  " << "Time interval value: "
+                               << item.time_interval_value.value() << "\n";
+                        } else {
+                            ss << "  " << "  " << "  " << "  " << "Time interval value: " << "undefined"
+                               << "\n";
+                        }
+                        ss << "  " << "  " << "  " << "  " << "Gate states value: "
+                           << item.gate_states_value << "\n";
+                    }
+                } else {
+                    ss << "  " << "  " << "  " << "  " << "undefined" << "\n";
+                }
+
+                if (rule_pointer->admin_cycle_time.has_value()) {
+                    ss << "  " << "  " << "  " << "Admin cycle time: "
+                       << (rule_pointer->admin_cycle_time->numerator /
+                           rule_pointer->admin_cycle_time->denominator) << "\n";
+                } else {
+                    ss << "  " << "  " << "  " << "Admin cycle time: " << "undefined" << "\n";
+                }
+
+                if (rule_pointer->oper_cycle_time.has_value()) {
+                    ss << "  " << "  " << "  " << "Oper cycle time: "
+                       << (rule_pointer->oper_cycle_time->numerator /
+                           rule_pointer->oper_cycle_time->denominator) << "\n";
+                } else {
+                    ss << "  " << "  " << "  " << "Oper cycle time: " << "undefined" << "\n";
+                }
+
+                if (rule_pointer->admin_cycle_time_extension.has_value()) {
+                    ss << "  " << "  " << "  " << "Admin cycle time extension: "
+                       << rule_pointer->admin_cycle_time_extension.value() << "\n";
+                } else {
+                    ss << "  " << "  " << "  " << "Admin cycle time extension: " << "undefined" << "\n";
+                }
+
+                if (rule_pointer->oper_cycle_time_extension.has_value()) {
+                    ss << "  " << "  " << "  " << "Oper cycle time extension: "
+                       << rule_pointer->oper_cycle_time_extension.value() << "\n";
+                } else {
+                    ss << "  " << "  " << "  " << "Oper cycle time extension: " << "undefined" << "\n";
+                }
+
+                if (rule_pointer->admin_base_time.has_value()) {
+                    ss << "  " << "  " << "  " << "Admin base time: "
+                       << rule_pointer->admin_base_time.value().seconds << "s, "
+                       << rule_pointer->admin_base_time.value().nanoseconds << "ns" << "\n";
+                } else {
+                    ss << "  " << "  " << "  " << "Admin base time: " << "undefined" << "\n";
+                }
+
+                if (rule_pointer->oper_base_time.has_value()) {
+                    ss << "  " << "  " << "  " << "Oper base time: "
+                       << rule_pointer->oper_base_time.value().seconds << "s, "
+                       << rule_pointer->oper_base_time.value().nanoseconds << "ns" << "\n";
+                } else {
+                    ss << "  " << "  " << "  " << "Oper base time: " << "undefined" << "\n";
+                }
+
+                if (rule_pointer->config_change.has_value()) {
+                    ss << "  " << "  " << "  " << "Config change: " << std::boolalpha
+                       << rule_pointer->config_change.value() << "\n";
+                } else {
+                    ss << "  " << "  " << "  " << "Config change: " << "undefined" << "\n";
+                }
+
+                if (rule_pointer->config_change_time.has_value()) {
+                    ss << "  " << "  " << "  " << "Config change time: "
+                       << rule_pointer->config_change_time.value().seconds << "s, "
+                       << rule_pointer->config_change_time.value().nanoseconds << "ns" << "\n";
+                } else {
+                    ss << "  " << "  " << "  " << "Config change time: " << "undefined" << "\n";
+                }
+
+                if (rule_pointer->tick_granularity.has_value()) {
+                    ss << "  " << "  " << "  " << "Tick granularity: "
+                       << rule_pointer->tick_granularity.value() << "\n";
+                } else {
+                    ss << "  " << "  " << "  " << "Tick granularity: " << "undefined" << "\n";
+                }
+
+                if (rule_pointer->currentTime.has_value()) {
+                    ss << "  " << "  " << "  " << "Current time: "
+                       << rule_pointer->currentTime.value().seconds << "s, "
+                       << rule_pointer->currentTime.value().nanoseconds << "ns" << "\n";
+                } else {
+                    ss << "  " << "  " << "  " << "Current time: " << "undefined" << "\n";
+                }
+
+                if (rule_pointer->config_pending.has_value()) {
+                    ss << "  " << "  " << "  " << "Config pending: " << std::boolalpha
+                       << rule_pointer->config_pending.value() << "\n";
+                } else {
+                    ss << "  " << "  " << "  " << "Config pending: " << "undefined" << "\n";
+                }
+
+                if (rule_pointer->config_change_error.has_value()) {
+                    ss << "  " << "  " << "  " << "Config change error: "
+                       << rule_pointer->config_change_error.value() << "\n";
+                } else {
+                    ss << "  " << "  " << "  " << "Config change error: " << "undefined" << "\n";
+                }
+
+                if (rule_pointer->supported_list_max.has_value()) {
+                    ss << "  " << "  " << "  " << "Supported list max: "
+                       << rule_pointer->supported_list_max.value() << "\n";
+                } else {
+                    ss << "  " << "  " << "  " << "Supported list max: " << "undefined" << "\n";
+                }
+
+                if (rule_pointer->supported_cycle_max.has_value()) {
+                    ss << "  " << "  " << "  " << "Supported cycle max: "
+                       << (rule_pointer->supported_cycle_max->numerator /
+                           rule_pointer->supported_cycle_max->denominator) << "\n";
+                } else {
+                    ss << "  " << "  " << "  " << "Supported cycle max: " << "undefined" << "\n";
+                }
+
+                if (rule_pointer->supported_interval_max.has_value()) {
+                    ss << "  " << "  " << "  " << "Supported interval max: "
+                       << rule_pointer->supported_interval_max.value() << "\n";
+                } else {
+                    ss << "  " << "  " << "  " << "Supported interval max: " << "undefined" << "\n";
+                }
+            }
+        }
+    }
+    ss << std::endl;
+
+    return ss.str();
+}
+
+std::string print_latency_cbs(const Latency& latency) {
+    std::stringstream ss;
+    ss << "Credit-based shaper (CBS) rules:" << "\n";
+    if (latency._credit_based_shaping_rules.empty()) {
+        ss << "  " << "No rules found on system." << "\n";
+    } else {
+        for (const auto &[index, rule_pointer]: latency._credit_based_shaping_rules) {
+            ss << "  " << "Rule " << index << ":" << "\n";
+            if (rule_pointer == nullptr or (not rule_pointer->cbsa_parameters.has_value())) {
+                ss << "  " << "  " << "inaccessible" << "\n";
+            } else {
+                ss << "  " << "  " << "Parameters:" << "\n";
+                for (const auto &parameter: rule_pointer->cbsa_parameters.value()) {
+                    ss << "  " << "  " << "  " << "Traffic class: " << parameter.traffic_class << "\n";
+                    ss << "  " << "  " << "  " << "Admin idle slope: ";
+                    if (parameter.admin_idle_slope.has_value()) {
+                        ss << parameter.admin_idle_slope.value() << "\n";
+                    } else {
+                        ss << "undefined" << "\n";
+                    }
+                    ss << "  " << "  " << "  " << "Operation idle slope: ";
+                    if (parameter.oper_idle_slope.has_value()) {
+                        ss << parameter.oper_idle_slope.value() << "\n";
+                    } else {
+                        ss << "undefined" << "\n";
+                    }
+                }
+            }
+        }
+    }
+    ss << std::endl;
+
+    return ss.str();
+}
+
 std::ostream &operator<<(std::ostream &os, const Latency &latency) {
     if (latency._json_formatted_output) {
         rapidjson::StringBuffer buffer;
@@ -112,212 +364,12 @@ std::ostream &operator<<(std::ostream &os, const Latency &latency) {
 
         os << buffer.GetString();
     } else {
-        os << "TSN latency properties and rules:" << "\n";
-
-        os << "\t" << "Credit-based shaper (CBS) rules:" << "\n";
-        if (latency._credit_based_shaping_rules.empty()) {
-            os << "\t" << "  " << "No rules found on system." << "\n";
-        } else {
-            for (const auto& [index, rule_pointer] : latency._credit_based_shaping_rules) {
-                os << "\t" << "  " << "Rule " << index << ":" << "\n";
-                if (rule_pointer == nullptr or (not rule_pointer->cbsa_parameters.has_value())) {
-                    os << "\t" << "  " << "  " << "inaccessible" << "\n";
-                } else {
-                    os << "\t" << "  " << "  " << "Parameters:" << "\n";
-                    for (const auto& parameter : rule_pointer->cbsa_parameters.value()) {
-                        os << "\t" << "  " << "  " << "  " << "Traffic class: " << parameter.traffic_class << "\n";
-                        os << "\t" << "  " << "  " << "  " << "Admin idle slope: ";
-                        if (parameter.admin_idle_slope.has_value()) {
-                            os << parameter.admin_idle_slope.value() << "\n";
-                        } else {
-                            os << "undefined" << "\n";
-                        }
-                        os << "\t" << "  " << "  " << "  " << "Operation idle slope: ";
-                        if (parameter.oper_idle_slope.has_value()) {
-                            os << parameter.oper_idle_slope.value() << "\n";
-                        } else {
-                            os << "undefined" << "\n";
-                        }
-                    }
-                }
-            }
+        if ((latency._output_type & OUTPUT_LATENCY_TYPE_CBS) != 0) {
+            os << print_latency_cbs(latency);
         }
-
-        os << "\t" << "Time-aware shaper (TAS) rules:" << "\n";
-        if (latency._time_aware_shaping_rules.empty()) {
-            os << "\t" << "  " << "No rules found on system." << "\n";
-        } else {
-            for (const auto& [index, rule_pointer] : latency._time_aware_shaping_rules) {
-                os << "\t" << "  " << "Rule " << index << ":" << "\n";
-                if (rule_pointer == nullptr) {
-                    os << "\t" << "  " << "  " << "inaccessible" << "\n";
-                } else {
-                    os << "\t" << "  " << "  " << "Schedule parameters:" << "\n";
-                    os << "\t" << "  " << "  " << "  " << "Gate parameter table: " << "\n";
-                    if (rule_pointer->gate_parameter_table.has_value()) {
-                        for (const auto& rule : rule_pointer->gate_parameter_table.value()) {
-                            os << "\t" << "  " << "  " << "  " << "  " << "Traffic class type: " << rule.traffic_class_type << "\n";
-                            if (rule.queue_max_sdu.has_value()) {
-                                os << "\t" << "  " << "  " << "  " << "  " << "Queue SDU max: " << rule.queue_max_sdu.value() << "\n";
-                            } else {
-                                os << "\t" << "  " << "  " << "  " << "  " << "Queue SDU max: " << "undefined" << "\n";
-                            }
-                            if (rule.transmission_overrun.has_value()) {
-                                os << "\t" << "  " << "  " << "  " << "  " << "Transmission overrun: " << rule.transmission_overrun.value() << "\n";
-                            } else {
-                                os << "\t" << "  " << "  " << "  " << "  " << "Transmission overrun: " << "undefined" << "\n";
-                            }
-                        }
-                    } else {
-                        os << "\t" << "  " << "  " << "  " << "  " << "undefined" << "\n";
-                    }
-
-                    if (rule_pointer->gate_enabled.has_value()) {
-                        os << "\t" << "  " << "  " << "  " << "Gate enabled: " << std::boolalpha
-                           << rule_pointer->gate_enabled.value() << "\n";
-                    } else {
-                        os << "\t" << "  " << "  " << "  " << "Gate enabled: " << "undefined" << "\n";
-                    }
-
-                    if (rule_pointer->admin_gate_states.has_value()) {
-                        os << "\t" << "  " << "  " << "  " << "Admin gate states: " << rule_pointer->admin_gate_states.value() << "\n";
-                    } else {
-                        os << "\t" << "  " << "  " << "  " << "Admin gate states: " << "undefined" << "\n";
-                    }
-
-                    if (rule_pointer->oper_gate_states.has_value()) {
-                        os << "\t" << "  " << "  " << "  " << "Oper gate states: " << rule_pointer->oper_gate_states.value() << "\n";
-                    } else {
-                        os << "\t" << "  " << "  " << "  " << "Oper gate states: " << "undefined" << "\n";
-                    }
-
-                    os << "\t" << "  " << "  " << "  " << "Admin control list: " << "\n";
-                    if (rule_pointer->admin_control_list.has_value()) {
-                        for (const auto& item : rule_pointer->admin_control_list.value()) {
-                            os << "\t" << "  " << "  " << "  " << "  " << "Index: " << item.index << "\n";
-                            os << "\t" << "  " << "  " << "  " << "  " << "Operation name: " << TAS::type_of_operation_name(item.operation_name) << "\n";
-                            if (item.time_interval_value.has_value()) {
-                                os << "\t" << "  " << "  " << "  " << "  " << "Time interval value: " << item.time_interval_value.value() << "\n";
-                            } else {
-                                os << "\t" << "  " << "  " << "  " << "  " << "Time interval value: " << "undefined" << "\n";
-                            }
-                            os << "\t" << "  " << "  " << "  " << "  " << "Gate states value: " << item.gate_states_value << "\n";
-                        }
-                    } else {
-                        os << "\t" << "  " << "  " << "  " << "  " << "undefined" << "\n";
-                    }
-
-                    os << "\t" << "  " << "  " << "  " << "Admin control list: " << "\n";
-                    if (rule_pointer->oper_control_list.has_value()) {
-                        for (const auto& item : rule_pointer->oper_control_list.value()) {
-                            os << "\t" << "  " << "  " << "  " << "  " << "Index: " << item.index << "\n";
-                            os << "\t" << "  " << "  " << "  " << "  " << "Operation name: " << TAS::type_of_operation_name(item.operation_name) << "\n";
-                            if (item.time_interval_value.has_value()) {
-                                os << "\t" << "  " << "  " << "  " << "  " << "Time interval value: " << item.time_interval_value.value() << "\n";
-                            } else {
-                                os << "\t" << "  " << "  " << "  " << "  " << "Time interval value: " << "undefined" << "\n";
-                            }
-                            os << "\t" << "  " << "  " << "  " << "  " << "Gate states value: " << item.gate_states_value << "\n";
-                        }
-                    } else {
-                        os << "\t" << "  " << "  " << "  " << "  " << "undefined" << "\n";
-                    }
-
-                    if (rule_pointer->admin_cycle_time.has_value()) {
-                        os << "\t" << "  " << "  " << "  " << "Admin cycle time: " << (rule_pointer->admin_cycle_time->numerator/rule_pointer->admin_cycle_time->denominator) << "\n";
-                    } else {
-                        os << "\t" << "  " << "  " << "  " << "Admin cycle time: " << "undefined" << "\n";
-                    }
-
-                    if (rule_pointer->oper_cycle_time.has_value()) {
-                        os << "\t" << "  " << "  " << "  " << "Oper cycle time: " << (rule_pointer->oper_cycle_time->numerator/rule_pointer->oper_cycle_time->denominator) << "\n";
-                    } else {
-                        os << "\t" << "  " << "  " << "  " << "Oper cycle time: " << "undefined" << "\n";
-                    }
-
-                    if (rule_pointer->admin_cycle_time_extension.has_value()) {
-                        os << "\t" << "  " << "  " << "  " << "Admin cycle time extension: " << rule_pointer->admin_cycle_time_extension.value() << "\n";
-                    } else {
-                        os << "\t" << "  " << "  " << "  " << "Admin cycle time extension: " << "undefined" << "\n";
-                    }
-
-                    if (rule_pointer->oper_cycle_time_extension.has_value()) {
-                        os << "\t" << "  " << "  " << "  " << "Oper cycle time extension: " << rule_pointer->oper_cycle_time_extension.value() << "\n";
-                    } else {
-                        os << "\t" << "  " << "  " << "  " << "Oper cycle time extension: " << "undefined" << "\n";
-                    }
-
-                    if (rule_pointer->admin_base_time.has_value()) {
-                        os << "\t" << "  " << "  " << "  " << "Admin base time: " << rule_pointer->admin_base_time.value().seconds << "s, " << rule_pointer->admin_base_time.value().nanoseconds << "ns" << "\n";
-                    } else {
-                        os << "\t" << "  " << "  " << "  " << "Admin base time: " << "undefined" << "\n";
-                    }
-
-                    if (rule_pointer->oper_base_time.has_value()) {
-                        os << "\t" << "  " << "  " << "  " << "Oper base time: " << rule_pointer->oper_base_time.value().seconds << "s, " << rule_pointer->oper_base_time.value().nanoseconds << "ns" << "\n";
-                    } else {
-                        os << "\t" << "  " << "  " << "  " << "Oper base time: " << "undefined" << "\n";
-                    }
-
-                    if (rule_pointer->config_change.has_value()) {
-                        os << "\t" << "  " << "  " << "  " << "Config change: " << std::boolalpha
-                           << rule_pointer->config_change.value() << "\n";
-                    } else {
-                        os << "\t" << "  " << "  " << "  " << "Config change: " << "undefined" << "\n";
-                    }
-
-                    if (rule_pointer->config_change_time.has_value()) {
-                        os << "\t" << "  " << "  " << "  " << "Config change time: " << rule_pointer->config_change_time.value().seconds << "s, " << rule_pointer->config_change_time.value().nanoseconds << "ns" << "\n";
-                    } else {
-                        os << "\t" << "  " << "  " << "  " << "Config change time: " << "undefined" << "\n";
-                    }
-
-                    if (rule_pointer->tick_granularity.has_value()) {
-                        os << "\t" << "  " << "  " << "  " << "Tick granularity: " << rule_pointer->tick_granularity.value() << "\n";
-                    } else {
-                        os << "\t" << "  " << "  " << "  " << "Tick granularity: " << "undefined" << "\n";
-                    }
-
-                    if (rule_pointer->currentTime.has_value()) {
-                        os << "\t" << "  " << "  " << "  " << "Current time: " << rule_pointer->currentTime.value().seconds << "s, " << rule_pointer->currentTime.value().nanoseconds << "ns" << "\n";
-                    } else {
-                        os << "\t" << "  " << "  " << "  " << "Current time: " << "undefined" << "\n";
-                    }
-
-                    if (rule_pointer->config_pending.has_value()) {
-                        os << "\t" << "  " << "  " << "  " << "Config pending: " << std::boolalpha
-                           << rule_pointer->config_pending.value() << "\n";
-                    } else {
-                        os << "\t" << "  " << "  " << "  " << "Config pending: " << "undefined" << "\n";
-                    }
-
-                    if (rule_pointer->config_change_error.has_value()) {
-                        os << "\t" << "  " << "  " << "  " << "Config change error: " << rule_pointer->config_change_error.value() << "\n";
-                    } else {
-                        os << "\t" << "  " << "  " << "  " << "Config change error: " << "undefined" << "\n";
-                    }
-
-                    if (rule_pointer->supported_list_max.has_value()) {
-                        os << "\t" << "  " << "  " << "  " << "Supported list max: " << rule_pointer->supported_list_max.value() << "\n";
-                    } else {
-                        os << "\t" << "  " << "  " << "  " << "Supported list max: " << "undefined" << "\n";
-                    }
-
-                    if (rule_pointer->supported_cycle_max.has_value()) {
-                        os << "\t" << "  " << "  " << "  " << "Supported cycle max: " << (rule_pointer->supported_cycle_max->numerator/rule_pointer->supported_cycle_max->denominator) << "\n";
-                    } else {
-                        os << "\t" << "  " << "  " << "  " << "Supported cycle max: " << "undefined" << "\n";
-                    }
-
-                    if (rule_pointer->supported_interval_max.has_value()) {
-                        os << "\t" << "  " << "  " << "  " << "Supported interval max: " << rule_pointer->supported_interval_max.value() << "\n";
-                    } else {
-                        os << "\t" << "  " << "  " << "  " << "Supported interval max: " << "undefined" << "\n";
-                    }
-                }
-            }
+        if ((latency._output_type & OUTPUT_LATENCY_TYPE_TAS) != 0) {
+            os << print_latency_tas(latency);
         }
-        os << std::endl;
     }
 
     return os;
