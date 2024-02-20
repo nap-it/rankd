@@ -15,6 +15,7 @@ set(HEADER_LIST
 set(SOURCE_LIST
         data-sources/configuration/configuration.cpp
         data-sources/latency/latency.cpp
+        data-sources/latency/standards.cpp
         data-sources/reliability/reliability.cpp
         data-sources/synchronization/synchronization.cpp
         utils/kernel.cpp
