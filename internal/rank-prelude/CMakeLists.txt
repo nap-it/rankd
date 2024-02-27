@@ -7,6 +7,11 @@ set(HEADER_LIST
         include/constants.h
         include/structs/capabilities.h
         include/structs/current_capabilities.h
+        include/structs/dispatcher.h
+        include/structs/dispatchers/receiver_simulation.h
+        include/structs/dispatchers/receiver_l2.h
+        include/structs/dispatchers/receiver_l3.h
+        include/structs/dispatchers/receiver_dds.h
         include/structs/handler.h
         include/structs/handler_state.h
         include/structs/message.h
@@ -42,6 +47,11 @@ set(HEADER_LIST
 set(SOURCE_LIST
         structs/capabilities.cpp
         structs/current_capabilities.cpp
+        structs/dispatcher.cpp
+        structs/dispatchers/receiver_simulation.cpp
+        structs/dispatchers/receiver_l2.cpp
+        structs/dispatchers/receiver_l3.cpp
+        structs/dispatchers/receiver_dds.cpp
         structs/handler.cpp
         structs/identifier.cpp
         structs/message.cpp
