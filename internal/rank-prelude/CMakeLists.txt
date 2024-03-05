@@ -48,6 +48,7 @@ set(SOURCE_LIST
         structs/capabilities.cpp
         structs/current_capabilities.cpp
         structs/dispatcher.cpp
+        structs/dispatchers/bpf/rank_l2.bpf.c
         structs/dispatchers/receiver_simulation.cpp
         structs/dispatchers/receiver_l2.cpp
         structs/dispatchers/receiver_l3.cpp
