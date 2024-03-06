@@ -25,6 +25,7 @@ private:
     Sender* _sender = Sender::get_instance();
     ReceiverSimulation* _receiver_simulation = ReceiverSimulation::get_instance();
     ReceiverL2* _receiver_l2 = ReceiverL2::get_instance();
+    RawReceiverL2* _raw_receiver_l2 = RawReceiverL2::get_instance();
     ReceiverL3* _receiver_l3 = ReceiverL3::get_instance();
     ReceiverDDS* _receiver_dds = ReceiverDDS::get_instance();
     std::queue<Message*>* _received_messages = new std::queue<Message*>();

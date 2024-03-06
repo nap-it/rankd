@@ -1,10 +1,11 @@
 #include "structs/dispatchers/receiver_l2.h"
 
-RawReceiverL2 *RawReceiverL2::set_queue(std::queue<std::vector<uint8_t>> *queue, std::mutex *queue_mutex) {
-    _queue = queue;
-    _queue_mutex = queue_mutex;
+std::pair<std::queue<std::vector<uint8_t>> *, std::mutex *> RawReceiverL2::queue_access() {
+    return std::make_pair(_queue, _queue_mutex);
+}
 
-    return this;
+RawReceiverL2 *RawReceiverL2::receive_control_borrowing_from(ReceiverL2 *controller) {
+    _receiver_controller = controller;
 }
 
 RawReceiverL2 *RawReceiverL2::execute() {
@@ -97,14 +98,22 @@ void RawReceiverL2::operator()() {
             std::lock_guard<std::mutex> guard(*_queue_mutex);
             _queue->push(data);
         }
+
+        // Execute the Receiver to handle such messages.
+        _receiver_controller->execute();
     }
 }
 
 void ReceiverL2::enqueue_bytes(const std::vector<uint8_t> &bytes) {
-    _queue.push(bytes);
+    _queue->push(bytes);
 }
 
-void ReceiverL2::set_queue(std::queue<Message *> *queue, std::mutex *mutex) {
+void ReceiverL2::set_queue(std::queue<std::vector<uint8_t>> *queue, std::mutex *mutex) {
+    _queue = queue;
+    _queue_mutex = mutex;
+}
+
+void ReceiverL2::set_message_deposit_queue(std::queue<Message *> *queue, std::mutex *mutex) {
     _message_deposit = queue;
     _message_deposit_mutex = mutex;
 }
@@ -137,12 +146,12 @@ bool ReceiverL2::is_running() {
 
 void ReceiverL2::operator()() {
     while (_running) {
-        if (not _queue.empty()) {
+        if (not _queue->empty()) {
             std::vector<uint8_t> bytes;
             {
                 std::lock_guard<std::mutex> guard(*_queue_mutex);
-                bytes = _queue.front();
-                _queue.pop();
+                bytes = _queue->front();
+                _queue->pop();
             }
 
             // TODO Parse the "bytes" into a message.
@@ -151,6 +160,8 @@ void ReceiverL2::operator()() {
                 std::lock_guard guard(*_message_deposit_mutex);
                 _message_deposit->push(message);
             }
+        } else {
+            stop();
         }
     }
 }
