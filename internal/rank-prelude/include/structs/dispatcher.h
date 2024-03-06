@@ -15,7 +15,6 @@ public:
         static Dispatcher instance;
         return &instance;
     }
-    size_t receive_bytes();
     size_t send_bytes(const std::vector<uint8_t>& bytes);
     bool receiving_queue_is_empty() const;
     Message* dequeue_message();

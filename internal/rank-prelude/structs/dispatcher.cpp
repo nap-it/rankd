@@ -1,9 +1,5 @@
 #include "structs/dispatcher.h"
 
-size_t Dispatcher::receive_bytes() {
-
-}
-
 size_t Dispatcher::send_bytes(const std::vector<uint8_t> &bytes) {
 
 }

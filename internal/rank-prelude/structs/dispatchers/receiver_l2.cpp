@@ -6,6 +6,8 @@ std::pair<std::queue<std::vector<uint8_t>> *, std::mutex *> RawReceiverL2::queue
 
 RawReceiverL2 *RawReceiverL2::receive_control_borrowing_from(ReceiverL2 *controller) {
     _receiver_controller = controller;
+
+    return this;
 }
 
 RawReceiverL2 *RawReceiverL2::execute() {
