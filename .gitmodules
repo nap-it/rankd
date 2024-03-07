@@ -34,3 +34,6 @@
 [submodule "internal/rank-prelude/vendor/cbor-cpp"]
 	path = internal/rank-prelude/vendor/cbor-cpp
 	url = https://code.nap.av.it.pt/external-tools/cbor-cpp.git
+[submodule "internal/rank-prelude/vendor/libbpf-bootstrap"]
+	path = internal/rank-prelude/vendor/libbpf-bootstrap
+	url = https://code.nap.av.it.pt/external-tools/libbpf-bootstrap.git

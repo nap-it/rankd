@@ -37,6 +37,15 @@ bool RawReceiverL2::is_running() {
 }
 
 RawReceiverL2::RawReceiverL2() {
+    // Load eBPF program.
+    struct rank_l2_bpf* skeleton;
+    skeleton = rank_l2_bpf__open_and_load();
+    int error = rank_l2_bpf__attach(skeleton);
+    // TODO Handle error code with errno.
+    struct bpf_map* interface_map = bpf_object__find_map_by_name(skeleton->obj, "interface");
+    int zero = 0;
+    bpf_map__update_elem(interface_map, &zero, sizeof(int), (void*)if_nametoindex(RANK_INTERFACE), sizeof(RANK_INTERFACE), BPF_ANY);
+
     // Create the raw socket.
     _raw_socket = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (_raw_socket < 0) {
