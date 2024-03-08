@@ -8,6 +8,10 @@ bool Dispatcher::receiving_queue_is_empty() const {
     return _received_messages->empty();
 }
 
+bool Dispatcher::receiving_queue_has_message() const {
+    return not receiving_queue_is_empty();
+}
+
 Message* Dispatcher::dequeue_message() {
     Message* message;
 

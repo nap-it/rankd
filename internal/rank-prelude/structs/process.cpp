@@ -147,78 +147,63 @@ bool Process::is_running() const {
 
 void Process::operator()() {
     while (_running) {
-        // Prepare for a new connection.
-        int new_connection = accept(_socket, (struct sockaddr*) &_address, &_address_length);
-        // If a new connection is wrongly done, simply ignore it.
-        if (new_connection < 0) {
-            continue;
-        }
+        // Check depositing queue of the dispatcher and retrieve a message, if there is one.
+        if (_dispatcher->receiving_queue_has_message()) {
+            // Dequeue a message from the Dispatcher's depositing queue.
+            auto* message = _dispatcher->dequeue_message();
 
-        // Read the data from the new connection's socket.
-        uint8_t raw_data[8192] = {0};
-        ssize_t raw_data_size = read(new_connection, raw_data, 8192 - 1);
-        std::vector<uint8_t> data(raw_data_size, 0);
-        for (int i = 0; i != raw_data_size; i++) {
-            data[i] = raw_data[i];
-        }
+            // Get the UUID from the raw data received.
+            auto message_uuid = message->uuid();
 
-        // Get the UUID from the raw data received.
-        auto message_uuid = parse_as_message_uuid(data);
+            // Create a meta handler.
+            Handler *handler = nullptr;
 
-        // Create a meta handler.
-        Handler* handler = nullptr;
+            // If UUID is known (A.3)...
+            if (is_uuid_in_store(message_uuid)) {
+                // Check the state of such UUID.
+                auto uuid_state = _store[message_uuid]->state();
 
-        // If UUID is known (A.3)...
-        if (is_uuid_in_store(message_uuid)) {
-            // Check the state of such UUID.
-            auto uuid_state = _store[message_uuid]->state();
-
-            // If state is CLOSED, then simply close the socket and ignore.
-            if (uuid_state == HandlerState::CLOSED) {
-                close(new_connection);
-                continue;
+                // If state is CLOSED, then simply close the socket and ignore.
+                if (uuid_state == HandlerState::CLOSED) {
+                    continue;
+                } else {
+                    // Otherwise, resume handling the request.
+                    handler = resume_handler(message_uuid);
+                }
             } else {
-                // Otherwise, resume handling the request.
-                handler = resume_handler(message_uuid);
+                // If the UUID is not known in the Store, then create one and save it.
+                handler = create_handler(message_uuid);
+                _store[message_uuid] = handler;
+                handler->execute();
             }
-        } else {
-            // If the UUID is not known in the Store, then create one and save it.
-            handler = create_handler(message_uuid);
-            _store[message_uuid] = handler;
-            handler->execute();
+
+            // Parse the raw data as a message header and pass a complete message to the handler to handle.
+            Header message_header = message->header();
+
+            switch (message_header.type()) {
+                case MessageType::EAR:
+                    handler->handle(dynamic_cast<EAR*>(message));
+                    break;
+                case MessageType::MAR:
+                    handler->handle(dynamic_cast<MAR*>(message));
+                    break;
+                case MessageType::BID:
+                    handler->handle(dynamic_cast<BID*>(message));
+                    break;
+                case MessageType::ACC:
+                    handler->handle(dynamic_cast<ACC*>(message));
+                    break;
+                case MessageType::REF:
+                    handler->handle(dynamic_cast<REF*>(message));
+                    break;
+                case MessageType::REP:
+                    handler->handle(dynamic_cast<REP*>(message));
+                    break;
+                case MessageType::NOTYPE:
+                    // TODO Handle this case.
+                    break;
+            }
         }
-
-        // Parse the raw data as a message header and pass a complete message to the handler to handle.
-        Header message_header = parse_as_message_header(data);
-        std::vector<uint8_t> message_body(raw_data_size - RANK_HEADER_LEN);
-        std::memcpy(message_body.data(), raw_data+RANK_HEADER_LEN, raw_data_size-RANK_HEADER_LEN);
-
-        switch (message_header.type()) {
-            case MessageType::EAR:
-                handler->handle(new EAR(message_header, message_body));
-                break;
-            case MessageType::MAR:
-                handler->handle(new MAR(message_header, message_body));
-                break;
-            case MessageType::BID:
-                handler->handle(new BID(message_header, message_body));
-                break;
-            case MessageType::ACC:
-                handler->handle(new ACC(message_header));
-                break;
-            case MessageType::REF:
-                handler->handle(new REF(message_header));
-                break;
-            case MessageType::REP:
-                handler->handle(new REP(message_header, message_body));
-                break;
-            case MessageType::NOTYPE:
-                // TODO Handle this case.
-                break;
-        }
-
-        // Close the new connection socket as data is already retrieved.
-        close(new_connection);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(_waiting_time));
     }

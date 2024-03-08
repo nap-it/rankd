@@ -17,6 +17,7 @@ public:
     }
     size_t send_bytes(const std::vector<uint8_t>& bytes);
     bool receiving_queue_is_empty() const;
+    bool receiving_queue_has_message() const;
     Message* dequeue_message();
     ~Dispatcher();
 private:

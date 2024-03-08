@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cstdint>
+#include <netinet/in.h>
 
 #include "structs/identifier.h"
 #include "structs/messages/header.h"
@@ -18,6 +19,7 @@ public:
     MessageType type() const;
     UUIDv4 uuid() const;
     size_t size() const;
+    Header header() const;
     virtual const std::array<uint8_t, RANK_HEADER_LEN> raw_payload() const = 0;
 
     // Setters.

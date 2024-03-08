@@ -28,6 +28,10 @@ size_t Message::size() const {
     return _header.size();
 }
 
+Header Message::header() const {
+    return _header;
+}
+
 void Message::header(const Header& header) {
     _header = header;
 }

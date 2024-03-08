@@ -19,6 +19,7 @@
 #include "constants.h"
 #include "structs/message.h"
 #include "structs/dispatchers/bpf/rank_l2.skel.h"
+#include "utils/messaging.h"
 
 #define TEMPORARY_BUFFER_LENGTH 65536
 

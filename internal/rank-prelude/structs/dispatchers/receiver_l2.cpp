@@ -165,8 +165,11 @@ void ReceiverL2::operator()() {
                 _queue->pop();
             }
 
-            // TODO Parse the "bytes" into a message.
-            Message* message = nullptr;
+            Message* message = parse_message_from_bytes(bytes, true);
+            if (message == nullptr) {
+                // TODO Handle this error, since it means that this message will be ignored (its size does not fill up a header or the type is recognized).
+                continue;
+            }
             {
                 std::lock_guard guard(*_message_deposit_mutex);
                 _message_deposit->push(message);
