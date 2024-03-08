@@ -1,7 +1,12 @@
 #include "structs/dispatcher.h"
 
-size_t Dispatcher::send_bytes(const std::vector<uint8_t> &bytes) {
+void Dispatcher::send_message(Message* message, const std::vector<uint8_t>& target, const IdentifierType& type) {
+    {
+        std::lock_guard<std::mutex> guard(_sending_messages_locker);
+        _sending_messages->push(std::make_tuple(message, target, type));
+    }
 
+    _sender->execute();
 }
 
 bool Dispatcher::receiving_queue_is_empty() const {
@@ -33,6 +38,7 @@ Dispatcher::Dispatcher() {
     _receiver_l2->set_queue(l2_queue.first, l2_queue.second);
     _receiver_l3->set_queue(_received_messages, &_received_messages_locker);
     _receiver_dds->set_queue(_received_messages, &_received_messages_locker);
+    _sender->set_queue(_sending_messages, &_sending_messages_locker);
 
     // Borrow the control of the L2 receiver to the raw receiver.
     _raw_receiver_l2->receive_control_borrowing_from(_receiver_l2);

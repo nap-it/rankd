@@ -12,6 +12,7 @@ set(HEADER_LIST
         include/structs/dispatchers/receiver_l2.h
         include/structs/dispatchers/receiver_l3.h
         include/structs/dispatchers/receiver_dds.h
+        include/structs/dispatchers/sender.h
         include/structs/handler.h
         include/structs/handler_state.h
         include/structs/message.h
@@ -52,6 +53,7 @@ set(SOURCE_LIST
         structs/dispatchers/receiver_l2.cpp
         structs/dispatchers/receiver_l3.cpp
         structs/dispatchers/receiver_dds.cpp
+        structs/dispatchers/sender.cpp
         structs/handler.cpp
         structs/identifier.cpp
         structs/message.cpp

@@ -44,6 +44,14 @@
 #define RANK_MAR_MESSAGE_LEN_LT_CODE_6 RANK_EAR_MESSAGE_LEN_LT_CODE_6
 #define RANK_MAR_MESSAGE_LEN_LT_CODE_7 RANK_EAR_MESSAGE_LEN_LT_CODE_7
 
+enum class IdentifierType {
+    IPv4,
+    MAC,
+    IPv6,
+    DDS,
+    Simulation
+};
+
 #include "utils/hashing.h"
 
 constexpr unsigned int RANK_YANG_KEY_TIME_TAS = FnvHash("time-tas");

@@ -15,7 +15,7 @@ public:
         static Dispatcher instance;
         return &instance;
     }
-    size_t send_bytes(const std::vector<uint8_t>& bytes);
+    void send_message(Message* message, const std::vector<uint8_t>& target, const IdentifierType& type);
     bool receiving_queue_is_empty() const;
     bool receiving_queue_has_message() const;
     Message* dequeue_message();
@@ -30,6 +30,8 @@ private:
     ReceiverDDS* _receiver_dds = ReceiverDDS::get_instance();
     std::queue<Message*>* _received_messages = new std::queue<Message*>();
     std::mutex _received_messages_locker{};
+    std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _sending_messages = new std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>();
+    std::mutex _sending_messages_locker{};
 };
 
 #endif //RANK_PRELUDE_DISPATCHER_H
