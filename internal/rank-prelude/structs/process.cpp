@@ -150,7 +150,10 @@ void Process::operator()() {
         // Check depositing queue of the dispatcher and retrieve a message, if there is one.
         if (_dispatcher->receiving_queue_has_message()) {
             // Dequeue a message from the Dispatcher's depositing queue.
-            auto* message = _dispatcher->dequeue_message();
+            Message* message;
+            std::vector<uint8_t> source_address;
+            IdentifierType source_address_type;
+            std::tie(message, source_address, source_address_type) = _dispatcher->dequeue_item();
 
             // Get the UUID from the raw data received.
             auto message_uuid = message->uuid();
@@ -174,8 +177,11 @@ void Process::operator()() {
                 // If the UUID is not known in the Store, then create one and save it.
                 handler = create_handler(message_uuid);
                 _store[message_uuid] = handler;
-                handler->execute();
+                handler->borrow(_dispatcher)->execute();
             }
+
+            // Get the source of this message and set it on the handler.
+            handler->mark_source(std::make_pair(source_address, source_address_type));
 
             // Parse the raw data as a message header and pass a complete message to the handler to handle.
             Header message_header = message->header();

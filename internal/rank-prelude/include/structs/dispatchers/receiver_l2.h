@@ -30,9 +30,9 @@ public:
         return &instance;
     }
     ReceiverL2(const ReceiverL2&) = delete;
-    void enqueue_bytes(const std::vector<uint8_t>& bytes);
-    void set_queue(std::queue<std::vector<uint8_t>>* queue, std::mutex* mutex);
-    void set_message_deposit_queue(std::queue<Message*>* queue, std::mutex* mutex);
+    //void enqueue_bytes(const std::vector<uint8_t>& bytes);
+    void set_queue(std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>* queue, std::mutex* mutex);
+    void set_message_deposit_queue(std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* queue, std::mutex* mutex);
     ReceiverL2* execute();
     ReceiverL2* stop();
     bool is_running();
@@ -41,10 +41,10 @@ private:
     ReceiverL2() = default;
     bool _running = false;
     std::thread _thread;
-    std::queue<std::vector<uint8_t>>* _queue = nullptr;
+    std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>* _queue = nullptr;
     std::mutex* _queue_mutex;
-    std::queue<Message*>* _message_deposit = nullptr;
-    std::mutex* _message_deposit_mutex;
+    std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _message_deposit = nullptr;
+    std::mutex* _message_deposit_mutex = nullptr;
 };
 
 class RawReceiverL2 {
@@ -53,7 +53,7 @@ public:
         static RawReceiverL2 instance;
         return &instance;
     }
-    std::pair<std::queue<std::vector<uint8_t>>*, std::mutex*> queue_access();
+    std::pair<std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>*, std::mutex*> queue_access();
     RawReceiverL2* receive_control_borrowing_from(ReceiverL2* controller);
     RawReceiverL2* execute();
     RawReceiverL2* stop();
@@ -66,7 +66,7 @@ private:
     int _raw_socket;
     unsigned char* _temporary_buffer;
     std::thread _thread;
-    std::queue<std::vector<uint8_t>>* _queue = new std::queue<std::vector<uint8_t>>();
+    std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>* _queue = new std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>();
     std::mutex* _queue_mutex;
     ReceiverL2* _receiver_controller = nullptr;
 };

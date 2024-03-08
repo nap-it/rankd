@@ -179,6 +179,14 @@ Reservation* Handler::associated_reservation() const {
     return _reservation;
 }
 
+Handler *Handler::borrow(Dispatcher *dispatcher) {
+    _dispatcher = dispatcher;
+}
+
+Handler *Handler::mark_source(const std::pair<std::vector<uint8_t>, IdentifierType> &source) {
+    _source_identifier = source;
+}
+
 Handler* Handler::execute() {
     if (_running) {
         return this;
@@ -268,8 +276,9 @@ void Handler::operator()() {
                             _resources->mark_reservation(_reservation);
 
                             // (B.1.1.1.1.2) Create an ACC message and send it.
-                            ACC acc_message = ACC(_uuid);
+                            ACC* acc_message = new ACC(_uuid);
                             // TODO Send message through process-created socket?
+                            _dispatcher->send_message(acc_message, _source_identifier.first, _source_identifier.second);
 
                             // (B.1.1.1.1.3) Change state to RESERVED and terminate thread.
                             _state = HandlerState::RESERVED;

@@ -17,6 +17,7 @@
 
 class TimeoutHandler;
 
+#include "structs/dispatcher.h"
 #include "structs/handler_state.h"
 #include "structs/identifier.h"
 #include "structs/message.h"
@@ -60,6 +61,12 @@ public:
     HandlerState state() const;
     Reservation* associated_reservation() const;
 
+    // Dispatcher configurations.
+    Handler* borrow(Dispatcher* dispatcher);
+
+    // Source identifier setter.
+    Handler* mark_source(const std::pair<std::vector<uint8_t>, IdentifierType>& source);
+
     // Threading control mechanisms.
     Handler* execute();
     Handler* stop();
@@ -68,6 +75,8 @@ public:
 
 private:
     UUIDv4 _uuid;
+    Dispatcher* _dispatcher = nullptr;
+    std::pair<std::vector<uint8_t>, IdentifierType> _source_identifier{};
     Message* _message = nullptr;
     HandlerState _state;
     BidSet _bids;

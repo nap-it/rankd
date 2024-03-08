@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "structs/message.h"
+#include "utils/messaging.h"
 
 class ReceiverL3 {
 public:
@@ -15,8 +16,8 @@ public:
         return &instance;
     }
     ReceiverL3(const ReceiverL3&) = delete;
-    void enqueue_bytes(const std::vector<uint8_t>& bytes);
-    void set_queue(std::queue<Message*>* queue, std::mutex* mutex);
+    //void enqueue_bytes(const std::vector<uint8_t>& bytes);
+    void set_queue(std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* queue, std::mutex* mutex);
     ReceiverL3* execute();
     ReceiverL3* stop();
     bool is_running();
@@ -25,9 +26,9 @@ private:
     ReceiverL3();
     bool _running = false;
     std::thread _thread;
-    std::queue<std::vector<uint8_t>> _queue{};
-    std::queue<Message*>* _message_deposit = nullptr;
-    std::mutex* _message_deposit_mutex;
+    std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>> _queue{};
+    std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _message_deposit = nullptr;
+    std::mutex* _message_deposit_mutex = nullptr;
 };
 
 #endif //RANK_PRELUDE_DISPATCHER_RECEIVER_L3_H

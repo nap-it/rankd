@@ -18,7 +18,7 @@ public:
     void send_message(Message* message, const std::vector<uint8_t>& target, const IdentifierType& type);
     bool receiving_queue_is_empty() const;
     bool receiving_queue_has_message() const;
-    Message* dequeue_message();
+    std::tuple<Message*, std::vector<uint8_t>, IdentifierType> dequeue_item();
     ~Dispatcher();
 private:
     Dispatcher();
@@ -28,7 +28,7 @@ private:
     RawReceiverL2* _raw_receiver_l2 = RawReceiverL2::get_instance();
     ReceiverL3* _receiver_l3 = ReceiverL3::get_instance();
     ReceiverDDS* _receiver_dds = ReceiverDDS::get_instance();
-    std::queue<Message*>* _received_messages = new std::queue<Message*>();
+    std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _received_messages = new std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>();
     std::mutex _received_messages_locker{};
     std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _sending_messages = new std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>();
     std::mutex _sending_messages_locker{};

@@ -1,6 +1,6 @@
 #include "structs/dispatchers/receiver_l2.h"
 
-std::pair<std::queue<std::vector<uint8_t>> *, std::mutex *> RawReceiverL2::queue_access() {
+std::pair<std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>> *, std::mutex *> RawReceiverL2::queue_access() {
     return std::make_pair(_queue, _queue_mutex);
 }
 
@@ -106,8 +106,12 @@ void RawReceiverL2::operator()() {
             // Insert the sliced C-array into the newly created vector.
             data.insert(data.end(), &rank_data[0], &rank_data[rank_data_length]);
 
+            // Get source MAC address.
+            std::vector<uint8_t> source_address(ethernet_header->h_source, ethernet_header->h_source + sizeof ethernet_header->h_source / sizeof ethernet_header->h_source[0]);
+            std::transform(source_address.begin(), source_address.end(), source_address.begin(), [](uint8_t byte) { return ntohs(byte); });
+
             std::lock_guard<std::mutex> guard(*_queue_mutex);
-            _queue->push(data);
+            _queue->emplace(source_address, data);
         }
 
         // Execute the Receiver to handle such messages.
@@ -115,16 +119,16 @@ void RawReceiverL2::operator()() {
     }
 }
 
-void ReceiverL2::enqueue_bytes(const std::vector<uint8_t> &bytes) {
-    _queue->push(bytes);
-}
+//void ReceiverL2::enqueue_bytes(const std::vector<uint8_t> &bytes) {
+//    _queue->push(bytes);
+//}
 
-void ReceiverL2::set_queue(std::queue<std::vector<uint8_t>> *queue, std::mutex *mutex) {
+void ReceiverL2::set_queue(std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>> *queue, std::mutex *mutex) {
     _queue = queue;
     _queue_mutex = mutex;
 }
 
-void ReceiverL2::set_message_deposit_queue(std::queue<Message *> *queue, std::mutex *mutex) {
+void ReceiverL2::set_message_deposit_queue(std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>> *queue, std::mutex *mutex) {
     _message_deposit = queue;
     _message_deposit_mutex = mutex;
 }
@@ -158,21 +162,21 @@ bool ReceiverL2::is_running() {
 void ReceiverL2::operator()() {
     while (_running) {
         if (not _queue->empty()) {
-            std::vector<uint8_t> bytes;
+            std::pair<std::vector<uint8_t>, std::vector<uint8_t>> source_and_bytes;
             {
                 std::lock_guard<std::mutex> guard(*_queue_mutex);
-                bytes = _queue->front();
+                source_and_bytes = _queue->front();
                 _queue->pop();
             }
 
-            Message* message = parse_message_from_bytes(bytes, true);
+            Message* message = parse_message_from_bytes(source_and_bytes.second, true);
             if (message == nullptr) {
                 // TODO Handle this error, since it means that this message will be ignored (its size does not fill up a header or the type is recognized).
                 continue;
             }
             {
                 std::lock_guard guard(*_message_deposit_mutex);
-                _message_deposit->push(message);
+                _message_deposit->emplace(message, source_and_bytes.first, IdentifierType::MAC);
             }
         } else {
             stop();

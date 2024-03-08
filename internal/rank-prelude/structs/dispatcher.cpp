@@ -3,7 +3,7 @@
 void Dispatcher::send_message(Message* message, const std::vector<uint8_t>& target, const IdentifierType& type) {
     {
         std::lock_guard<std::mutex> guard(_sending_messages_locker);
-        _sending_messages->push(std::make_tuple(message, target, type));
+        _sending_messages->emplace(message, target, type);
     }
 
     _sender->execute();
@@ -17,17 +17,17 @@ bool Dispatcher::receiving_queue_has_message() const {
     return not receiving_queue_is_empty();
 }
 
-Message* Dispatcher::dequeue_message() {
-    Message* message;
+std::tuple<Message*, std::vector<uint8_t>, IdentifierType> Dispatcher::dequeue_item() {
+    std::tuple<Message*, std::vector<uint8_t>, IdentifierType> message_source_and_type;
 
     {
         std::lock_guard guard(_received_messages_locker);
 
-        message = _received_messages->front();
+        message_source_and_type = _received_messages->front();
         _received_messages->pop();
     }
 
-    return message;
+    return message_source_and_type;
 }
 
 Dispatcher::Dispatcher() {

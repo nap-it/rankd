@@ -91,7 +91,9 @@ find_package(BpfObject REQUIRED)
 bpf_object(rank_l2 structs/dispatchers/bpf/rank_l2.bpf.c)
 add_dependencies(rank_l2_skel libbpf-build bpftool-build)
 
-configure_file(${CMAKE_CURRENT_BINARY_DIR}/rank_l2.skel.h ${CMAKE_CURRENT_SOURCE_DIR}/include/structs/dispatchers/bpf/rank_l2.skel.h COPYONLY)
+if (EXISTS ${CMAKE_CURRENT_BINARY_DIR}/rank_l2.skel.h)
+    configure_file(${CMAKE_CURRENT_BINARY_DIR}/rank_l2.skel.h ${CMAKE_CURRENT_SOURCE_DIR}/include/structs/dispatchers/bpf/rank_l2.skel.h COPYONLY)
+endif()
 
 set(RANK_PRELUDE include)
 add_library(rank-prelude STATIC prelude.cpp ${SOURCE_LIST} ${HEADER_LIST})
