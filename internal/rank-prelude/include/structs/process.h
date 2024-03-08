@@ -18,10 +18,10 @@
 class Handler;
 
 #include "constants.h"
+#include "structs/dispatcher.h"
 #include "structs/store.h"
 #include "structs/timeout_table.h"
 #include "structs/translation_table.h"
-
 #include "structs/handler.h"
 #include "structs/handler_state.h"
 #include "structs/identifier.h"
@@ -63,6 +63,7 @@ public:
 
 private:
     Process();
+    Dispatcher* _dispatcher;
     Resources* _resources;
     TimeoutHandler* _timeout_handler;
     Store _store;

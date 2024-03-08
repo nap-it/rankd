@@ -315,4 +315,7 @@ Process::Process() {
     if (listen(_socket, 3) < 0) {
         throw std::exception();  // TODO
     }
+
+    // Initialize the dispatcher.
+    _dispatcher = Dispatcher::get_instance();
 }
