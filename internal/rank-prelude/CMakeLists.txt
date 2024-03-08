@@ -92,7 +92,7 @@ add_dependencies(rank_l2_skel libbpf-build bpftool-build)
 configure_file(${CMAKE_CURRENT_BINARY_DIR}/rank_l2.skel.h ${CMAKE_CURRENT_SOURCE_DIR}/include/structs/dispatchers/bpf/rank_l2.skel.h COPYONLY)
 
 set(RANK_PRELUDE include)
-add_library(rank-prelude prelude.cpp ${SOURCE_LIST} ${HEADER_LIST})
+add_library(rank-prelude STATIC prelude.cpp ${SOURCE_LIST} ${HEADER_LIST})
 target_include_directories(rank-prelude PUBLIC include)
 target_link_libraries(rank-prelude PRIVATE pthread rank_l2_skel)
 target_include_directories(rank-prelude PUBLIC vendor/libyang-cpp/include vendor/rapidjson vendor/doctest/doctest vendor/cbor-cpp/src)
