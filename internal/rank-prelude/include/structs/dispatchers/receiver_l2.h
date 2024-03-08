@@ -16,10 +16,10 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
+#include "constants.h"
 #include "structs/message.h"
 #include "structs/dispatchers/bpf/rank_l2.skel.h"
 
-#define RANK_INTERFACE "rank0" // TODO Change this value or allow this value to be configured.
 #define TEMPORARY_BUFFER_LENGTH 65536
 
 class ReceiverL2 {

@@ -6,9 +6,14 @@
 #include <thread>
 #include <vector>
 
+#include <linux/netlink.h>
+#include <linux/rtnetlink.h>
+#include <net/if_arp.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
+
+#define NLMSG_BUF_SIZE 4096
 
 class Handler;
 

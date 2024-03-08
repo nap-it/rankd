@@ -237,6 +237,67 @@ Process::Process() {
     _resources = Resources::get_instance();
     _timeout_handler = TimeoutHandler::get_instance();
 
+    // Initialize the rank0 network interface.
+    struct sockaddr_nl binding_address{};
+    int netlink_socket = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+    if (netlink_socket < 0) {
+        throw std::ios_base::failure("Netlink could not be opened in order to create a rank0 interface in Process.");
+    }
+    memset(&binding_address, 0, sizeof(binding_address));
+    binding_address.nl_family = AF_NETLINK;
+    binding_address.nl_pid = 0;
+    if (bind(netlink_socket, (struct sockaddr*) &binding_address, sizeof(binding_address)) < 0) {
+        throw std::ios_base::failure("Netlink socket could not be bound in rankd Process.");
+    }
+    struct {
+        struct nlmsghdr header;
+        struct ifinfomsg message;
+    } request;
+    request.header.nlmsg_type = RTM_NEWLINK;
+    request.header.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK | NLM_F_EXCL | NLM_F_CREATE;
+    request.header.nlmsg_len = sizeof(request);
+    request.header.nlmsg_seq = time(nullptr);
+    request.message.ifi_family = AF_UNSPEC;
+    request.message.ifi_type = ARPHRD_NETROM;
+    request.message.ifi_index = 0;
+    request.message.ifi_flags = IFF_UP;
+    request.message.ifi_change = 0xFFFFFFFF;
+    struct rtattr* rta = (struct rtattr*) (((char*) &request) + NLMSG_ALIGN(request.header.nlmsg_len));
+    rta->rta_type = IFLA_IFNAME;
+    rta->rta_len = RTA_LENGTH(sizeof(RANK_INTERFACE)+1);
+    request.header.nlmsg_len = NLMSG_ALIGN(request.header.nlmsg_len) + RTA_LENGTH(sizeof(RANK_INTERFACE)+1);
+    memcpy(RTA_DATA(rta), RANK_INTERFACE, sizeof(RANK_INTERFACE)+1);
+    rta = (struct rtattr*) (((char*) &request) + NLMSG_ALIGN(request.header.nlmsg_len));
+    rta->rta_type = IFLA_LINKINFO;
+    rta->rta_len = RTA_LENGTH(sizeof(short));
+    struct rtattr info_kind_attribute;
+    info_kind_attribute.rta_type = IFLA_INFO_KIND;
+    info_kind_attribute.rta_len = RTA_LENGTH(sizeof(RANK_INTERFACE_TYPE_INFO)+1);
+    request.header.nlmsg_len = NLMSG_ALIGN(request.header.nlmsg_len) + RTA_LENGTH(sizeof(info_kind_attribute));
+    memcpy(RTA_DATA(rta), &info_kind_attribute, sizeof(info_kind_attribute));
+
+    ssize_t sent_bytes = send(netlink_socket, &request, request.header.nlmsg_len, 0);
+    if (sent_bytes < 0) {
+        close(netlink_socket);
+        throw std::ios_base::failure("Netlink socket could not send data in rankd Process to configure rank0 interface.");
+    }
+    char response_buffer[8192];
+    ssize_t received_bytes = recv(netlink_socket, response_buffer, sizeof(response_buffer), 0);
+    if (received_bytes < 0) {
+        close(netlink_socket);
+        throw std::ios_base::failure("Rankd Process failed to receive a response from the Netlink socket on creating the rank0 interface.");
+    }
+    auto* response = (struct nlmsghdr*) response_buffer;
+    while (NLMSG_OK(response, received_bytes)) {
+        if (response->nlmsg_type == NLMSG_ERROR) {
+            if (((struct nlmsgerr*) response)->error != 0) {
+                close(netlink_socket);
+                throw std::ios_base::failure("The interface rank0 could not be successfully set.");
+            }
+        }
+    }
+    close(netlink_socket);
+
     // Initialize the socket.
     _socket = socket(AF_INET, SOCK_STREAM, 0);  // TODO Handle also when AF_LOCAL or AF_INET6.
     if (_socket < 0) {

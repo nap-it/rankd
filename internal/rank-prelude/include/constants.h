@@ -4,6 +4,8 @@
 #define RANK_PORT 7265
 #define RANK_IP_PROTO 0x9B
 #define RANK_ETHERTYPE 0x7265
+#define RANK_INTERFACE "rank0" // TODO Change this value or allow this value to be configured.
+#define RANK_INTERFACE_TYPE_INFO "dummy"
 
 #define RANK_EAR_TO_EAR_TIMEOUT 0
 #define RANK_MAR_TO_MAR_TIMEOUT 1
