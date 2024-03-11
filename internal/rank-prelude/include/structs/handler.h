@@ -46,10 +46,12 @@ public:
     void new_bid(float bid, std::array<uint8_t, 4>& ipv4_address);
     void new_bid(float bid, std::array<uint8_t, 6>& mac_address);
     void new_bid(float bid, std::array<uint8_t, 16>& ipv6_address);
+    void new_bid(float bid, std::string& dds_address);
+    // TODO Define new bid for simulation.
     void clear_bids();
     size_t cardinal_bids();
-    std::set<std::vector<uint8_t>> min_bids();
-    bool is_min_bid_unique(const std::set<std::vector<uint8_t>>& targets) const;
+    std::set<std::pair<std::vector<uint8_t>, IdentifierType>> min_bids();
+    bool is_min_bid_unique(const std::set<std::pair<std::vector<uint8_t>, IdentifierType>>& targets) const;
     bool is_bid_in_store(const UUIDv4& id) const;   // From process to handler.
     bool is_uuid_in_store(const UUIDv4& id) const;  // From process to handler.
 

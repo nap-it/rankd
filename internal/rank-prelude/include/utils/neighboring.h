@@ -14,8 +14,8 @@
 
 #include "constants.h"
 
-std::vector<std::vector<uint8_t>> get_connections_to(const std::vector<uint8_t> &target);
+std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> get_connections_to(const std::vector<uint8_t> &target, bool is_dds = false);
 
-unsigned int connections_cardinal(const std::vector<std::vector<uint8_t>> &connections);
+unsigned int connections_cardinal(const std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> &connections);
 
 #endif  // RANK_PRELUDE_NEIGHBORING_H

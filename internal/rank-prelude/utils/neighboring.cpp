@@ -54,13 +54,19 @@ bool is_within_range(const std::vector<uint8_t> &tester, const std::vector<uint8
     return true;
 }
 
-std::vector<std::vector<uint8_t>> get_connections_to(const std::vector<uint8_t> &target) {
-    std::vector<std::vector<uint8_t>> addresses{};
+// TODO What about using IdentityType::Simulator?
+std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> get_connections_to(const std::vector<uint8_t> &target, bool is_dds) {
+    std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> addresses{};
 
     // Get the type of target address.
     switch (target.size()) {
         case 4:
         case 16: {
+            // TODO Handle the case of DDS.
+            if (is_dds) {
+                return {};
+            }
+
             // If the address is IP, check for routes in IP.
 
             // Create base structures for the netlink socket to be placed.
@@ -191,7 +197,11 @@ std::vector<std::vector<uint8_t>> get_connections_to(const std::vector<uint8_t> 
                         auto mask = content->rtm_dst_len;
 
                         if (is_within_range(possible_destination, route_address, mask)) {
-                            addresses.push_back(possible_destination);
+                            if (target.size() == 4) {
+                                addresses.emplace_back(possible_destination, IdentifierType::IPv4);
+                            } else if (target.size() == 16) {
+                                addresses.emplace_back(possible_destination, IdentifierType::IPv6);
+                            }
                         }
                     }
                 }
@@ -326,7 +336,7 @@ std::vector<std::vector<uint8_t>> get_connections_to(const std::vector<uint8_t> 
                     }
 
                     if (not possible_mac_address.empty() and not possible_destination.empty()) {
-                        addresses.push_back(possible_destination);
+                        addresses.emplace_back(possible_destination, IdentifierType::MAC);
                         break;
                     }
 
@@ -343,6 +353,6 @@ std::vector<std::vector<uint8_t>> get_connections_to(const std::vector<uint8_t> 
     return addresses;
 }
 
-unsigned int connections_cardinal(const std::vector<std::vector<uint8_t>> &connections) {
+unsigned int connections_cardinal(const std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> &connections) {
     return connections.size();
 }

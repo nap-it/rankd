@@ -180,20 +180,26 @@ void Process::operator()() {
                 handler->borrow(_dispatcher)->execute();
             }
 
-            // Get the source of this message and set it on the handler.
-            handler->mark_source(std::make_pair(source_address, source_address_type));
-
             // Parse the raw data as a message header and pass a complete message to the handler to handle.
             Header message_header = message->header();
 
             switch (message_header.type()) {
                 case MessageType::EAR:
+                    // Get the source of this message and set it on the handler.
+                    handler->mark_source(std::make_pair(source_address, source_address_type));
+
                     handler->handle(dynamic_cast<EAR*>(message));
                     break;
                 case MessageType::MAR:
+                    // Get the source of this message and set it on the handler.
+                    handler->mark_source(std::make_pair(source_address, source_address_type));
+
                     handler->handle(dynamic_cast<MAR*>(message));
                     break;
                 case MessageType::BID:
+                    // Get the source of this message and set it on the handler.
+                    handler->mark_source(std::make_pair(source_address, source_address_type));
+
                     handler->handle(dynamic_cast<BID*>(message));
                     break;
                 case MessageType::ACC:
@@ -203,6 +209,9 @@ void Process::operator()() {
                     handler->handle(dynamic_cast<REF*>(message));
                     break;
                 case MessageType::REP:
+                    // Get the source of this message and set it on the handler.
+                    handler->mark_source(std::make_pair(source_address, source_address_type));
+
                     handler->handle(dynamic_cast<REP*>(message));
                     break;
                 case MessageType::NOTYPE:

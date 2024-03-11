@@ -87,19 +87,25 @@ bool Handler::is_translation_table_empty() {
 void Handler::new_bid(float bid, std::array<uint8_t, 4>& ipv4_address) {
     // Safely add the bid to the set of bids.
     std::lock_guard<std::mutex> lock(_bids_locker);
-    _bids.insert(std::make_pair(bid, std::vector<uint8_t>(ipv4_address.begin(), ipv4_address.end())));
+    _bids.insert(std::make_pair(bid, std::make_pair(std::vector<uint8_t>(ipv4_address.begin(), ipv4_address.end()), IdentifierType::IPv4)));
 }
 
 void Handler::new_bid(float bid, std::array<uint8_t, 6>& mac_address) {
     // Safely add the bid to the set of bids.
     std::lock_guard<std::mutex> lock(_bids_locker);
-    _bids.insert(std::make_pair(bid, std::vector<uint8_t>(mac_address.begin(), mac_address.end())));
+    _bids.insert(std::make_pair(bid, std::make_pair(std::vector<uint8_t>(mac_address.begin(), mac_address.end()), IdentifierType::MAC)));
 }
 
 void Handler::new_bid(float bid, std::array<uint8_t, 16>& ipv6_address) {
     // Safely add the bid to the set of bids.
     std::lock_guard<std::mutex> lock(_bids_locker);
-    _bids.insert(std::make_pair(bid, std::vector<uint8_t>(ipv6_address.begin(), ipv6_address.end())));
+    _bids.insert(std::make_pair(bid, std::make_pair(std::vector<uint8_t>(ipv6_address.begin(), ipv6_address.end()), IdentifierType::IPv6)));
+}
+
+void Handler::new_bid(float bid, std::string& dds_address) {
+    // Safely add the bid to the set of bids.
+    std::lock_guard<std::mutex> lock(_bids_locker);
+    _bids.insert(std::make_pair(bid, std::make_pair(std::vector<uint8_t>(dds_address.begin(), dds_address.end()), IdentifierType::DDS)));
 }
 
 void Handler::clear_bids() {
@@ -110,7 +116,7 @@ size_t Handler::cardinal_bids() {
     return _bids.size();
 }
 
-std::set<std::vector<uint8_t>> Handler::min_bids() {
+std::set<std::pair<std::vector<uint8_t>, IdentifierType>> Handler::min_bids() {
     // Copy the bids set to a safe-to-modify variable.
     BidSet bids_copy {};
     {
@@ -124,16 +130,16 @@ std::set<std::vector<uint8_t>> Handler::min_bids() {
     auto minimum_bid = minimum_bid_item->first;
 
     // Create the set to be returned.
-    std::set<std::vector<uint8_t>> minimum_bids {};
+    std::set<std::pair<std::vector<uint8_t>, IdentifierType>> minimum_bids {};
 
     // Iterate over all the given bids and attempt to find smaller than current minimum and all equal bids.
     for (const auto& bid : bids_copy) {
         if (bid.first < minimum_bid) {
             minimum_bid = bid.first;
             minimum_bids.clear();
-            minimum_bids.insert(bid.second);
+            minimum_bids.insert(std::make_pair(bid.second.first, bid.second.second));
         } else if (bid.first == minimum_bid) {
-            minimum_bids.insert(bid.second);
+            minimum_bids.insert(std::make_pair(bid.second.first, bid.second.second));
         }
     }
 
@@ -141,7 +147,7 @@ std::set<std::vector<uint8_t>> Handler::min_bids() {
     return minimum_bids;
 }
 
-bool Handler::is_min_bid_unique(const std::set<std::vector<uint8_t>>& targets) const {
+bool Handler::is_min_bid_unique(const std::set<std::pair<std::vector<uint8_t>, IdentifierType>>& targets) const {
     return targets.size() == 1;
 }
 
@@ -181,10 +187,14 @@ Reservation* Handler::associated_reservation() const {
 
 Handler *Handler::borrow(Dispatcher *dispatcher) {
     _dispatcher = dispatcher;
+
+    return this;
 }
 
 Handler *Handler::mark_source(const std::pair<std::vector<uint8_t>, IdentifierType> &source) {
     _source_identifier = source;
+
+    return this;
 }
 
 Handler* Handler::execute() {
@@ -286,8 +296,9 @@ void Handler::operator()() {
                             break;
                         } else {
                             // (B.1.1.2) Create a REF message and send it.
-                            REF ref_message = REF(_uuid);
+                            REF* ref_message = new REF(_uuid);
                             // TODO Send message through process-created socket?
+                            _dispatcher->send_message(ref_message, _source_identifier.first, _source_identifier.second);
 
                             // (B.1.1.3) Change state to CLOSED and delete UUID from the Store.
                             _state = HandlerState::CLOSED;
@@ -325,7 +336,7 @@ void Handler::operator()() {
                                     default:
                                         throw std::exception();  // TODO
                                 }
-                                std::vector<std::vector<uint8_t>> connections_to_target =
+                                std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target =
                                         get_connections_to(target);
 
                                 // (B.1.2.2) Depending on the cardinal of connections...
@@ -333,8 +344,9 @@ void Handler::operator()() {
                                     case 0: {
                                         // If no connection is found...
                                         // (B.1.2.2.3.1) Create REF message and send it.
-                                        REF ref_message = REF(_uuid);
+                                        REF* ref_message = new REF(_uuid);
                                         // TODO Send message through process-created socket?
+                                        _dispatcher->send_message(ref_message, _source_identifier.first, _source_identifier.second);
 
                                         // (B.1.2.2.3.2) Change state to CLOSED and delete UUID from the Store.
                                         _state = HandlerState::CLOSED;
@@ -344,11 +356,12 @@ void Handler::operator()() {
                                     case 1: {
                                         // If only one connection is found...
                                         // (B.1.2.2.2.1) Create EAR message and send it.
-                                        EAR new_ear_message =
-                                                EAR(_uuid, ear_message->priority(), ear_message->listener_length(),
-                                                    listener_message_format(connections_to_target.front()), ear_message->payload_length(),
+                                        EAR* new_ear_message =
+                                                new EAR(_uuid, ear_message->priority(), ear_message->listener_length(),
+                                                    listener_message_format(connections_to_target.front().first), ear_message->payload_length(),
                                                     ear_message->payload());
                                         // TODO Send message through process-created socket?
+                                        _dispatcher->send_message(new_ear_message, connections_to_target.front().first, connections_to_target.front().second);
 
                                         // Change state to PRE_RESERVED.
                                         _state = HandlerState::PRE_RESERVED;
@@ -360,11 +373,12 @@ void Handler::operator()() {
                                         // If more than one connection is found...
                                         // (B.1.2.2.1.1) For each connection create a MAR message and send it.
                                         for (const auto& intermediate : connections_to_target) {
-                                            MAR mar_message =
-                                                    MAR(_uuid, ear_message->priority(), ear_message->listener_length(),
-                                                        listener_message_format(intermediate),
+                                            MAR* mar_message =
+                                                    new MAR(_uuid, ear_message->priority(), ear_message->listener_length(),
+                                                        listener_message_format(intermediate.first),
                                                         ear_message->payload_length(), ear_message->payload());
                                             // TODO Send message through process-created socket?
+                                            _dispatcher->send_message(mar_message, intermediate.first, intermediate.second);
                                         }
 
                                         // Change state to PRE_RESERVED.
@@ -378,8 +392,9 @@ void Handler::operator()() {
                             }
                         } else {
                             // (B.1.1.2) Create a REF message and send it.
-                            REF ref_message = REF(_uuid);
+                            REF* ref_message = new REF(_uuid);
                             // TODO Send message through process-created socket?
+                            _dispatcher->send_message(ref_message, _source_identifier.first, _source_identifier.second);
 
                             // (B.1.1.3) Change state to CLOSED and delete UUID from the Store.
                             _state = HandlerState::CLOSED;
@@ -438,8 +453,9 @@ void Handler::operator()() {
                         float bid_value = _resources->estimate_bid(*_reservation);
 
                         // (C.1.2.2) Create bid message and send it.
-                        BID bid_message = BID(_uuid, bid_value);
+                        BID* bid_message = new BID(_uuid, bid_value);
                         // TODO Send message through process-created socket?
+                        _dispatcher->send_message(bid_message, _source_identifier.first, _source_identifier.second);
 
                         // Change state to PRE_RESERVED.
                         _state = HandlerState::PRE_RESERVED;
@@ -451,8 +467,9 @@ void Handler::operator()() {
                         _timeout_handler->initiate_timeout(this, RANK_BID_TO_BID_TIMEOUT);
                     } else {
                         // (C.1.1.1) Create zeroed-bid message and send it.
-                        BID bid_message = BID(_uuid, 0);
+                        BID* bid_message = new BID(_uuid, 0);
                         // TODO Send message through process-created socket?
+                        _dispatcher->send_message(bid_message, _source_identifier.first, _source_identifier.second);
 
                         // Change handler's state to CLOSED.
                         _state = HandlerState::CLOSED;
@@ -466,13 +483,14 @@ void Handler::operator()() {
                     auto bid_message = dynamic_cast<BID*>(_message);
 
                     // (D.1) Wait for all bids.
-                    // TODO
+                    // TODO Add bids until a timeout is reached (call new_bid methods according to the type).
 
                     // (D.3) Check the cardinal of bids.
                     if (cardinal_bids() == 0) {
                         // (D.3.1.1) Create REF message and send it.
-                        REF ref_message = REF(_uuid);
+                        REF* ref_message = new REF(_uuid);
                         // TODO Send the message.
+                        _dispatcher->send_message(ref_message, _source_identifier.first, _source_identifier.second);
 
                         // Change the state to CLOSED.
                         _state = HandlerState::CLOSED;
@@ -482,13 +500,15 @@ void Handler::operator()() {
                         break;
                     } else {
                         // (D.3.2.1) Is the minimum bid unique?
-                        if (is_min_bid_unique(min_bids())) {
+                        auto minimum_bids = min_bids();
+                        if (is_min_bid_unique(minimum_bids)) {
                             // (D.3.2.1.1.1) As it is unique, send an EAR message to it.
-                            EAR ear_message = EAR(_uuid, _reservation->priority(), _reservation->listener_length(),
+                            EAR* ear_message = new EAR(_uuid, _reservation->priority(), _reservation->listener_length(),
                                                   _reservation->listener(),
                                                   make_payload_length(_reservation->requirements()),
                                                   make_payload(_reservation->requirements()));
                             // TODO Send this message.
+                            _dispatcher->send_message(ear_message, minimum_bids.begin()->first, minimum_bids.begin()->second);
 
                             // Change the state to PRE_RESERVED.
                             _state = HandlerState::PRE_RESERVED;
@@ -507,11 +527,12 @@ void Handler::operator()() {
                                 auto new_uuid = create_translation(_uuid);
 
                                 // (D.3.2.1.2.3) Create EAR message and send it to each min(B) node, with UUID*.
-                                EAR ear_message = EAR(new_uuid, _reservation->priority(),
+                                EAR* ear_message = new EAR(new_uuid, _reservation->priority(),
                                                       _reservation->listener_length(), _reservation->listener(),
                                                       make_payload_length(_reservation->requirements()),
                                                       make_payload(_reservation->requirements()));
                                 // TODO Send this message.
+                                _dispatcher->send_message(ear_message, bid_target.second.first, bid_target.second.second);
 
                                 // Change the state to PRE_RESERVED.
                                 _state = HandlerState::PRE_RESERVED;
@@ -537,8 +558,9 @@ void Handler::operator()() {
                         UUIDv4 original_uuid = locate_original_of(_uuid);
 
                         // (E.2.2.1) Create ACC message to the original UUID.
-                        ACC new_acc_message = ACC(original_uuid);
+                        ACC* new_acc_message = new ACC(original_uuid);
                         // TODO Send this message.
+                        _dispatcher->send_message(new_acc_message, _source_identifier.first, _source_identifier.second);
 
                         // Change state to RESERVED.
                         _state = HandlerState::RESERVED;
@@ -573,16 +595,18 @@ void Handler::operator()() {
                         // (F.2.1.2) Is TranslationTable empty?
                         if (is_translation_table_empty()) {
                             // (F.3) Create REF message and send it.
-                            REF new_ref_message = REF(_uuid);
+                            REF* new_ref_message = new REF(_uuid);
                             // TODO Send message.
+                            _dispatcher->send_message(new_ref_message, _source_identifier.first, _source_identifier.second);
                         } else {
                             stop();
                             break;
                         }
                     } else {
                         // (F.3) Create REF message and send it.
-                        REF new_ref_message = REF(_uuid);
+                        REF* new_ref_message = new REF(_uuid);
                         // TODO Send message.
+                        _dispatcher->send_message(new_ref_message, _source_identifier.first, _source_identifier.second);
                     }
 
                     // Change state to CLOSED.
@@ -629,8 +653,9 @@ void Handler::operator()() {
                     }
                     if (i_am_listener) {
                         // (G.1.1.1) Create REF message and send it.
-                        REF ref_message = REF(_uuid);
+                        REF* ref_message = new REF(_uuid);
                         // TODO Send message.
+                        _dispatcher->send_message(ref_message, _source_identifier.first, _source_identifier.second);
 
                         // Change state to CLOSED.
                         _state = HandlerState::CLOSED;
@@ -643,6 +668,7 @@ void Handler::operator()() {
                         if (is_uuid_in_store(_uuid)) {
                             // (G.1.2.1.2.1) Create REP message towards L and send it.
                             REP new_rep_message = REP(_uuid, rep_message->listener_length(), rep_message->listener());
+                            // TODO send this message.
 
                             // (G.1.2.1.2.2) Begin timer for REP timeout.
                             _timeout_handler->initiate_timeout(this, RANK_REP_TO_REP_TIMEOUT);
@@ -657,8 +683,9 @@ void Handler::operator()() {
                             }
 
                             // (G.1.2.1.2.4) Create REF message with original UUID and send it.
-                            REF new_ref_message = REF(original_uuid);
+                            REF* new_ref_message = new REF(original_uuid);
                             // TODO Send message.
+                            _dispatcher->send_message(new_ref_message, _source_identifier.first, _source_identifier.second);
 
                             // Change state to CLOSED.
                             _state = HandlerState::CLOSED;
@@ -673,6 +700,8 @@ void Handler::operator()() {
                         }
                     }
                 } break;
+                case MessageType::NOTYPE:
+                    break;
             }
 
             // Delete the pointer of the message.
