@@ -203,6 +203,9 @@ void Process::operator()() {
                     handler->handle(dynamic_cast<BID*>(message));
                     break;
                 case MessageType::ACC:
+                    // Get the source of this message and set it as an accepting node in the handler.
+                    handler->mark_accepting_node(std::make_pair(source_address, source_address_type));
+
                     handler->handle(dynamic_cast<ACC*>(message));
                     break;
                 case MessageType::REF:

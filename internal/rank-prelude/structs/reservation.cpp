@@ -15,6 +15,14 @@ Reservation::Reservation(const RequestingCapabilities& capabilities, uint8_t pri
     _capabilities = capabilities;
 }
 
+void Reservation::add_next_node(const std::pair<std::vector<uint8_t>, IdentifierType> &node) {
+    _next_nodes.push_back(node);
+}
+
+void Reservation::set_past_node(const std::pair<std::vector<uint8_t>, IdentifierType> &node) {
+    _past_node = node;
+}
+
 uint8_t Reservation::priority() const {
     return _priority;
 }
@@ -37,6 +45,14 @@ std::array<uint8_t, RANK_LISTENER_MAX_LEN> Reservation::listener() const {
 
 UUIDv4 Reservation::uuid() const {
     return _uuid;
+}
+
+std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> Reservation::next_nodes() const {
+    return _next_nodes;
+}
+
+std::pair<std::vector<uint8_t>, IdentifierType> Reservation::past_node() const {
+    return _past_node;
 }
 
 Reservation* Reservation::mark_listener(const std::vector<uint8_t>& listener) {

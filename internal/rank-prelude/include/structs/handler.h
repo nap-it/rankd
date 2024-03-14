@@ -66,8 +66,9 @@ public:
     // Dispatcher configurations.
     Handler* borrow(Dispatcher* dispatcher);
 
-    // Source identifier setter.
+    // Source and accepting node identifier setter.
     Handler* mark_source(const std::pair<std::vector<uint8_t>, IdentifierType>& source);
+    Handler* mark_accepting_node(const std::pair<std::vector<uint8_t>, IdentifierType>& node);
 
     // Threading control mechanisms.
     Handler* execute();
@@ -79,6 +80,7 @@ private:
     UUIDv4 _uuid;
     Dispatcher* _dispatcher = nullptr;
     std::pair<std::vector<uint8_t>, IdentifierType> _source_identifier{};
+    std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> _accepting_nodes{};
     Message* _message = nullptr;
     HandlerState _state;
     BidSet _bids;

@@ -197,6 +197,12 @@ Handler *Handler::mark_source(const std::pair<std::vector<uint8_t>, IdentifierTy
     return this;
 }
 
+Handler *Handler::mark_accepting_node(const std::pair<std::vector<uint8_t>, IdentifierType> &node) {
+    _accepting_nodes.push_back(node);
+
+    return this;
+}
+
 Handler* Handler::execute() {
     if (_running) {
         return this;
@@ -366,7 +372,10 @@ void Handler::operator()() {
                                         // Change state to PRE_RESERVED.
                                         _state = HandlerState::PRE_RESERVED;
 
-                                        // (B.1.2.2.2.2) Begin timer for EAR timeout.
+                                        // (B.1.2.2.2.2) Add message source address as reservation past node.
+                                        _reservation->set_past_node(_source_identifier);
+
+                                        // (B.1.2.2.2.3) Begin timer for EAR timeout.
                                         _timeout_handler->initiate_timeout(this, RANK_EAR_TO_EAR_TIMEOUT);
                                     } break;
                                     default: {
@@ -513,10 +522,13 @@ void Handler::operator()() {
                             // Change the state to PRE_RESERVED.
                             _state = HandlerState::PRE_RESERVED;
 
-                            // (D.3.2.1.1.2) Begin timer for EAR timeout.
+                            // (D.3.2.1.1.2) Add message source address as reservation past node.
+                            _reservation->set_past_node(_source_identifier);
+
+                            // (D.3.2.1.1.3) Begin timer for EAR timeout.
                             _timeout_handler->initiate_timeout(this, RANK_EAR_TO_EAR_TIMEOUT);
 
-                            // (D.3.2.1.1.3) Delete UUID from the Store.
+                            // (D.3.2.1.1.4) Delete UUID from the Store.
                             stop();
                             break;
                         } else {
@@ -537,10 +549,13 @@ void Handler::operator()() {
                                 // Change the state to PRE_RESERVED.
                                 _state = HandlerState::PRE_RESERVED;
 
-                                // (D.3.2.1.2.4) Begin timer for EAR timeout.
+                                // (D.3.2.1.2.4) Add message source address as reservation past node.
+                                _reservation->set_past_node(_source_identifier);
+
+                                // (D.3.2.1.2.5) Begin timer for EAR timeout.
                                 _timeout_handler->initiate_timeout(this, RANK_EAR_TO_EAR_TIMEOUT);
 
-                                // (D.3.2.1.2.5) Delete UUID from the Store.
+                                // (D.3.2.1.2.6) Delete UUID from the Store.
                                 stop();
                                 break;
                             }
@@ -565,18 +580,25 @@ void Handler::operator()() {
                         // Change state to RESERVED.
                         _state = HandlerState::RESERVED;
 
-                        // (E.2.2.2) Terminate the thread.
+                        // (E.2.2.2) Add accepting node as next node of the reservation.
+                        _reservation->add_next_node(_accepting_nodes.back());
+
+                        // (E.2.2.3) Terminate the thread.
                         stop();
                         break;
                     } else {
                         // (E.2.1.1) Create ACC message to the UUID.
-                        ACC new_acc_message = ACC(_uuid);
+                        ACC* new_acc_message = new ACC(_uuid);
                         // TODO Send this message.
+                        _dispatcher->send_message(new_acc_message, _source_identifier.first, _source_identifier.second);
 
                         // Change state to RESERVED.
                         _state = HandlerState::RESERVED;
 
-                        // (E.2.1.2) Terminate the thread.
+                        // (E.2.1.2) Add accepting node as next node of the reservation.
+                        _reservation->add_next_node(_accepting_nodes.back());
+
+                        // (E.2.1.3) Terminate the thread.
                         stop();
                         break;
                     }
@@ -667,8 +689,11 @@ void Handler::operator()() {
                         // (G.1.2.1) Is UUID in Store?
                         if (is_uuid_in_store(_uuid)) {
                             // (G.1.2.1.2.1) Create REP message towards L and send it.
-                            REP new_rep_message = REP(_uuid, rep_message->listener_length(), rep_message->listener());
+                            REP* new_rep_message = new REP(_uuid, rep_message->listener_length(), rep_message->listener());
                             // TODO send this message.
+                            for (const auto& direction : _reservation->next_nodes()) {
+                                _dispatcher->send_message(new_rep_message, direction.first, direction.second);
+                            }
 
                             // (G.1.2.1.2.2) Begin timer for REP timeout.
                             _timeout_handler->initiate_timeout(this, RANK_REP_TO_REP_TIMEOUT);

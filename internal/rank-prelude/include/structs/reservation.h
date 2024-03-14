@@ -14,6 +14,10 @@ public:
     Reservation(const Reservation& reservation);
     Reservation(const RequestingCapabilities& capabilities, uint8_t priority);
 
+    // Past and next nodes handling.
+    void add_next_node(const std::pair<std::vector<uint8_t>, IdentifierType>& node);
+    void set_past_node(const std::pair<std::vector<uint8_t>, IdentifierType>& node);
+
     // Getters.
     uint8_t priority() const;
     RequestingCapabilities requirements() const;
@@ -21,6 +25,8 @@ public:
     uint8_t listener_length() const;
     std::array<uint8_t, RANK_LISTENER_MAX_LEN> listener() const;
     UUIDv4 uuid() const;
+    std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> next_nodes() const;
+    std::pair<std::vector<uint8_t>, IdentifierType> past_node() const;
 
     // Setters.
     Reservation* mark_listener(const std::vector<uint8_t>& listener);
@@ -47,6 +53,8 @@ private:
     RequestingCapabilities _capabilities;
     UUIDv4 _uuid{};
     uint8_t _listener_length{};
+    std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> _next_nodes{};
+    std::pair<std::vector<uint8_t>, IdentifierType> _past_node{};
     std::array<uint8_t, RANK_LISTENER_MAX_LEN> _listener{};
 };
 
