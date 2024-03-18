@@ -2,7 +2,9 @@
 #define RANK_PRELUDE_CONSTANTS_H
 
 #define IPV4_ADDR_LEN 4
+#define MAC_ADDR_LEN 6
 #define IPV6_ADDR_LEN 16
+#define DDS_ADDR_LEN 16
 
 #define RANK_PORT 7265
 #define RANK_IP_PROTO 0x9B

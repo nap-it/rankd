@@ -11,10 +11,10 @@
 class REP : public Message {
 public:
     // Instance handlers.
-    REP(const UUIDv4& uuid, uint8_t listener_length, uint8_t* listener) :
+    REP(const UUIDv4& uuid, uint8_t listener_length, const std::vector<uint8_t>& listener) :
         Message(Header(RANK_HEADER_VERSION, MessageType::REP, uuid)), _listener_length {listener_length}, _listener {listener} {
     }
-    REP(const Header& header, uint8_t listener_length, uint8_t* listener) :
+    REP(const Header& header, uint8_t listener_length, const std::vector<uint8_t>& listener) :
         Message(header), _listener_length {listener_length}, _listener {listener} {
     }
     REP(const Header& header, const std::vector<uint8_t>& marshalled_data) : Message(header) {
@@ -26,7 +26,7 @@ public:
     // Getters.
     uint8_t listener_length() const;
     uint8_t reserved() const;
-    uint8_t* listener() const;
+    std::vector<uint8_t> listener() const;
 
     // Derived member methods.
     const std::vector<uint8_t> raw_payload() const override;
@@ -37,7 +37,7 @@ public:
 private:
     uint8_t _listener_length;
     uint8_t _reserved;
-    uint8_t* _listener;
+    std::vector<uint8_t> _listener;
 };
 
 
