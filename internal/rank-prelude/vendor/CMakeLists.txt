@@ -1,5 +1,6 @@
 add_subdirectory(libyang-cpp)
 add_subdirectory(cbor-cpp)
+add_subdirectory(pcap-plus-plus)
 
 set(RANK_PRELUDE_LIBBPF_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/libbpf-bootstrap CACHE INTERNAL "RANK_PRELUDE_LIBBPF_ROOT")
 message("-- Set libbpf-bootstrap library path as ${RANK_PRELUDE_LIBBPF_ROOT}")

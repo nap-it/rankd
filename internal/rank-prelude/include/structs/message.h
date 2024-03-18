@@ -20,7 +20,7 @@ public:
     UUIDv4 uuid() const;
     size_t size() const;
     Header header() const;
-    virtual const std::array<uint8_t, RANK_HEADER_LEN> raw_payload() const = 0;
+    virtual const std::vector<uint8_t> raw_payload() const = 0;
 
     // Setters.
     void header(const Header& header);
@@ -28,9 +28,10 @@ public:
 
     // Destructor.
     virtual ~Message();
+protected:
+    Header _header;
 private:
     size_t _length;
-    Header _header;
 };
 
 

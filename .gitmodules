@@ -37,3 +37,6 @@
 [submodule "internal/rank-prelude/vendor/libbpf-bootstrap"]
 	path = internal/rank-prelude/vendor/libbpf-bootstrap
 	url = https://code.nap.av.it.pt/external-tools/libbpf-bootstrap.git
+[submodule "internal/rank-prelude/vendor/pcap-plus-plus"]
+	path = internal/rank-prelude/vendor/pcap-plus-plus
+	url = https://code.nap.av.it.pt/external-tools/pcap-plus-plus.git

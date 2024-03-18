@@ -16,6 +16,6 @@ uint8_t* REP::listener() const {
     return _listener;
 }
 
-const std::array<uint8_t, RANK_HEADER_LEN> REP::raw_payload() const {}
+const std::vector<uint8_t> REP::raw_payload() const {}
 
 REP::~REP() {}

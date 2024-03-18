@@ -8,6 +8,14 @@
 
 #include "structs/message.h"
 
+#include "net-lib.h"
+
+#include "EthLayer.h"
+#include "PayloadLayer.h"
+#include "Packet.h"
+#include "PcapLiveDevice.h"
+#include "PcapLiveDeviceList.h"
+
 class Sender {
 public:
     static Sender* get_instance() {
@@ -21,7 +29,7 @@ public:
     void operator()();
 private:
     Sender();
-    void make_and_send_frame(const Message* message, const std::vector<uint8_t>& target) const;
+    void make_and_send_frame(const Message* message, const std::vector<uint8_t>& target);
     void make_and_send_packet(const Message* message, const std::vector<uint8_t>& target) const;
     void make_and_send_message(const Message* message, const std::vector<uint8_t>& target) const;
     void make_and_send_bytes(const Message* message, const std::vector<uint8_t>& target) const;
@@ -29,6 +37,7 @@ private:
     std::thread _thread;
     std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _queue;
     std::mutex* _queue_mutex;
+    NetworkNeighbors _neighbors_data_source = NetworkNeighbors();
 };
 
 #endif //RANK_PRELUDE_DISPATCHER_SENDER_H

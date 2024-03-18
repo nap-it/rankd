@@ -38,7 +38,7 @@ std::vector<uint8_t> EAR::payload() const {
     return _payload;
 }
 
-const std::array<uint8_t, RANK_HEADER_LEN> EAR::raw_payload() const {
+const std::vector<uint8_t> EAR::raw_payload() const {
     return {}; // TODO Não estará isto misturado?
 }
 

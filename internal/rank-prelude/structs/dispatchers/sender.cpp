@@ -1,4 +1,5 @@
 #include "structs/dispatchers/sender.h"
+#include "structs/messages/ear.h"
 
 Sender *Sender::set_queue(std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* queue, std::mutex *mutex) {
     _queue = queue;
@@ -75,9 +76,37 @@ Sender::Sender() {
 
 }
 
-void Sender::make_and_send_frame(const Message *message, const std::vector<uint8_t> &target) const {
+void Sender::make_and_send_frame(const Message *message, const std::vector<uint8_t> &target) {
     // Get source address of the interface from which the target is reachable? Only Ethernet interfaces?
 
+    // Get current L2 neighbors.
+    _neighbors_data_source.snap();
+    std::vector<NetworkNeighbor> neighbors = _neighbors_data_source.neighbors();
+
+    // Cast our target from vector of unsigned ints to string for comparison.
+    char stringified_target[18];
+    sprintf(stringified_target, "%02x:%02x:%02x:%02x:%02x:%02x", target.at(0), target.at(1), target.at(2), target.at(3), target.at(4), target.at(5));
+
+    // Iterate over the neighbors looking for the stringified_target.
+    int target_interface_index = -1;
+    for (const auto& neighbor : neighbors) {
+        if (strcmp(neighbor.l2_address.c_str(), stringified_target) == 0) {
+            target_interface_index = neighbor.interface_index;
+        }
+    }
+
+    // If there is no interface update, then no neighbor was found, the send function should quit.
+    if (target_interface_index == -1) {
+        // TODO Handle this case.
+        return;
+    }
+
+    // Get interface name from interface index.
+    char interface_name[IFNAMSIZ];
+    if_indextoname(target_interface_index, interface_name);
+
+    // Open the device to send message.
+    pcpp::PcapLiveDevice* device = pcpp::PcapLiveDeviceList::getInstance().getPcapLiveDeviceByName(interface_name);
 }
 
 void Sender::make_and_send_packet(const Message *message, const std::vector<uint8_t> &target) const {

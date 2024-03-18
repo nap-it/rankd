@@ -44,7 +44,7 @@ public:
     std::vector<uint8_t> payload() const;
 
     // Derived member methods.
-    const std::array<uint8_t, RANK_HEADER_LEN> raw_payload() const override;
+    const std::vector<uint8_t> raw_payload() const override;
 
     // Destructor.
     ~MAR();
