@@ -66,6 +66,8 @@ void NetworkNeighbors::snap() {
 
         neighbor.family = nd_message->ndm_family;
 
+        neighbor.interface_index = nd_message->ndm_ifindex;
+
         switch (nd_message->ndm_state) {
             case NUD_INCOMPLETE:
                 neighbor.state = "incomplete";
@@ -139,6 +141,10 @@ void NetworkNeighbors::enable_json_output() {
 
 void NetworkNeighbors::disable_json_output() {
     _json_formatted_output = false;
+}
+
+std::vector <NetworkNeighbor> NetworkNeighbors::neighbors() {
+    return _neighbors;
 }
 
 rapidjson::Document NetworkNeighbors::json() const {

@@ -20,6 +20,7 @@
 
 struct NetworkNeighbor {
     uint8_t family;
+    uint8_t interface_index;
     std::string state;
     std::vector<std::string> flags{};
     std::string l2_address;
@@ -32,6 +33,7 @@ public:
     void snap();
     void enable_json_output();
     void disable_json_output();
+    std::vector<NetworkNeighbor> neighbors();
     rapidjson::Document json() const;
     friend std::ostream& operator<<(std::ostream& os, const NetworkNeighbors& neighbors);
 private:
