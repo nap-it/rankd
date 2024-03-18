@@ -76,7 +76,7 @@ Sender::Sender() {
 
 }
 
-void Sender::make_and_send_frame(const Message *message, const std::vector<uint8_t> &target) {
+void Sender::make_and_send_frame(Message *message, const std::vector<uint8_t> &target) {
     // Get source address of the interface from which the target is reachable? Only Ethernet interfaces?
 
     // Get current L2 neighbors.
@@ -105,8 +105,48 @@ void Sender::make_and_send_frame(const Message *message, const std::vector<uint8
     char interface_name[IFNAMSIZ];
     if_indextoname(target_interface_index, interface_name);
 
+    // Prepare message serialization.
+    std::vector<uint8_t> serialized_message;
+    switch (message->type()) {
+        case MessageType::EAR:
+            serialized_message = dynamic_cast<EAR*>(message)->raw_payload();
+            break;
+        case MessageType::MAR:
+            serialized_message = dynamic_cast<MAR*>(message)->raw_payload();
+            break;
+        case MessageType::BID:
+            serialized_message = dynamic_cast<BID*>(message)->raw_payload();
+            break;
+        case MessageType::ACC:
+            serialized_message = dynamic_cast<EAR*>(message)->raw_payload();
+            break;
+        case MessageType::REF:
+            serialized_message = dynamic_cast<EAR*>(message)->raw_payload();
+            break;
+        case MessageType::REP:
+            serialized_message = dynamic_cast<REP*>(message)->raw_payload();
+            break;
+        case MessageType::NOTYPE:
+            // TODO Handle this case.
+            break;
+    }
+
     // Open the device to send message.
     pcpp::PcapLiveDevice* device = pcpp::PcapLiveDeviceList::getInstance().getPcapLiveDeviceByName(interface_name);
+
+    // Create Rank L2 packet.
+    pcpp::EthLayer ethernet_header(device->getMacAddress(), pcpp::MacAddress(stringified_target), RANK_ETHERTYPE);
+    pcpp::PayloadLayer payload(serialized_message.data(), serialized_message.size(), false);
+    pcpp::Packet packet;
+    packet.addLayer(&ethernet_header);
+    packet.addLayer(&payload);
+    packet.computeCalculateFields();
+
+    // Send Rank L2 packet.
+    device->sendPacket(&packet);
+
+    // Close the device.
+    device->close();
 }
 
 void Sender::make_and_send_packet(const Message *message, const std::vector<uint8_t> &target) const {

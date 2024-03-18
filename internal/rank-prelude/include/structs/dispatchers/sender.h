@@ -29,7 +29,7 @@ public:
     void operator()();
 private:
     Sender();
-    void make_and_send_frame(const Message* message, const std::vector<uint8_t>& target);
+    void make_and_send_frame(Message* message, const std::vector<uint8_t>& target);
     void make_and_send_packet(const Message* message, const std::vector<uint8_t>& target) const;
     void make_and_send_message(const Message* message, const std::vector<uint8_t>& target) const;
     void make_and_send_bytes(const Message* message, const std::vector<uint8_t>& target) const;
