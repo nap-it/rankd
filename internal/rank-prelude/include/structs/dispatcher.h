@@ -19,11 +19,16 @@ public:
     bool receiving_queue_is_empty() const;
     bool receiving_queue_has_message() const;
     std::tuple<Message*, std::vector<uint8_t>, IdentifierType> dequeue_item();
+#ifndef SIMUZILLA
+    Dispatcher* borrow_simulation_receiver_function(std::function<std::vector<uint8_t>(void)>* function);
+    Dispatcher* borrow_simulation_sender_function(std::function<void(uint8_t, const std::vector<uint8_t>&)>* function);
+#endif
     ~Dispatcher();
 private:
     Dispatcher();
     Sender* _sender = Sender::get_instance();
     ReceiverSimulation* _receiver_simulation = ReceiverSimulation::get_instance();
+    RawReceiverSimulation* _raw_receiver_simulation = RawReceiverSimulation::get_instance();
     ReceiverL2* _receiver_l2 = ReceiverL2::get_instance();
     RawReceiverL2* _raw_receiver_l2 = RawReceiverL2::get_instance();
     ReceiverL3* _receiver_l3 = ReceiverL3::get_instance();

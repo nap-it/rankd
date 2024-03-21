@@ -230,6 +230,21 @@ void Process::operator()() {
     close(_socket);
 }
 
+#ifndef SIMUZILLA
+Process *Process::borrow_simulation_recv_function(std::function<std::vector<uint8_t>()> *function) {
+    _dispatcher->borrow_simulation_receiver_function(function);
+
+    return this;
+}
+
+Process *
+Process::borrow_simulation_send_function(std::function<void(uint8_t, const std::vector<uint8_t> &)> *function) {
+    _dispatcher->borrow_simulation_sender_function(function);
+
+    return this;
+}
+#endif
+
 Process::~Process() {
     // Stop running the base thread.
     stop();

@@ -16,8 +16,8 @@ public:
         return &instance;
     }
     ReceiverSimulation(const ReceiverSimulation&) = delete;
-    //void enqueue_bytes(const std::vector<uint8_t>& bytes);
-    void set_queue(std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* queue, std::mutex* mutex);
+    void set_queue(std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>* queue, std::mutex* mutex);
+    void set_message_deposit_queue(std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* queue, std::mutex* mutex);
     ReceiverSimulation* execute();
     ReceiverSimulation* stop();
     bool is_running();
@@ -26,9 +26,36 @@ private:
     ReceiverSimulation() = default;
     bool _running = false;
     std::thread _thread;
-    std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>> _queue{};
+    std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>* _queue = nullptr;
+    std::mutex* _queue_mutex;
     std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _message_deposit = nullptr;
     std::mutex* _message_deposit_mutex = nullptr;
+};
+
+class RawReceiverSimulation {
+public:
+    static RawReceiverSimulation* get_instance() {
+        static RawReceiverSimulation instance;
+        return &instance;
+    }
+    std::pair<std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>*, std::mutex*> queue_access();
+    RawReceiverSimulation* receive_control_borrowing_from(ReceiverSimulation* controller);
+    RawReceiverSimulation* execute();
+    RawReceiverSimulation* stop();
+    bool is_running();
+    void operator()();
+#ifndef SIMUZILLA
+    RawReceiverSimulation* borrow_receiver_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)>* function);
+#endif
+    ~RawReceiverSimulation();
+private:
+    RawReceiverSimulation();
+    void* _simulated_recv = nullptr;
+    bool _running = false;
+    std::thread _thread;
+    std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>* _queue = new std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>();
+    std::mutex* _queue_mutex;
+    ReceiverSimulation* _receiver_controller = nullptr;
 };
 
 #endif //RANK_PRELUDE_DISPATCHER_RECEIVER_SIMULATION_H

@@ -30,7 +30,6 @@ public:
         return &instance;
     }
     ReceiverL2(const ReceiverL2&) = delete;
-    //void enqueue_bytes(const std::vector<uint8_t>& bytes);
     void set_queue(std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>* queue, std::mutex* mutex);
     void set_message_deposit_queue(std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* queue, std::mutex* mutex);
     ReceiverL2* execute();

@@ -1,6 +1,7 @@
 #ifndef RANK_PRELUDE_DISPATCHER_SENDER_H
 #define RANK_PRELUDE_DISPATCHER_SENDER_H
 
+#include <functional>
 #include <mutex>
 #include <queue>
 #include <thread>
@@ -27,12 +28,17 @@ public:
     Sender* stop();
     bool is_running();
     void operator()();
+
+#ifndef SIMUZILLA
+    Sender* borrow_sender_function(std::function<void(uint8_t, const std::vector<uint8_t>&)>* function);
+#endif
 private:
     Sender();
     void make_and_send_frame(Message* message, const std::vector<uint8_t>& target);
-    void make_and_send_packet(const Message* message, const std::vector<uint8_t>& target) const;
-    void make_and_send_message(const Message* message, const std::vector<uint8_t>& target) const;
-    void make_and_send_bytes(const Message* message, const std::vector<uint8_t>& target) const;
+    void make_and_send_packet(Message* message, const std::vector<uint8_t>& target) const;
+    void make_and_send_message(Message* message, const std::vector<uint8_t>& target) const;
+    void make_and_send_bytes(Message* message, const std::vector<uint8_t>& target) const;
+    void* _simulated_send = nullptr;
     bool _running = false;
     std::thread _thread;
     std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _queue;

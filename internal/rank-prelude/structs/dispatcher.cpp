@@ -32,7 +32,9 @@ std::tuple<Message*, std::vector<uint8_t>, IdentifierType> Dispatcher::dequeue_i
 
 Dispatcher::Dispatcher() {
     // Set queues and respective mutexes for synchronization on accesses.
-    _receiver_simulation->set_queue(_received_messages, &_received_messages_locker);
+    _receiver_simulation->set_message_deposit_queue(_received_messages, &_received_messages_locker);
+    auto sim_queue = _raw_receiver_simulation->queue_access();
+    _receiver_simulation->set_queue(sim_queue.first, sim_queue.second);
     _receiver_l2->set_message_deposit_queue(_received_messages, &_received_messages_locker);
     auto l2_queue = _raw_receiver_l2->queue_access();
     _receiver_l2->set_queue(l2_queue.first, l2_queue.second);
@@ -42,13 +44,28 @@ Dispatcher::Dispatcher() {
 
     // Borrow the control of the L2 receiver to the raw receiver.
     _raw_receiver_l2->receive_control_borrowing_from(_receiver_l2);
+    _raw_receiver_simulation->receive_control_borrowing_from(_receiver_simulation);
 
     // Run the receivers.
-    _receiver_simulation->execute();
+    _raw_receiver_simulation->execute();
     _raw_receiver_l2->execute();
     _receiver_l3->execute();
     _receiver_dds->execute();
 }
+
+#ifndef SIMUZILLA
+Dispatcher *Dispatcher::borrow_simulation_receiver_function(std::function<std::vector<uint8_t>()> *function) {
+    // _receiver_simulation->borrow_receiver_function(function);
+
+    return this;
+}
+
+Dispatcher *Dispatcher::borrow_simulation_sender_function(std::function<void(uint8_t, const std::vector<uint8_t> &)> *function) {
+    _sender->borrow_sender_function(function);
+
+    return this;
+}
+#endif
 
 Dispatcher::~Dispatcher() {
     _receiver_simulation->stop();

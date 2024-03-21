@@ -58,6 +58,12 @@ public:
     bool is_running() const;
     void operator()();
 
+    // Simulation set parameters.
+#ifndef SIMUZILLA
+    Process* borrow_simulation_recv_function(std::function<std::vector<uint8_t>(void)>* function);
+    Process* borrow_simulation_send_function(std::function<void(uint8_t, const std::vector<uint8_t>&)>* function);
+#endif
+
     // Destructor.
     ~Process();
 

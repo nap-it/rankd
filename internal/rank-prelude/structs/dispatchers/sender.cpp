@@ -72,6 +72,14 @@ void Sender::operator()() {
     }
 }
 
+#ifndef SIMUZILLA
+Sender *Sender::borrow_sender_function(std::function<void(uint8_t, const std::vector<uint8_t> &)> *function) {
+    _simulated_send = function;
+
+    return this;
+}
+#endif
+
 Sender::Sender() {
 
 }
@@ -118,10 +126,10 @@ void Sender::make_and_send_frame(Message *message, const std::vector<uint8_t> &t
             serialized_message = dynamic_cast<BID*>(message)->raw_payload();
             break;
         case MessageType::ACC:
-            serialized_message = dynamic_cast<EAR*>(message)->raw_payload();
+            serialized_message = dynamic_cast<ACC*>(message)->raw_payload();
             break;
         case MessageType::REF:
-            serialized_message = dynamic_cast<EAR*>(message)->raw_payload();
+            serialized_message = dynamic_cast<REF*>(message)->raw_payload();
             break;
         case MessageType::REP:
             serialized_message = dynamic_cast<REP*>(message)->raw_payload();
@@ -149,14 +157,46 @@ void Sender::make_and_send_frame(Message *message, const std::vector<uint8_t> &t
     device->close();
 }
 
-void Sender::make_and_send_packet(const Message *message, const std::vector<uint8_t> &target) const {
+void Sender::make_and_send_packet(Message *message, const std::vector<uint8_t> &target) const {
 
 }
 
-void Sender::make_and_send_message(const Message *message, const std::vector<uint8_t> &target) const {
+void Sender::make_and_send_message(Message *message, const std::vector<uint8_t> &target) const {
 
 }
 
-void Sender::make_and_send_bytes(const Message *message, const std::vector<uint8_t> &target) const {
+void Sender::make_and_send_bytes(Message *message, const std::vector<uint8_t> &target) const {
+    // Get target identifier as a proper simulation identifier.
+    uint8_t target_identifier = target.at(0);
 
+    // Prepare message serialization.
+    std::vector<uint8_t> serialized_message;
+    switch (message->type()) {
+        case MessageType::EAR:
+            serialized_message = dynamic_cast<EAR*>(message)->raw_payload();
+            break;
+        case MessageType::MAR:
+            serialized_message = dynamic_cast<MAR*>(message)->raw_payload();
+            break;
+        case MessageType::BID:
+            serialized_message = dynamic_cast<BID*>(message)->raw_payload();
+            break;
+        case MessageType::ACC:
+            serialized_message = dynamic_cast<ACC*>(message)->raw_payload();
+            break;
+        case MessageType::REF:
+            serialized_message = dynamic_cast<REF*>(message)->raw_payload();
+            break;
+        case MessageType::REP:
+            serialized_message = dynamic_cast<REP*>(message)->raw_payload();
+            break;
+        case MessageType::NOTYPE:
+            // TODO Handle this case.
+            break;
+    }
+
+    // Send this message through simulated send function.
+#ifndef SIMUZILLA
+    (*(static_cast<std::function<void(uint8_t, const std::vector<uint8_t> &)>*>(_simulated_send)))(target_identifier, serialized_message);
+#endif
 }
