@@ -5,7 +5,7 @@ RequestingCapabilities EAR::requirements() const {
 }
 
 uint8_t EAR::expand_listener_length(uint8_t length) const {
-
+    return 0; // TODO
 }
 
 uint8_t EAR::priority() const {

@@ -2,6 +2,8 @@
 
 Handler::Handler(Resources* resources, TranslationTable* translation_table, std::mutex* translation_table_mutex,
                  TimeoutHandler* timeout_handler, Store* store, std::mutex* store_mutex, const UUIDv4& uuid) {
+    _logger->trace("[Handler] [{}] Creating handler for this UUID...", uuid);
+
     // Update all attributes from caller.
     _uuid = uuid;
     _bids = {};
@@ -19,6 +21,9 @@ Handler::Handler(Resources* resources, TranslationTable* translation_table, std:
 
     // Change handler's state to Ready.
     _state = HandlerState::READY;
+    _logger->trace("[Handler] [{}] The handler was successfully created and given the state of {}.", uuid,
+                   handler_state_to_string(_state));
+    _logger->info("A handler was created for the {} session.", uuid);
 }
 
 Handler::Handler(Resources* resources, TranslationTable* translation_table, std::mutex* translation_table_mutex,
@@ -230,6 +235,11 @@ bool Handler::is_running() const {
 }
 
 void Handler::operator()() {
+    _logger->trace("[Handler] [{}] This handler session is starting/resuming functions.", _uuid);
+
+    // Variables for debugging purposes.
+    HandlerState old_state{};
+
     // Initialization for the threading mechanism.
 
     while (_running) {
@@ -237,12 +247,17 @@ void Handler::operator()() {
             // Parse message to their types and handle the parsing algorithm.
             switch (_message->type()) {
                 case MessageType::EAR: {
+                    _logger->trace("[Handler] [{}] The received message is an EAR message.", _uuid);
                     auto ear_message = dynamic_cast<EAR*>(_message);
 
                     // As this node is receiving a new EAR message, then change state to ASSESSING.
+                    old_state = _state;
                     _state = HandlerState::ASSESSING;
+                    _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
+                                   handler_state_to_string(_state));
 
                     // (B.1) Check if the current node is the message's listener.
+                    _logger->trace("[Handler] [{}] (B.1) Am I the listener?", _uuid);
                     auto listener_field = ear_message->listener();
                     auto listener_field_length = ear_message->listener_length();
                     bool i_am_listener = false;
@@ -286,42 +301,56 @@ void Handler::operator()() {
 
                     if (i_am_listener) {
                         // (B.1.1.1) Can R be performed with priority p?
+                        _logger->trace("[Handler] [{}] (B.1.1.1) Can R be performed with priority p?", _uuid);
                         auto* position = _resources->available_for_performance(*_reservation, ear_message->priority());
                         if (position != nullptr) {
                             // (B.1.1.1.1.1) Reserve R with UUID in Store.
+                            _logger->trace("[Handler] [{}] (B.1.1.1.1.1) Reserve R with UUID in Store.", _uuid);
                             _resources->mark_reservation(_reservation);
 
                             // (B.1.1.1.1.2) Create an ACC message and send it.
+                            _logger->trace("[Handler] [{}] (B.1.1.1.1.2) Create an ACC message and send it back.", _uuid);
                             ACC* acc_message = new ACC(_uuid);
-                            // TODO Send message through process-created socket?
                             _dispatcher->send_message(acc_message, _source_identifier.first, _source_identifier.second);
 
                             // (B.1.1.1.1.3) Change state to RESERVED and terminate thread.
+                            _logger->trace("[Handler] [{}] (B.1.1.1.1.3) Change state to RESERVED and terminate thread.", _uuid);
+                            old_state = _state;
                             _state = HandlerState::RESERVED;
+                            _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
+                                           handler_state_to_string(_state));
                             stop();
                             break;
                         } else {
                             // (B.1.1.2) Create a REF message and send it.
+                            _logger->trace("[Handler] [{}] (B.1.1.2) Create a REF message and send it back.", _uuid);
                             REF* ref_message = new REF(_uuid);
-                            // TODO Send message through process-created socket?
                             _dispatcher->send_message(ref_message, _source_identifier.first, _source_identifier.second);
 
                             // (B.1.1.3) Change state to CLOSED and delete UUID from the Store.
+                            _logger->trace("[Handler] [{}] (B.1.1.3) Change state to CLOSED and delete UUID from the Store.", _uuid);
+                            old_state = _state;
                             _state = HandlerState::CLOSED;
+                            _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
+                                           handler_state_to_string(_state));
                             stop();
                             return;
                         }
                     } else {
                         // (B.1.2.1) Is there a bid in Store for the UUID?
+                        _logger->trace("[Handler] [{}] (B.1.2.1) Is there a bid in Store for the UUID?", _uuid);
                         if (!is_bid_in_store(ear_message->uuid())) {
                             // (B.1.2.1.1.1) Can R be performed with priority p?
+                            _logger->trace("[Handler] [{}] (B.1.2.1.1.1) Can R be performed with priority p?", _uuid);
                             auto* position =
                                     _resources->available_for_performance(*_reservation, ear_message->priority());
                             if (position != nullptr) {
                                 // (B.1.2.1.1.2) Pre-reserve R with UUID in Store.
+                                _logger->trace("[Handler] [{}] (B.1.2.1.1.2) Pre-reserve R with UUID in Store.", _uuid);
                                 _resources->mark_pre_reservation(_reservation);
 
                                 // (B.1.2.1.2.1) Get connections towards listener(s).
+                                _logger->trace("[Handler] [{}] (B.1.2.1.2.1) Get connections towards listener(s).", _uuid);
                                 std::vector<uint8_t> target {};
                                 switch (listener_field_length) {
                                     case RANK_EAR_MESSAGE_LEN_LT_IP4: {
@@ -346,54 +375,68 @@ void Handler::operator()() {
                                         get_connections_to(target);
 
                                 // (B.1.2.2) Depending on the cardinal of connections...
+                                _logger->trace("[Handler] [{}] (B.1.2.2) Depending on the cardinal of connections...", _uuid);
                                 switch (connections_cardinal(connections_to_target)) {
                                     case 0: {
                                         // If no connection is found...
                                         // (B.1.2.2.3.1) Create REF message and send it.
+                                        _logger->trace("[Handler] [{}] (B.1.2.2.3.1) If no connection is found... create REF message and send it back.", _uuid);
                                         REF* ref_message = new REF(_uuid);
-                                        // TODO Send message through process-created socket?
                                         _dispatcher->send_message(ref_message, _source_identifier.first, _source_identifier.second);
 
                                         // (B.1.2.2.3.2) Change state to CLOSED and delete UUID from the Store.
+                                        _logger->trace("[Handler] [{}] (B.1.2.2.3.2) Change state to CLOSED and delete UUID from the Store.", _uuid);
+                                        old_state = _state;
                                         _state = HandlerState::CLOSED;
+                                        _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
+                                                                                     handler_state_to_string(_state));
                                         stop();
                                         return;
                                     } break;
                                     case 1: {
                                         // If only one connection is found...
                                         // (B.1.2.2.2.1) Create EAR message and send it.
+                                        _logger->trace("[Handler] [{}] (B.1.2.2.2.1) If only one connection is found... create EAR message and send it.", _uuid);
                                         EAR* new_ear_message =
                                                 new EAR(_uuid, ear_message->priority(), ear_message->listener_length(),
                                                     listener_message_format(connections_to_target.front().first), ear_message->payload_length(),
                                                     ear_message->payload());
-                                        // TODO Send message through process-created socket?
                                         _dispatcher->send_message(new_ear_message, connections_to_target.front().first, connections_to_target.front().second);
 
                                         // Change state to PRE_RESERVED.
+                                        old_state = _state;
                                         _state = HandlerState::PRE_RESERVED;
+                                        _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
+                                                       handler_state_to_string(_state));
 
                                         // (B.1.2.2.2.2) Add message source address as reservation past node.
+                                        _logger->trace("[Handler] [{}] (B.1.2.2.2.2) Add message source address as reservation past node.", _uuid);
                                         _reservation->set_past_node(_source_identifier);
 
                                         // (B.1.2.2.2.3) Begin timer for EAR timeout.
+                                        _logger->trace("[Handler] [{}] (B.1.2.2.2.3) Begin timer for EAR timeout.", _uuid);
                                         _timeout_handler->initiate_timeout(this, RANK_EAR_TO_EAR_TIMEOUT);
                                     } break;
                                     default: {
                                         // If more than one connection is found...
                                         // (B.1.2.2.1.1) For each connection create a MAR message and send it.
+                                        _logger->trace("[Handler] [{}] (B.1.2.2.1.1) If more than one connection is found... for each connection create a MAR message and send it.", _uuid);
                                         for (const auto& intermediate : connections_to_target) {
                                             MAR* mar_message =
                                                     new MAR(_uuid, ear_message->priority(), ear_message->listener_length(),
                                                         listener_message_format(intermediate.first),
                                                         ear_message->payload_length(), ear_message->payload());
-                                            // TODO Send message through process-created socket?
                                             _dispatcher->send_message(mar_message, intermediate.first, intermediate.second);
                                         }
 
                                         // Change state to PRE_RESERVED.
+                                        old_state = _state;
                                         _state = HandlerState::PRE_RESERVED;
+                                        _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
+                                                       handler_state_to_string(_state));
 
                                         // (B.1.2.2.1.2) Begin timer for MAR timeout.
+                                        _logger->trace("[Handler] [{}] (B.1.2.2.1.2) Begin timer for MAR timeout.", _uuid);
                                         _timeout_handler->initiate_timeout(this, RANK_MAR_TO_MAR_TIMEOUT);
                                     } break;
                                 }
@@ -401,12 +444,16 @@ void Handler::operator()() {
                             }
                         } else {
                             // (B.1.1.2) Create a REF message and send it.
+                            _logger->trace("[Handler] [{}] (B.1.1.2) Create a REF message and send it back.", _uuid);
                             REF* ref_message = new REF(_uuid);
-                            // TODO Send message through process-created socket?
                             _dispatcher->send_message(ref_message, _source_identifier.first, _source_identifier.second);
 
                             // (B.1.1.3) Change state to CLOSED and delete UUID from the Store.
+                            _logger->trace("[Handler] [{}] (B.1.1.3) Change state to CLOSED and delete UUID from the Store.", _uuid);
+                            old_state = _state;
                             _state = HandlerState::CLOSED;
+                            _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
+                                           handler_state_to_string(_state));
                             stop();
                             return;
                         }
@@ -416,7 +463,10 @@ void Handler::operator()() {
                     auto mar_message = dynamic_cast<MAR*>(_message);
 
                     // Change state to AUCTION_BIDDING.
+                    old_state = _state;
                     _state = HandlerState::AUCTION_BIDDING;
+                    _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
+                                   handler_state_to_string(_state));
 
                     auto listener_field = mar_message->listener();
                     auto listener_field_length = mar_message->listener_length();
@@ -456,34 +506,45 @@ void Handler::operator()() {
                     }
 
                     // (C.1) Can R be performed with priority p?
+                    _logger->trace("[Handler] [{}] (C.1) Can R be performed with priority p?", _uuid);
                     auto* position = _resources->available_for_performance(*_reservation, mar_message->priority());
                     if (position != nullptr) {
                         // (C.1.2.1) Estimate bid.
+                        _logger->trace("[Handler] [{}] (C.1.2.1) Estimate bid.", _uuid);
                         float bid_value = _resources->estimate_bid(*_reservation);
 
                         // (C.1.2.2) Create bid message and send it.
+                        _logger->trace("[Handler] [{}] (C.1.2.2) Create bid message and send it.", _uuid);
                         BID* bid_message = new BID(_uuid, bid_value);
-                        // TODO Send message through process-created socket?
                         _dispatcher->send_message(bid_message, _source_identifier.first, _source_identifier.second);
 
                         // Change state to PRE_RESERVED.
+                        old_state = _state;
                         _state = HandlerState::PRE_RESERVED;
+                        _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
+                                       handler_state_to_string(_state));
 
                         // (C.1.2.3) Pre-reserve R with UUID in the store.
+                        _logger->trace("[Handler] [{}] (C.1.2.3) Pre-reserve R with UUID in the store.", _uuid);
                         _resources->mark_pre_reservation(_reservation);
 
                         // (C.1.2.4) Begin timer for BID timeout.
+                        _logger->trace("[Handler] [{}] (C.1.2.4) Begin timer for BID timeout.", _uuid);
                         _timeout_handler->initiate_timeout(this, RANK_BID_TO_BID_TIMEOUT);
                     } else {
                         // (C.1.1.1) Create zeroed-bid message and send it.
+                        _logger->trace("[Handler] [{}] (C.1.1.1) Create zeroed-bid message and send it.", _uuid);
                         BID* bid_message = new BID(_uuid, 0);
-                        // TODO Send message through process-created socket?
                         _dispatcher->send_message(bid_message, _source_identifier.first, _source_identifier.second);
 
                         // Change handler's state to CLOSED.
+                        old_state = _state;
                         _state = HandlerState::CLOSED;
+                        _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
+                                       handler_state_to_string(_state));
 
                         // (C.1.1.2) Delete UUID from the Store.
+                        _logger->trace("[Handler] [{}] (C.1.1.2) Delete UUID from the Store.", _uuid);
                         stop();
                         break;
                     }
@@ -492,43 +553,56 @@ void Handler::operator()() {
                     auto bid_message = dynamic_cast<BID*>(_message);
 
                     // (D.1) Wait for all bids.
+                    _logger->trace("[Handler] [{}] (D.1) Wait for all bids.", _uuid);
                     // TODO Add bids until a timeout is reached (call new_bid methods according to the type).
 
                     // (D.3) Check the cardinal of bids.
+                    _logger->trace("[Handler] [{}] (D.3) Check the cardinal of bids.", _uuid);
                     if (cardinal_bids() == 0) {
                         // (D.3.1.1) Create REF message and send it.
+                        _logger->trace("[Handler] [{}] (D.3.1.1) Create REF message and send it.", _uuid);
                         REF* ref_message = new REF(_uuid);
-                        // TODO Send the message.
                         _dispatcher->send_message(ref_message, _source_identifier.first, _source_identifier.second);
 
                         // Change the state to CLOSED.
+                        old_state = _state;
                         _state = HandlerState::CLOSED;
+                        _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
+                                       handler_state_to_string(_state));
 
                         // (D.3.1.2) Delete UUID from the Store.
+                        _logger->trace("[Handler] [{}] (D.3.1.2) Delete UUID from the Store.", _uuid);
                         stop();
                         break;
                     } else {
                         // (D.3.2.1) Is the minimum bid unique?
+                        _logger->trace("[Handler] [{}] (D.3.2.1) Is the minimum bid unique?", _uuid);
                         auto minimum_bids = min_bids();
                         if (is_min_bid_unique(minimum_bids)) {
                             // (D.3.2.1.1.1) As it is unique, send an EAR message to it.
+                            _logger->trace("[Handler] [{}] (D.3.2.1.1.1) As it is unique, send an EAR message to it.", _uuid);
                             EAR* ear_message = new EAR(_uuid, _reservation->priority(), _reservation->listener_length(),
                                                   _reservation->listener(),
                                                   make_payload_length(_reservation->requirements()),
                                                   make_payload(_reservation->requirements()));
-                            // TODO Send this message.
                             _dispatcher->send_message(ear_message, minimum_bids.begin()->first, minimum_bids.begin()->second);
 
                             // Change the state to PRE_RESERVED.
+                            old_state = _state;
                             _state = HandlerState::PRE_RESERVED;
+                            _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
+                                           handler_state_to_string(_state));
 
                             // (D.3.2.1.1.2) Add message source address as reservation past node.
+                            _logger->trace("[Handler] [{}] (D.3.2.1.1.2) Add message source address as reservation past node.", _uuid);
                             _reservation->set_past_node(_source_identifier);
 
                             // (D.3.2.1.1.3) Begin timer for EAR timeout.
+                            _logger->trace("[Handler] [{}] (D.3.2.1.1.3) Begin timer for EAR timeout.", _uuid);
                             _timeout_handler->initiate_timeout(this, RANK_EAR_TO_EAR_TIMEOUT);
 
                             // (D.3.2.1.1.4) Delete UUID from the Store.
+                            _logger->trace("[Handler] [{}] (D.3.2.1.1.4) Delete UUID from the Store.", _uuid);
                             stop();
                             break;
                         } else {
@@ -536,26 +610,33 @@ void Handler::operator()() {
                             for (const auto& bid_target : _bids) {
                                 // (D.3.2.1.2.1) Create a new UUID for each min(B) node and (D.3.2.1.2.2) Save
                                 // translations UUID to UUID* in TranslationTable.
+                                _logger->trace("[Handler] [{}] (D.3.2.1.2.1) Create a new UUID for each min(B) node and (D.3.2.1.2.2) Save translations UUID to UUID* in TranslationTable.", _uuid);
                                 auto new_uuid = create_translation(_uuid);
 
                                 // (D.3.2.1.2.3) Create EAR message and send it to each min(B) node, with UUID*.
+                                _logger->trace("[Handler] [{}] (D.3.2.1.2.3) Create EAR message and send it to each min(B) node, with UUID*.", _uuid);
                                 EAR* ear_message = new EAR(new_uuid, _reservation->priority(),
                                                       _reservation->listener_length(), _reservation->listener(),
                                                       make_payload_length(_reservation->requirements()),
                                                       make_payload(_reservation->requirements()));
-                                // TODO Send this message.
                                 _dispatcher->send_message(ear_message, bid_target.second.first, bid_target.second.second);
 
                                 // Change the state to PRE_RESERVED.
+                                old_state = _state;
                                 _state = HandlerState::PRE_RESERVED;
+                                _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
+                                               handler_state_to_string(_state));
 
                                 // (D.3.2.1.2.4) Add message source address as reservation past node.
+                                _logger->trace("[Handler] [{}] (D.3.2.1.2.4) Add message source address as reservation past node.", _uuid);
                                 _reservation->set_past_node(_source_identifier);
 
                                 // (D.3.2.1.2.5) Begin timer for EAR timeout.
+                                _logger->trace("[Handler] [{}] (D.3.2.1.2.5) Begin timer for EAR timeout.", _uuid);
                                 _timeout_handler->initiate_timeout(this, RANK_EAR_TO_EAR_TIMEOUT);
 
                                 // (D.3.2.1.2.6) Delete UUID from the Store.
+                                _logger->trace("[Handler] [{}] (D.3.2.1.2.6) Delete UUID from the Store.", _uuid);
                                 stop();
                                 break;
                             }
@@ -566,39 +647,51 @@ void Handler::operator()() {
                     auto acc_message = dynamic_cast<ACC*>(_message);
 
                     // (E.1) Set pre-reservation as reserved on UUID in Store.
+                    _logger->trace("[Handler] [{}] (E.1) Set pre-reservation as reserved on UUID in Store.", _uuid);
                     _resources->mark_reservation(_reservation);
 
                     // (E.2) Is UUID in the TranslationTable?
+                    _logger->trace("[Handler] [{}] (E.2) Is UUID in the TranslationTable?", _uuid);
                     if (!is_translation_table_empty_for(_uuid)) {
                         UUIDv4 original_uuid = locate_original_of(_uuid);
 
                         // (E.2.2.1) Create ACC message to the original UUID.
+                        _logger->trace("[Handler] [{}] (E.2.2.1) Create ACC message to the original UUID.", _uuid);
                         ACC* new_acc_message = new ACC(original_uuid);
-                        // TODO Send this message.
                         _dispatcher->send_message(new_acc_message, _source_identifier.first, _source_identifier.second);
 
                         // Change state to RESERVED.
+                        old_state = _state;
                         _state = HandlerState::RESERVED;
+                        _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
+                                       handler_state_to_string(_state));
 
                         // (E.2.2.2) Add accepting node as next node of the reservation.
+                        _logger->trace("[Handler] [{}] (E.2.2.2) Add accepting node as next node of the reservation.", _uuid);
                         _reservation->add_next_node(_accepting_nodes.back());
 
                         // (E.2.2.3) Terminate the thread.
+                        _logger->trace("[Handler] [{}] (E.2.2.3) Terminate the thread.", _uuid);
                         stop();
                         break;
                     } else {
                         // (E.2.1.1) Create ACC message to the UUID.
+                        _logger->trace("[Handler] [{}] (E.2.1.1) Create ACC message to the UUID.", _uuid);
                         ACC* new_acc_message = new ACC(_uuid);
-                        // TODO Send this message.
                         _dispatcher->send_message(new_acc_message, _source_identifier.first, _source_identifier.second);
 
                         // Change state to RESERVED.
+                        old_state = _state;
                         _state = HandlerState::RESERVED;
+                        _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
+                                       handler_state_to_string(_state));
 
                         // (E.2.1.2) Add accepting node as next node of the reservation.
+                        _logger->trace("[Handler] [{}] (E.2.1.2) Add accepting node as next node of the reservation.", _uuid);
                         _reservation->add_next_node(_accepting_nodes.back());
 
                         // (E.2.1.3) Terminate the thread.
+                        _logger->trace("[Handler] [{}] (E.2.1.3) Terminate the thread.", _uuid);
                         stop();
                         break;
                     }
@@ -607,18 +700,22 @@ void Handler::operator()() {
                     auto ref_message = dynamic_cast<REF*>(_message);
 
                     // (F.1) Delete pre-reservations with UUID in the Store.
+                    _logger->trace("[Handler] [{}] (F.1) Delete pre-reservations with UUID in the Store.", _uuid);
                     // TODO
 
                     // (F.2) Is UUID in the TranslationTable?
+                    _logger->trace("[Handler] [{}] (F.2) Is UUID in the TranslationTable?", _uuid);
                     if (!is_translation_table_empty_for(_uuid)) {
                         // (F.2.1.1) Delete UUID* in Store.
+                        _logger->trace("[Handler] [{}] (F.2.1.1) Delete UUID* in Store.", _uuid);
                         // TODO
 
                         // (F.2.1.2) Is TranslationTable empty?
+                        _logger->trace("[Handler] [{}] (F.2.1.2) Is TranslationTable empty?", _uuid);
                         if (is_translation_table_empty()) {
                             // (F.3) Create REF message and send it.
+                            _logger->trace("[Handler] [{}] (F.3) Create REF message and send it.", _uuid);
                             REF* new_ref_message = new REF(_uuid);
-                            // TODO Send message.
                             _dispatcher->send_message(new_ref_message, _source_identifier.first, _source_identifier.second);
                         } else {
                             stop();
@@ -626,15 +723,19 @@ void Handler::operator()() {
                         }
                     } else {
                         // (F.3) Create REF message and send it.
+                        _logger->trace("[Handler] [{}] (F.3) Create REF message and send it.", _uuid);
                         REF* new_ref_message = new REF(_uuid);
-                        // TODO Send message.
                         _dispatcher->send_message(new_ref_message, _source_identifier.first, _source_identifier.second);
                     }
 
                     // Change state to CLOSED.
+                    old_state = _state;
                     _state = HandlerState::CLOSED;
+                    _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
+                                   handler_state_to_string(_state));
 
                     // (F.4) Delete UUID from the Store.
+                    _logger->trace("[Handler] [{}] (F.4) Delete UUID from the Store.", _uuid);
                     stop();
                     break;
                 } break;
@@ -642,9 +743,13 @@ void Handler::operator()() {
                     auto rep_message = dynamic_cast<REP*>(_message);
 
                     // Change state to REPLENISHING.
+                    old_state = _state;
                     _state = HandlerState::REPLENISHING;
+                    _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
+                                   handler_state_to_string(_state));
 
                     // (G.1) Check if the current node is the message's listener.
+                    _logger->trace("[Handler] [{}] (G.1) Check if the current node is the message's listener.", _uuid);
                     auto listener_field = rep_message->listener();
                     auto listener_field_length = rep_message->listener_length();
                     bool i_am_listener = false;
@@ -675,57 +780,71 @@ void Handler::operator()() {
                     }
                     if (i_am_listener) {
                         // (G.1.1.1) Create REF message and send it.
+                        _logger->trace("[Handler] [{}] (G.1.1.1) Create REF message and send it.", _uuid);
                         REF* ref_message = new REF(_uuid);
-                        // TODO Send message.
                         _dispatcher->send_message(ref_message, _source_identifier.first, _source_identifier.second);
 
                         // Change state to CLOSED.
+                        old_state = _state;
                         _state = HandlerState::CLOSED;
+                        _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
+                                       handler_state_to_string(_state));
 
                         // (G.1.1.2) Delete UUID from the Store.
+                        _logger->trace("[Handler] [{}] (G.1.1.2) Delete UUID from the Store.", _uuid);
                         stop();
                         break;
                     } else {
                         // (G.1.2.1) Is UUID in Store?
+                        _logger->trace("[Handler] [{}] (G.1.2.1) Is UUID in Store?", _uuid);
                         if (is_uuid_in_store(_uuid)) {
                             // (G.1.2.1.2.1) Create REP message towards L and send it.
+                            _logger->trace("[Handler] [{}] (G.1.2.1.2.1) Create REP message towards L and send it.", _uuid);
                             REP* new_rep_message = new REP(_uuid, rep_message->listener_length(), rep_message->listener());
-                            // TODO send this message.
                             for (const auto& direction : _reservation->next_nodes()) {
                                 _dispatcher->send_message(new_rep_message, direction.first, direction.second);
                             }
 
                             // (G.1.2.1.2.2) Begin timer for REP timeout.
+                            _logger->trace("[Handler] [{}] (G.1.2.1.2.2) Begin timer for REP timeout.", _uuid);
                             _timeout_handler->initiate_timeout(this, RANK_REP_TO_REP_TIMEOUT);
 
                             // (G.1.2.1.2.3) Is UUID in the TranslationTable?
+                            _logger->trace("[Handler] [{}] (G.1.2.1.2.3) Is UUID in the TranslationTable?", _uuid);
                             UUIDv4 original_uuid = _uuid;
                             if (!is_translation_table_empty_for(_uuid)) {
                                 original_uuid = locate_original_of(_uuid);
 
                                 // (G.1.2.1.2.3.1.1) Delete UUID* in Store.
+                                _logger->trace("[Handler] [{}] (G.1.2.1.2.3.1.1) Delete UUID* in Store.", _uuid);
                                 // TODO
                             }
 
                             // (G.1.2.1.2.4) Create REF message with original UUID and send it.
+                            _logger->trace("[Handler] [{}] (G.1.2.1.2.4) Create REF message with original UUID and send it.", _uuid);
                             REF* new_ref_message = new REF(original_uuid);
-                            // TODO Send message.
                             _dispatcher->send_message(new_ref_message, _source_identifier.first, _source_identifier.second);
 
                             // Change state to CLOSED.
+                            old_state = _state;
                             _state = HandlerState::CLOSED;
+                            _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
+                                           handler_state_to_string(_state));
 
                             // (G.1.2.1.2.5) Delete UUID from the Store.
+                            _logger->trace("[Handler] [{}] (G.1.2.1.2.5) Delete UUID from the Store.", _uuid);
                             stop();
                             break;
                         } else {
-                            // (G.1.2.1.1.1) Discard and ignore message
+                            // (G.1.2.1.1.1) Discard and ignore message.
+                            _logger->trace("[Handler] [{}] (G.1.2.1.1.1) Discard and ignore message.", _uuid);
                             stop();
                             break;
                         }
                     }
                 } break;
                 case MessageType::NOTYPE:
+                    _logger->error("[Handler] [{}] An erroneous message was received. It will be ignored.", _uuid);
                     break;
             }
 

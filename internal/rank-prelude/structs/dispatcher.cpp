@@ -31,22 +31,37 @@ std::tuple<Message*, std::vector<uint8_t>, IdentifierType> Dispatcher::dequeue_i
 }
 
 Dispatcher::Dispatcher() {
+    _logger->info("Preparing the dispatcher unit...");
+
     // Set queues and respective mutexes for synchronization on accesses.
+    _logger->trace("[Dispatcher] Setting the depositing queue in simulator receiver.");
     _receiver_simulation->set_message_deposit_queue(_received_messages, &_received_messages_locker);
     auto sim_queue = _raw_receiver_simulation->queue_access();
+    _logger->trace("[Dispatcher] Setting an intermediate queue between raw-simulator and simulator receivers.");
     _receiver_simulation->set_queue(sim_queue.first, sim_queue.second);
+
+    _logger->trace("[Dispatcher] Setting the depositing queue in L2 receiver.");
     _receiver_l2->set_message_deposit_queue(_received_messages, &_received_messages_locker);
     auto l2_queue = _raw_receiver_l2->queue_access();
+    _logger->trace("[Dispatcher] Setting an intermediate queue between raw-L2 and L2 receivers.");
     _receiver_l2->set_queue(l2_queue.first, l2_queue.second);
+
+    _logger->trace("[Dispatcher] Setting the depositing queue in L3 receiver.");
     _receiver_l3->set_queue(_received_messages, &_received_messages_locker);
+
+    _logger->trace("[Dispatcher] Setting the depositing queue in DDS receiver.");
     _receiver_dds->set_queue(_received_messages, &_received_messages_locker);
+
+    _logger->trace("[Dispatcher] Setting the sending queue in sender component.");
     _sender->set_queue(_sending_messages, &_sending_messages_locker);
 
-    // Borrow the control of the L2 receiver to the raw receiver.
+    // Borrow the control of the receivers to the raw receivers.
+    _logger->trace("[Dispatcher] Borrow the control of the receivers to the raw receivers.");
     _raw_receiver_l2->receive_control_borrowing_from(_receiver_l2);
     _raw_receiver_simulation->receive_control_borrowing_from(_receiver_simulation);
 
     // Run the receivers.
+    _logger->trace("[Dispatcher] Executing all the receivers.");
     _raw_receiver_simulation->execute();
     _raw_receiver_l2->execute();
     _receiver_l3->execute();
@@ -55,12 +70,14 @@ Dispatcher::Dispatcher() {
 
 #ifndef SIMUZILLA
 Dispatcher *Dispatcher::borrow_simulation_receiver_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>()> *function) {
+    _logger->trace("[Dispatcher] Registering Rx function in raw receiver.");
     _raw_receiver_simulation->borrow_receiver_function(function);
 
     return this;
 }
 
 Dispatcher *Dispatcher::borrow_simulation_sender_function(std::function<void(uint8_t, const std::vector<uint8_t> &)> *function) {
+    _logger->trace("[Dispatcher] Registering Tx function in sender.");
     _sender->borrow_sender_function(function);
 
     return this;
@@ -68,8 +85,10 @@ Dispatcher *Dispatcher::borrow_simulation_sender_function(std::function<void(uin
 #endif
 
 Dispatcher::~Dispatcher() {
+    _logger->trace("[Dispatcher] Stopping all the dispatching units...");
     _receiver_simulation->stop();
     _receiver_l2->stop();
     _receiver_l3->stop();
     _receiver_dds->stop();
+    _sender->stop();
 }

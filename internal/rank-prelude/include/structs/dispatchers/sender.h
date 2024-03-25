@@ -7,6 +7,8 @@
 #include <thread>
 #include <tuple>
 
+#include "spdlog/spdlog.h"
+
 #include "structs/message.h"
 
 #include "net-lib.h"
@@ -44,6 +46,7 @@ private:
     std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _queue;
     std::mutex* _queue_mutex;
     NetworkNeighbors _neighbors_data_source = NetworkNeighbors();
+    std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
 };
 
 #endif //RANK_PRELUDE_DISPATCHER_SENDER_H

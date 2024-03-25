@@ -6,6 +6,8 @@
 #include <thread>
 #include <vector>
 
+#include "spdlog/spdlog.h"
+
 #include "structs/message.h"
 #include "utils/messaging.h"
 
@@ -30,6 +32,7 @@ private:
     std::mutex* _queue_mutex;
     std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _message_deposit = nullptr;
     std::mutex* _message_deposit_mutex = nullptr;
+    std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
 };
 
 class RawReceiverSimulation {
@@ -56,6 +59,7 @@ private:
     std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>* _queue = new std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>();
     std::mutex* _queue_mutex;
     ReceiverSimulation* _receiver_controller = nullptr;
+    std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
 };
 
 #endif //RANK_PRELUDE_DISPATCHER_RECEIVER_SIMULATION_H

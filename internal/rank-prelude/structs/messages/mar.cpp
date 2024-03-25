@@ -5,7 +5,7 @@ RequestingCapabilities MAR::requirements() const {
 }
 
 uint8_t MAR::expand_listener_length(uint8_t length) const {
-
+    return 0; // TODO
 }
 
 uint8_t MAR::priority() const {

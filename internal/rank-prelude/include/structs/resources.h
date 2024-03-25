@@ -7,6 +7,8 @@
 #include <thread>
 #include <vector>
 
+#include "spdlog/spdlog.h"
+
 #include "constants.h"
 
 #include "structs/current_capabilities.h"
@@ -48,6 +50,7 @@ private:
     bool _running = false;
     std::thread _thread;
     std::mutex _reservations_mutex;
+    std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
 };
 
 #endif  // RANK_PRELUDE_RESOURCES_H

@@ -1,19 +1,19 @@
 #include "utils/messaging.h"
 
 uint16_t make_payload_length(const RequestingCapabilities& capabilities) {
-
+    return 0; // TODO.
 }
 
 std::vector<uint8_t> make_payload(const RequestingCapabilities& capabilities) {
-
+    return {}; // TODO.
 }
 
 RequestingCapabilities parse_capabilities_from(const std::array<uint8_t, RANK_HEADER_LEN>& data) {
-
+    return RequestingCapabilities(); // TODO
 }
 
 Header new_prototype(const std::array<uint8_t, RANK_HEADER_LEN>& marshalled_data) {
-
+    return Header(); // TODO
 }
 
 std::array<uint8_t, RANK_LISTENER_MAX_LEN> listener_message_format(const std::vector<uint8_t>& connection) {
@@ -61,4 +61,6 @@ Message* parse_message_from_bytes(std::vector<uint8_t> bytes, bool from_network)
         case MessageType::REP:
             return new REP(header, message_content);
     }
+
+    return nullptr;
 }

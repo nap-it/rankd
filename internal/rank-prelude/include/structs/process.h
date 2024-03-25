@@ -13,6 +13,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include "spdlog/spdlog.h"
+
 #define NLMSG_BUF_SIZE 4096
 
 class Handler;
@@ -32,46 +34,67 @@ class Handler;
 
 #include "utils/messaging.h"
 
+namespace rank {
+
 class Process {
 public:
     // Instance handling.
-    static Process* get_instance();
+    static Process *get_instance();
 
     // Store and handlers management.
-    bool store(Handler* handler);
-    void delete_handler(const UUIDv4& id);
-    Handler* create_handler(const UUIDv4& id);
-    Handler* resume_handler(const UUIDv4& id);
-    Handler* suspend_handler(const UUIDv4& id);
-    Handler* get_handler(const UUIDv4& id);
-    HandlerState get_handler_state(const UUIDv4& id);
-    bool is_uuid_in_store(const UUIDv4& uuid);
+    bool store(Handler *handler);
+
+    void delete_handler(const UUIDv4 &id);
+
+    Handler *create_handler(const UUIDv4 &id);
+
+    Handler *resume_handler(const UUIDv4 &id);
+
+    Handler *suspend_handler(const UUIDv4 &id);
+
+    Handler *get_handler(const UUIDv4 &id);
+
+    HandlerState get_handler_state(const UUIDv4 &id);
+
+    bool is_uuid_in_store(const UUIDv4 &uuid);
 
     // Receiving data parsing.
-    Header parse_as_message_header(const std::vector<uint8_t>& data);
-    MessageType parse_as_message_type(const std::vector<uint8_t>& data);
-    UUIDv4 parse_as_message_uuid(const std::vector<uint8_t>& data);
+    Header parse_as_message_header(const std::vector<uint8_t> &data);
+
+    MessageType parse_as_message_type(const std::vector<uint8_t> &data);
+
+    UUIDv4 parse_as_message_uuid(const std::vector<uint8_t> &data);
 
     // Threading control mechanisms.
-    Process* execute();
-    Process* stop();
+    Process *execute();
+
+    Process *stop();
+
     bool is_running() const;
+
     void operator()();
 
     // Simulation set parameters.
 #ifndef SIMUZILLA
-    Process* borrow_simulation_recv_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)>* function);
-    Process* borrow_simulation_send_function(std::function<void(uint8_t, const std::vector<uint8_t>&)>* function);
+
+    Process *borrow_simulation_recv_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)> *function);
+
+    Process *borrow_simulation_send_function(std::function<void(uint8_t, const std::vector<uint8_t> &)> *function);
+
 #endif
+
+    // Logging registry.
+    Process* log_on(std::shared_ptr<spdlog::logger> logger);
 
     // Destructor.
     ~Process();
 
 private:
     Process();
-    Dispatcher* _dispatcher;
-    Resources* _resources;
-    TimeoutHandler* _timeout_handler;
+
+    Dispatcher *_dispatcher;
+    Resources *_resources;
+    TimeoutHandler *_timeout_handler;
     Store _store;
     std::mutex _store_locker;
     TranslationTable _translation_table;
@@ -79,12 +102,11 @@ private:
     unsigned int _waiting_time = 1000;
     bool _running = false;
     std::thread _thread;
-    int _socket;
-    int _socket_options = 1;
-    struct sockaddr_in _address{};
-    socklen_t _address_length = sizeof(_address);
     bool _in_simulation = false;
+    std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
 };
+
+}
 
 
 #endif  // RANK_PRELUDE_PROCESS_H

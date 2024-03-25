@@ -16,6 +16,8 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
+#include "spdlog/spdlog.h"
+
 #include "constants.h"
 #include "structs/message.h"
 #include "structs/dispatchers/bpf/rank_l2.skel.h"
@@ -44,6 +46,7 @@ private:
     std::mutex* _queue_mutex;
     std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _message_deposit = nullptr;
     std::mutex* _message_deposit_mutex = nullptr;
+    std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
 };
 
 class RawReceiverL2 {
@@ -68,6 +71,7 @@ private:
     std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>* _queue = new std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>();
     std::mutex* _queue_mutex;
     ReceiverL2* _receiver_controller = nullptr;
+    std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
 };
 
 

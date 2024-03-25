@@ -6,6 +6,8 @@
 #include <queue>
 #include <vector>
 
+#include "spdlog/spdlog.h"
+
 #include "structs/message.h"
 #include "structs/dispatchers/all.h"
 
@@ -37,6 +39,7 @@ private:
     std::mutex _received_messages_locker{};
     std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _sending_messages = new std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>();
     std::mutex _sending_messages_locker{};
+    std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
 };
 
 #endif //RANK_PRELUDE_DISPATCHER_H

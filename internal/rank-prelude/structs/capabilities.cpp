@@ -5,7 +5,7 @@ std::map<CapabilityItemType, std::any> Capabilities::items() const {
 }
 
 bool Capabilities::operator<(const Capabilities& prototype) const {
-
+    return false; // TODO
 }
 
 bool Capabilities::operator==(const Capabilities& prototype) const {

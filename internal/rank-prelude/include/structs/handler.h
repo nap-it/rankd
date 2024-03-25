@@ -6,6 +6,8 @@
 #include <mutex>
 #include <thread>
 
+#include "spdlog/spdlog.h"
+
 #include "constants.h"
 
 #include "structs/bidset.h"
@@ -95,6 +97,7 @@ private:
     bool _running = false;
     unsigned int _waiting_time = 1000;
     std::thread _thread;
+    std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
 };
 
 

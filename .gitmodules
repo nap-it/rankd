@@ -40,3 +40,6 @@
 [submodule "internal/rank-prelude/vendor/pcap-plus-plus"]
 	path = internal/rank-prelude/vendor/pcap-plus-plus
 	url = https://code.nap.av.it.pt/external-tools/pcap-plus-plus.git
+[submodule "internal/rank-prelude/vendor/spdlog"]
+	path = internal/rank-prelude/vendor/spdlog
+	url = https://code.nap.av.it.pt/external-tools/spdlog.git

@@ -57,6 +57,23 @@ enum class IdentifierType {
     Simulation
 };
 
+inline const char* identifier_to_string(const IdentifierType& type) {
+    switch (type) {
+        case IdentifierType::IPv4:
+            return "IPv4";
+        case IdentifierType::MAC:
+            return "MAC";
+        case IdentifierType::IPv6:
+            return "IPv6";
+        case IdentifierType::DDS:
+            return "DDS";
+        case IdentifierType::Simulation:
+            return "Simulation";
+    }
+
+    return "";
+}
+
 #include "utils/hashing.h"
 
 constexpr unsigned int RANK_YANG_KEY_TIME_TAS = FnvHash("time-tas");

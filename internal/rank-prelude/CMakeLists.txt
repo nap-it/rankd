@@ -4,6 +4,7 @@ project(rank-prelude
         LANGUAGES CXX C)
 
 set(HEADER_LIST
+        include/prelude.h
         include/constants.h
         include/structs/capabilities.h
         include/structs/current_capabilities.h
@@ -107,6 +108,7 @@ target_include_directories(rank-prelude PUBLIC
         vendor/pcap-plus-plus/Common++/header
         vendor/pcap-plus-plus/Packet++/header
         vendor/pcap-plus-plus/Pcap++/header
+        vendor
 )
 if (GLOBAL_PROJECT_SCOPE)
     target_include_directories(rank-prelude PUBLIC ${GLOBALLY_RANKD_INTERNAL_COMP_INCLUDES})

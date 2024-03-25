@@ -3,6 +3,10 @@
 
 #include <cassert>
 #include <cstdint>
+#include <iomanip>
+#include <sstream>
+
+#include "spdlog/spdlog.h"
 
 #include "structs/identifier.h"
 #include "structs/requesting_capabilities.h"
@@ -19,14 +23,14 @@ public:
     void set_past_node(const std::pair<std::vector<uint8_t>, IdentifierType>& node);
 
     // Getters.
-    uint8_t priority() const;
-    RequestingCapabilities requirements() const;
-    ReservationState state() const;
-    uint8_t listener_length() const;
-    std::array<uint8_t, RANK_LISTENER_MAX_LEN> listener() const;
-    UUIDv4 uuid() const;
-    std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> next_nodes() const;
-    std::pair<std::vector<uint8_t>, IdentifierType> past_node() const;
+    [[nodiscard]] uint8_t priority() const;
+    [[nodiscard]] RequestingCapabilities requirements() const;
+    [[nodiscard]] ReservationState state() const;
+    [[nodiscard]] uint8_t listener_length() const;
+    [[nodiscard]] std::array<uint8_t, RANK_LISTENER_MAX_LEN> listener() const;
+    [[nodiscard]] UUIDv4 uuid() const;
+    [[nodiscard]] std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> next_nodes() const;
+    [[nodiscard]] std::pair<std::vector<uint8_t>, IdentifierType> past_node() const;
 
     // Setters.
     Reservation* mark_listener(const std::vector<uint8_t>& listener);
@@ -48,6 +52,9 @@ public:
     ~Reservation();
 
 private:
+    [[nodiscard]] std::string next_nodes_as_string() const;
+    [[nodiscard]] std::string past_node_as_string() const;
+
     ReservationState _state;
     uint8_t _priority;
     RequestingCapabilities _capabilities;
@@ -56,6 +63,7 @@ private:
     std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> _next_nodes{};
     std::pair<std::vector<uint8_t>, IdentifierType> _past_node{};
     std::array<uint8_t, RANK_LISTENER_MAX_LEN> _listener{};
+    std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
 };
 
 

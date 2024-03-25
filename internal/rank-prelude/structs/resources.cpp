@@ -7,6 +7,8 @@ Resources* Resources::get_instance() {
 
 float Resources::estimate_bid(const RequestingCapabilities& capabilities) const {
     // FIXME Talvez cortar este método?
+
+    return -1;
 }
 
 float Resources::estimate_bid(const Reservation& reservation) const {
