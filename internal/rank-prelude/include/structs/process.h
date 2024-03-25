@@ -60,7 +60,7 @@ public:
 
     // Simulation set parameters.
 #ifndef SIMUZILLA
-    Process* borrow_simulation_recv_function(std::function<std::vector<uint8_t>(void)>* function);
+    Process* borrow_simulation_recv_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)>* function);
     Process* borrow_simulation_send_function(std::function<void(uint8_t, const std::vector<uint8_t>&)>* function);
 #endif
 
@@ -83,6 +83,7 @@ private:
     int _socket_options = 1;
     struct sockaddr_in _address{};
     socklen_t _address_length = sizeof(_address);
+    bool _in_simulation = false;
 };
 
 

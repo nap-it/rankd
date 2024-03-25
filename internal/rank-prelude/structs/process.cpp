@@ -231,8 +231,10 @@ void Process::operator()() {
 }
 
 #ifndef SIMUZILLA
-Process *Process::borrow_simulation_recv_function(std::function<std::vector<uint8_t>()> *function) {
+Process *Process::borrow_simulation_recv_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)> *function) {
     _dispatcher->borrow_simulation_receiver_function(function);
+
+    _in_simulation = true;
 
     return this;
 }
@@ -240,6 +242,8 @@ Process *Process::borrow_simulation_recv_function(std::function<std::vector<uint
 Process *
 Process::borrow_simulation_send_function(std::function<void(uint8_t, const std::vector<uint8_t> &)> *function) {
     _dispatcher->borrow_simulation_sender_function(function);
+
+    _in_simulation = true;
 
     return this;
 }

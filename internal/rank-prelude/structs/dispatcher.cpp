@@ -54,8 +54,8 @@ Dispatcher::Dispatcher() {
 }
 
 #ifndef SIMUZILLA
-Dispatcher *Dispatcher::borrow_simulation_receiver_function(std::function<std::vector<uint8_t>()> *function) {
-    // _receiver_simulation->borrow_receiver_function(function);
+Dispatcher *Dispatcher::borrow_simulation_receiver_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>()> *function) {
+    _raw_receiver_simulation->borrow_receiver_function(function);
 
     return this;
 }
