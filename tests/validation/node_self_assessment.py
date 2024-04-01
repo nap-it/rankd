@@ -90,11 +90,26 @@ class Node:
         self.PDV_TOLERANCE = 2.0/3.0
         self.PL_THRESHOLD = 0.1
         self.PL_DEGRADATION = DegradationMethod.steep
-        self.SALT = 0.01
+        self.SALT = 0.0
         self.H1 = 0.25
         self.H2 = 0.25
         self.H3 = 0.25
         self.H4 = 0.25
+
+        # Discard components.
+        self.discard_c1 = False
+        self.discard_c2 = False
+        self.discard_c3 = False
+        self.discard_c4 = False
+        self.discard_c4_rtt = False
+        self.discard_c4_noh = False
+        self.discard_c4_pdv = False
+        self.discard_c4_pl = False
+        self.discard_c5 = False
+        self.discard_c5_1 = False
+        self.discard_c5_2 = False
+        self.discard_c5_3 = False
+        self.discard_c5_4 = False
 
         self.set_initial_state()
 
@@ -152,7 +167,7 @@ class Node:
 
     def assess_current_node_resources(self, discard=False):
         if discard:
-            return 1
+            return 1, []
 
         if self.request is None:
             return 0
@@ -173,15 +188,24 @@ class Node:
 
         return (self.request.priority+1) / (self.MAX_PRIO+1)
 
-    def assess_rtt(self, x):
+    def assess_rtt(self, x, discard=False):
+        if discard:
+            return 1
+
         if x <= self.RTT_THRESHOLD:
             return 1
         return 2**(-(x-self.RTT_THRESHOLD)/self.RTT_THRESHOLD)
 
-    def assess_number_of_hops(self, x):
+    def assess_number_of_hops(self, x, discard=False):
+        if discard:
+            return 1
+
         return 2**(-int(x))
 
-    def assess_pdv(self, x):
+    def assess_pdv(self, x, discard=False):
+        if discard:
+            return 1
+
         if x <= self.PDV_THRESHOLD:
             return 1
         elif x > self.PDV_THRESHOLD and x < self.PDV_THRESHOLD*self.PDV_TOLERANCE:
@@ -189,14 +213,17 @@ class Node:
         else:
             return 0
 
-    def assess_pl(self, x):
+    def assess_pl(self, x, discard=False):
+        if discard:
+            return 1
+
         if x > self.PL_THRESHOLD:
             return 0
         return self.PL_DEGRADATION(x, self.PL_THRESHOLD)
 
     def assess_proximity(self, discard=False):
         if discard:
-            return 1
+            return 1, 1, 1, 1, 1
 
         if self.request is None:
             return 0
@@ -204,16 +231,16 @@ class Node:
         peer = [peer for peer in self.peers if peer.id == self.request.listener][0]
 
         raw_rtt = peer.get_rtt()
-        rtt = self.assess_rtt(raw_rtt)
+        rtt = self.assess_rtt(raw_rtt, discard=self.discard_c4_rtt)
 
         raw_number_of_hops = peer.get_number_of_hops()
-        noh = self.assess_number_of_hops(raw_number_of_hops)
+        noh = self.assess_number_of_hops(raw_number_of_hops, discard=self.discard_c4_noh)
 
         raw_pdv = peer.get_pdv()
-        pdv = self.assess_pdv(raw_pdv)
+        pdv = self.assess_pdv(raw_pdv, discard=self.discard_c4_pdv)
 
         raw_pl = peer.get_pl()
-        pl = self.assess_pl(raw_pl)
+        pl = self.assess_pl(raw_pl, discard=self.discard_c4_pl)
 
         return (rtt+noh+pdv+pl)/4.0, rtt, noh, pdv, pl
 
@@ -231,7 +258,7 @@ class Node:
 
     def assess_historical_performance(self, discard=False):
         if discard:
-            return 1
+            return 1, 1, 1, 1, 1, 1
 
         a1 = self.assess_historical_1()
         a2 = self.assess_historical_2()
@@ -244,21 +271,21 @@ class Node:
 
     def assess(self):
         # First criterion: node resources.
-        node_resources = self.assess_node_resources()
+        node_resources = self.assess_node_resources(discard=self.discard_c1)
         if node_resources == 0:
-            return 0
+            return 0, 0, (0, []), 0, (0, 0, 0, 0, 0), (0, 0, 0, 0, 0, 0)
 
         # Second criterion: current node resources.
-        current_node_resources, cnr_results  = self.assess_current_node_resources()
+        current_node_resources, cnr_results = self.assess_current_node_resources(discard=self.discard_c2)
 
         # Third criterion: fairness.
-        fairness = self.assess_fairness()
+        fairness = self.assess_fairness(discard=self.discard_c3)
 
         # Fourth criterion: proximity.
-        proximity, rtt, noh, pdv, pl = self.assess_proximity()
+        proximity, rtt, noh, pdv, pl = self.assess_proximity(discard=self.discard_c4)
 
         # Fifth criterion: historical performance.
-        historical_performance, a1, a2, a3, a4, salt = self.assess_historical_performance()
+        historical_performance, a1, a2, a3, a4, salt = self.assess_historical_performance(discard=self.discard_c5)
 
         return node_resources * (historical_performance+proximity)/2 * current_node_resources * fairness, node_resources, (current_node_resources, cnr_results), fairness, (proximity, rtt, noh, pdv, pl), (historical_performance, a1, a2, a3, a4, salt)
 
@@ -321,7 +348,7 @@ class Node:
                                                         self.configurations["memory"]["total"]) + \
             "  CPU: {:d} of {:d} cores used \n".format(self.configurations["cpu"]["used-cores"],
                                                        self.configurations["cpu"]["total"]) + \
-            "  Bandwidth: {:5.1f} of {:5.1f} Mbps \n".format(self.configurations["bandwidth"]["current"], self.configurations["bandwidth"]["total"])
+            "  Bandwidth: {:5.1f} of {:5.1f} Mbps".format(self.configurations["bandwidth"]["current"], self.configurations["bandwidth"]["total"])
 
 
 def main():
