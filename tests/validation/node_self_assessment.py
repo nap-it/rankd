@@ -133,7 +133,7 @@ class Node:
                 return 0
         return 1
 
-    def assess_current_node_resources_recursive(self, requirements, result):
+    def assess_current_node_resources_recursive(self, requirements, result, variable_result):
         # Retrieve the first requirement from the list R_0.
         first_requirement = requirements[list(requirements.keys())[0]]
         first_requirement_type = list(requirements.keys())[0]
@@ -159,11 +159,13 @@ class Node:
 
         # Recursive call.
         if len(requirements) == 1:
+            variable_result.append(rho_0)
             return rho_0
 
         requirements.pop(first_requirement_type)
-        return self.CNR_THRESHOLD * rho_0 + (1 - self.CNR_THRESHOLD)*self.assess_current_node_resources_recursive(requirements, result)
-
+        this_grade = self.CNR_THRESHOLD * rho_0 + (1 - self.CNR_THRESHOLD)*self.assess_current_node_resources_recursive(requirements, result, variable_result)
+        variable_result.append(this_grade)
+        return this_grade
 
     def assess_current_node_resources(self, discard=False):
         if discard:
@@ -173,11 +175,12 @@ class Node:
             return 0
 
         results = []
-        result = self.assess_current_node_resources_recursive(self.request.requirements, results)
+        vresults = []
+        result = self.assess_current_node_resources_recursive(self.request.requirements, results, vresults)
 
         result = 0 if any([item == 0 for item in results]) else result
 
-        return result, results
+        return result, results, vresults
 
     def assess_fairness(self, discard=False):
         if discard:
@@ -208,7 +211,7 @@ class Node:
 
         if x <= self.PDV_THRESHOLD:
             return 1
-        elif x > self.PDV_THRESHOLD and x < self.PDV_THRESHOLD*self.PDV_TOLERANCE:
+        elif x > self.PDV_THRESHOLD and x < (self.PDV_THRESHOLD + self.PDV_THRESHOLD*self.PDV_TOLERANCE):
             return -((x-self.PDV_THRESHOLD)/(self.PDV_THRESHOLD*self.PDV_TOLERANCE)) + 1
         else:
             return 0
@@ -276,7 +279,7 @@ class Node:
             return 0, 0, (0, []), 0, (0, 0, 0, 0, 0), (0, 0, 0, 0, 0, 0)
 
         # Second criterion: current node resources.
-        current_node_resources, cnr_results = self.assess_current_node_resources(discard=self.discard_c2)
+        current_node_resources, cnr_results, cnr_vresults = self.assess_current_node_resources(discard=self.discard_c2)
 
         # Third criterion: fairness.
         fairness = self.assess_fairness(discard=self.discard_c3)
@@ -287,7 +290,30 @@ class Node:
         # Fifth criterion: historical performance.
         historical_performance, a1, a2, a3, a4, salt = self.assess_historical_performance(discard=self.discard_c5)
 
-        return node_resources * (historical_performance+proximity)/2 * current_node_resources * fairness, node_resources, (current_node_resources, cnr_results), fairness, (proximity, rtt, noh, pdv, pl), (historical_performance, a1, a2, a3, a4, salt)
+        return node_resources * (historical_performance+proximity)/2 * current_node_resources * fairness, node_resources, (current_node_resources, cnr_results, cnr_vresults), fairness, (proximity, rtt, noh, pdv, pl), (historical_performance, a1, a2, a3, a4, salt)
+
+    def assess_raw_values(resources, current_resources, fairness, proximity, historical, constants, detail_grade=0):
+        # Unpack current_resources.
+        cr_value, rho_i, vrho_i = current_resources
+
+        # Unpack proximity.
+        p_value, rtt, noh, pdv, pl = proximity
+
+        # Unpack historical.
+        h_value, h1, h2, h3, h4, salt = historical
+
+        # Unpack constants.
+        if constants is not None:
+            CNR, PRIO, RTT_T, PDV_T, PDV_TOL, PL_T, PL_D, SALT, H1, H2, H3, H4 = constants
+
+        # Assess final grade.
+        c1 = resources
+        c2 = cr_value if detail_grade >= 1 else 1
+        c3 = fairness if detail_grade >= 2 else 1
+        c4 = p_value if detail_grade >= 3 else 1
+        c5 = h_value if detail_grade >= 4 else 1
+
+        return c1*c2*c3*(c4+c5)/2
 
     def update_state(self):
         if not self.update:
