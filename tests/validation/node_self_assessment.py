@@ -16,8 +16,8 @@ class Request:
 
 class Peer:
     def __init__(self, id=None, rtt=None, hops=None, pdv=None, pl=None):
-        self.rtt = rtt if rtt is not None else random.randrange(20, 1500)*random.random()
-        self.hops = hops if hops is not None else random.randint(0, 5)
+        self.rtt = rtt if rtt is not None else random.randint(0, 200)*random.random()
+        self.hops = hops if hops is not None else random.randint(0, 2)
         self.pdv = pdv if pdv is not None else 0
         self.pl = pl if pl is not None else 0
         self.id = uuid.uuid4() if id is None else id
@@ -28,17 +28,19 @@ class Peer:
 
     def get_rtt(self, rand=True):
         if rand:
-            self.rtt = self.rtt + random.randrange(-50, 50)*random.random()
+            self.rtt = self.rtt + random.randint(-1, 1)*random.random()
+        if self.rtt < 0:
+            self.rtt = 0
         return self.rtt
 
-    def get_number_of_hops(self, rand=False):
+    def get_number_of_hops(self, rand=True):
         if rand:
-            self.hops = random.randint(0, 5)
+            self.hops = random.randint(0, 2)
         return self.hops
 
     def get_pdv(self, rand=True):
         if rand:
-            self.pdv = self.pdv + random.randrange(-10, 10)
+            self.pdv = self.pdv + (random.randint(-1, 1)*random.random())/100.0
         if self.pdv < 0:
             self.pdv = 0
 
@@ -46,7 +48,7 @@ class Peer:
 
     def get_pl(self, rand=True):
         if rand:
-            self.pl = self.pl + random.randrange(-1, 1)*0.1
+            self.pl = self.pl + (random.randint(-1, 1)*random.random())/10000.0
         if self.pl < 0:
             self.pl = 0
 
@@ -197,7 +199,7 @@ class Node:
 
         if x <= self.RTT_THRESHOLD:
             return 1
-        return 2**(-(x-self.RTT_THRESHOLD)/self.RTT_THRESHOLD)
+        return 2.0**(-(float(x)-self.RTT_THRESHOLD)/self.RTT_THRESHOLD)
 
     def assess_number_of_hops(self, x, discard=False):
         if discard:
@@ -226,7 +228,7 @@ class Node:
 
     def assess_proximity(self, discard=False):
         if discard:
-            return 1, 1, 1, 1, 1
+            return 1, 1, 1, 1, 1, 1, 1, 1, 1
 
         if self.request is None:
             return 0
@@ -245,7 +247,7 @@ class Node:
         raw_pl = peer.get_pl()
         pl = self.assess_pl(raw_pl, discard=self.discard_c4_pl)
 
-        return (rtt+noh+pdv+pl)/4.0, rtt, noh, pdv, pl
+        return (rtt+noh+pdv+pl)/4.0, rtt, noh, pdv, pl, raw_rtt, raw_number_of_hops, raw_pdv, raw_pl
 
     def assess_historical_1(self):
         return 1
@@ -276,7 +278,7 @@ class Node:
         # First criterion: node resources.
         node_resources = self.assess_node_resources(discard=self.discard_c1)
         if node_resources == 0:
-            return 0, 0, (0, []), 0, (0, 0, 0, 0, 0), (0, 0, 0, 0, 0, 0)
+            return 0, 0, (0, [], []), 0, (0, 0, 0, 0, 0, 0, 0, 0, 0), (0, 0, 0, 0, 0, 0)
 
         # Second criterion: current node resources.
         current_node_resources, cnr_results, cnr_vresults = self.assess_current_node_resources(discard=self.discard_c2)
@@ -285,19 +287,19 @@ class Node:
         fairness = self.assess_fairness(discard=self.discard_c3)
 
         # Fourth criterion: proximity.
-        proximity, rtt, noh, pdv, pl = self.assess_proximity(discard=self.discard_c4)
+        proximity, rtt, noh, pdv, pl, raw_rtt, raw_noh, raw_pdv, raw_pl = self.assess_proximity(discard=self.discard_c4)
 
         # Fifth criterion: historical performance.
         historical_performance, a1, a2, a3, a4, salt = self.assess_historical_performance(discard=self.discard_c5)
 
-        return node_resources * (historical_performance+proximity)/2 * current_node_resources * fairness, node_resources, (current_node_resources, cnr_results, cnr_vresults), fairness, (proximity, rtt, noh, pdv, pl), (historical_performance, a1, a2, a3, a4, salt)
+        return node_resources * (historical_performance+proximity)/2 * current_node_resources * fairness, node_resources, (current_node_resources, cnr_results, cnr_vresults), fairness, (proximity, rtt, noh, pdv, pl, raw_rtt, raw_noh, raw_pdv, raw_pl), (historical_performance, a1, a2, a3, a4, salt)
 
     def assess_raw_values(resources, current_resources, fairness, proximity, historical, constants, detail_grade=0):
         # Unpack current_resources.
         cr_value, rho_i, vrho_i = current_resources
 
         # Unpack proximity.
-        p_value, rtt, noh, pdv, pl = proximity
+        p_value, rtt, noh, pdv, pl, raw_rtt, raw_noh, raw_pdv, raw_pl = proximity
 
         # Unpack historical.
         h_value, h1, h2, h3, h4, salt = historical
@@ -386,7 +388,7 @@ def main():
         request = Request({"cpu": {"value": 1}, "memory": {"value": 2}, "bandwidth": {"value": 100}}, 4, n1.peers[0].id)
         print("Placing request: {}".format(request))
 
-        bid, a1, (a2, a2_all), a3, (a4, rtt, noh, pdv, pl), (a5, a51, a52, a53, a54, a5_salt) = n1.place_request(request)
+        bid, a1, (a2, a2_all), a3, (a4, rtt, noh, pdv, pl, raw_rtt, raw_noh, raw_pdv, raw_pl), (a5, a51, a52, a53, a54, a5_salt) = n1.place_request(request)
 
         print("Assessment: ")
         print("  - a1: {}".format(a1))
@@ -396,9 +398,13 @@ def main():
         print("  - a3: {}".format(a3))
         print("  - a4: {}".format(a4))
         print("     - rtt: {}".format(rtt))
+        print("     - raw_rtt: {}".format(raw_rtt))
         print("     - noh: {}".format(noh))
+        print("     - raw_noh: {}".format(raw_noh))
         print("     - pdv: {}".format(pdv))
+        print("     - raw_pdv: {}".format(raw_pdv))
         print("     - pl: {}".format(pl))
+        print("     - raw_pl: {}".format(raw_pl))
         print("  - a5: {}".format(a5))
         print("     - d1: {}".format(a51))
         print("     - d2: {}".format(a52))
