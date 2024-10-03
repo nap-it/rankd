@@ -5,6 +5,10 @@ project(rankd
         DESCRIPTION "Implementation of a service to retrieve information on a machine where a server instance is being ran."
         LANGUAGES CXX C)
 
+message("-> Initiating CMake for cmd/rank/cmd/rankd project")
+
+set(EXTERNALLY_SOURCED OFF)
+
 include(ExternalProject)
 
 # Define build type. If none is specified, then DEBUG is chosen.
@@ -22,3 +26,5 @@ set(GLOBAL_VENDOR_DIRS "${PROJECT_SOURCE_DIR}/vendor")
 add_subdirectory(internal)
 add_subdirectory(cmd)
 add_subdirectory(tests)
+
+set(EXTERNALLY_SOURCED ON)
