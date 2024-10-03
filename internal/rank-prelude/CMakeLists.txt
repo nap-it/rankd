@@ -84,7 +84,9 @@ set(SOURCE_LIST
 )
 
 # Add external projects (vendor).
-add_subdirectory(vendor)
+if(NOT EXTERNALLY_SOURCED)
+    add_subdirectory(vendor)
+endif()
 
 # Compile and produce the needed eBPF skeletons.
 list(APPEND CMAKE_MODULE_PATH ${RANK_PRELUDE_LIBBPF_ROOT}/tools/cmake)
@@ -99,7 +101,10 @@ if (EXISTS ${CMAKE_CURRENT_BINARY_DIR}/rank_l2.skel.h)
 endif()
 
 set(RANK_PRELUDE include)
-add_library(rank-prelude STATIC prelude.cpp ${SOURCE_LIST} ${HEADER_LIST})
+
+if(NOT EXTERNALLY_SOURCED)
+    add_library(rank-prelude STATIC prelude.cpp ${SOURCE_LIST} ${HEADER_LIST})
+endif()
 
 target_include_directories(rank-prelude PUBLIC include)
 target_include_directories(rank-prelude PUBLIC
@@ -129,6 +134,8 @@ target_link_libraries(rank-prelude PRIVATE rankd-comp rankd-net rankd-time)
 
 target_compile_features(rank-prelude PUBLIC cxx_std_20)
 
-add_subdirectory(tests)
+if(NOT EXTERNALLY_SOURCED)
+    add_subdirectory(tests)
+endif()
 
 source_group(TREE "${PROJECT_SOURCE_DIR}" PREFIX "Header Files" FILES ${HEADER_LIST})

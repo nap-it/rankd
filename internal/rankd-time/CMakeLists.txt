@@ -22,8 +22,8 @@ set(SOURCE_LIST
         )
 
 if (APU)
-set(HAVE_ONESTEP_P2P ON)
-add_definitions(-DHAVE_ONESTEP_P2P)
+    set(HAVE_ONESTEP_P2P ON)
+    add_definitions(-DHAVE_ONESTEP_P2P)
 endif()
 
 if (DOCKER)
@@ -54,7 +54,9 @@ endif()
 
 # Make the rankd-time library (librankd-net).
 set(RANKD_TIME include)
-add_library(rankd-time SHARED lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
+if(NOT EXTERNALLY_SOURCED)
+    add_library(rankd-time SHARED lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
+endif()
 target_include_directories(rankd-time PUBLIC include vendor/ptp vendor/rapidjson)
 target_link_libraries(rankd-time pmc)
 if (EXCELFORE_GPTP)

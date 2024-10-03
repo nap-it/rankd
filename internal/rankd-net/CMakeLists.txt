@@ -41,7 +41,9 @@ set(SOURCE_LIST
 
 # Make the rankd-net library (librankd-net).
 set(RANKD_NET include)
-add_library(rankd-net lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
+if(NOT EXTERNALLY_SOURCED)
+    add_library(rankd-net lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
+endif()
 target_include_directories(rankd-net PUBLIC include vendor/rapidjson)
 target_link_libraries(rankd-net PRIVATE fastrtps fastcdr)
 
