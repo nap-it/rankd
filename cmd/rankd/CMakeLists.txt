@@ -30,8 +30,8 @@ set(SOURCE_LIST
         configs/configs.cpp
         )
 
-# Add vendor project directories.
-add_subdirectory(vendor/restbed)
+# Add vendor project directories. TODO Add conditional for If it already has yanp, then no need...
+#add_subdirectory(vendor/restbed)
 
 # Make the rankd executable.
 add_executable(rankd main.cpp ${HEADER_LIST} ${SOURCE_LIST})

@@ -65,7 +65,7 @@ class DegradationMethod:
         return -0.75*(l**(-1))*x + 1
 
     def smooth(x: float, l: float):
-        return (0.75/l**2) * x**2 + 1
+        return -(0.75/l**2) * x**2 + 1
 
 
 class Node:

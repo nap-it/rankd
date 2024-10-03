@@ -101,6 +101,7 @@ add_library(rank-prelude STATIC prelude.cpp ${SOURCE_LIST} ${HEADER_LIST})
 
 target_include_directories(rank-prelude PUBLIC include)
 target_include_directories(rank-prelude PUBLIC
+        vendor
         vendor/libyang-cpp/include
         vendor/rapidjson
         vendor/doctest/doctest
@@ -108,7 +109,6 @@ target_include_directories(rank-prelude PUBLIC
         vendor/pcap-plus-plus/Common++/header
         vendor/pcap-plus-plus/Packet++/header
         vendor/pcap-plus-plus/Pcap++/header
-        vendor
 )
 if (GLOBAL_PROJECT_SCOPE)
     target_include_directories(rank-prelude PUBLIC ${GLOBALLY_RANKD_INTERNAL_COMP_INCLUDES})

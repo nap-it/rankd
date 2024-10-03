@@ -550,17 +550,28 @@ void Handler::operator()() {
                     }
                 } break;
                 case MessageType::BID: {
+                    // (D.1) Is auction waiting?
+                    if (_state != HandlerState::AUCTION_WAITING) {
+                        _logger->trace("[Handler] [{}] (D.1) Is auction waiting?", _uuid);
+                        _logger->warn("[Handler] [{}] Handler received an unexpected BID message.", _uuid);
+
+                        // (D.1.1.1) Delete UUID from the Store.
+                        _logger->trace("[Handler] [{}] (D.1.1.1) Delete UUID from the Store.");
+                        stop();
+                        return;
+                    }
+
                     auto bid_message = dynamic_cast<BID*>(_message);
 
-                    // (D.1) Wait for all bids.
-                    _logger->trace("[Handler] [{}] (D.1) Wait for all bids.", _uuid);
+                    // (D.1.2.1) Wait for all bids.
+                    _logger->trace("[Handler] [{}] (D.1.2.1) Wait for all bids.", _uuid);
                     // TODO Add bids until a timeout is reached (call new_bid methods according to the type).
 
-                    // (D.3) Check the cardinal of bids.
-                    _logger->trace("[Handler] [{}] (D.3) Check the cardinal of bids.", _uuid);
+                    // (D.1.2.3) Check the cardinal of bids.
+                    _logger->trace("[Handler] [{}] (D.1.2.3) Check the cardinal of bids.", _uuid);
                     if (cardinal_bids() == 0) {
-                        // (D.3.1.1) Create REF message and send it.
-                        _logger->trace("[Handler] [{}] (D.3.1.1) Create REF message and send it.", _uuid);
+                        // (D.1.2.3.1.1) Create REF message and send it.
+                        _logger->trace("[Handler] [{}] (D.1.2.3.1.1) Create REF message and send it.", _uuid);
                         REF* ref_message = new REF(_uuid);
                         _dispatcher->send_message(ref_message, _source_identifier.first, _source_identifier.second);
 
@@ -570,17 +581,17 @@ void Handler::operator()() {
                         _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
                                        handler_state_to_string(_state));
 
-                        // (D.3.1.2) Delete UUID from the Store.
-                        _logger->trace("[Handler] [{}] (D.3.1.2) Delete UUID from the Store.", _uuid);
+                        // (D.1.2.3.1.2) Delete UUID from the Store.
+                        _logger->trace("[Handler] [{}] (D.1.2.3.1.2) Delete UUID from the Store.", _uuid);
                         stop();
                         break;
                     } else {
-                        // (D.3.2.1) Is the minimum bid unique?
-                        _logger->trace("[Handler] [{}] (D.3.2.1) Is the minimum bid unique?", _uuid);
+                        // (D.1.2.3.2.1) Is the minimum bid unique?
+                        _logger->trace("[Handler] [{}] (D.1.2.3.2.1) Is the minimum bid unique?", _uuid);
                         auto minimum_bids = min_bids();
                         if (is_min_bid_unique(minimum_bids)) {
-                            // (D.3.2.1.1.1) As it is unique, send an EAR message to it.
-                            _logger->trace("[Handler] [{}] (D.3.2.1.1.1) As it is unique, send an EAR message to it.", _uuid);
+                            // (D.1.2.3.2.1.1.1) As it is unique, send an EAR message to it.
+                            _logger->trace("[Handler] [{}] (D.1.2.3.2.1.1.1) As it is unique, send an EAR message to it.", _uuid);
                             EAR* ear_message = new EAR(_uuid, _reservation->priority(), _reservation->listener_length(),
                                                   _reservation->listener(),
                                                   make_payload_length(_reservation->requirements()),
@@ -593,28 +604,28 @@ void Handler::operator()() {
                             _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
                                            handler_state_to_string(_state));
 
-                            // (D.3.2.1.1.2) Add message source address as reservation past node.
-                            _logger->trace("[Handler] [{}] (D.3.2.1.1.2) Add message source address as reservation past node.", _uuid);
+                            // (D.1.2.3.2.1.1.2) Add message source address as reservation past node.
+                            _logger->trace("[Handler] [{}] (D.1.2.3.2.1.1.2) Add message source address as reservation past node.", _uuid);
                             _reservation->set_past_node(_source_identifier);
 
-                            // (D.3.2.1.1.3) Begin timer for EAR timeout.
-                            _logger->trace("[Handler] [{}] (D.3.2.1.1.3) Begin timer for EAR timeout.", _uuid);
+                            // (D.1.2.3.2.1.1.3) Begin timer for EAR timeout.
+                            _logger->trace("[Handler] [{}] (D.1.2.3.2.1.1.3) Begin timer for EAR timeout.", _uuid);
                             _timeout_handler->initiate_timeout(this, RANK_EAR_TO_EAR_TIMEOUT);
 
-                            // (D.3.2.1.1.4) Delete UUID from the Store.
-                            _logger->trace("[Handler] [{}] (D.3.2.1.1.4) Delete UUID from the Store.", _uuid);
+                            // (D.1.2.3.2.1.1.4) Delete UUID from the Store.
+                            _logger->trace("[Handler] [{}] (D.1.2.3.2.1.1.4) Delete UUID from the Store.", _uuid);
                             stop();
                             break;
                         } else {
                             // As it is not unique...
                             for (const auto& bid_target : _bids) {
-                                // (D.3.2.1.2.1) Create a new UUID for each min(B) node and (D.3.2.1.2.2) Save
+                                // (D.1.2.3.2.1.2.1) Create a new UUID for each min(B) node and (D.3.2.1.2.2) Save
                                 // translations UUID to UUID* in TranslationTable.
-                                _logger->trace("[Handler] [{}] (D.3.2.1.2.1) Create a new UUID for each min(B) node and (D.3.2.1.2.2) Save translations UUID to UUID* in TranslationTable.", _uuid);
+                                _logger->trace("[Handler] [{}] (D.1.2.3.2.1.2.1) Create a new UUID for each min(B) node and (D.1.2.3.2.1.2.2) Save translations UUID to UUID* in TranslationTable.", _uuid);
                                 auto new_uuid = create_translation(_uuid);
 
-                                // (D.3.2.1.2.3) Create EAR message and send it to each min(B) node, with UUID*.
-                                _logger->trace("[Handler] [{}] (D.3.2.1.2.3) Create EAR message and send it to each min(B) node, with UUID*.", _uuid);
+                                // (D.1.2.3.2.1.2.3) Create EAR message and send it to each min(B) node, with UUID*.
+                                _logger->trace("[Handler] [{}] (D.1.2.3.2.1.2.3) Create EAR message and send it to each min(B) node, with UUID*.", _uuid);
                                 EAR* ear_message = new EAR(new_uuid, _reservation->priority(),
                                                       _reservation->listener_length(), _reservation->listener(),
                                                       make_payload_length(_reservation->requirements()),
@@ -627,16 +638,16 @@ void Handler::operator()() {
                                 _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
                                                handler_state_to_string(_state));
 
-                                // (D.3.2.1.2.4) Add message source address as reservation past node.
-                                _logger->trace("[Handler] [{}] (D.3.2.1.2.4) Add message source address as reservation past node.", _uuid);
+                                // (D.1.2.3.2.1.2.4) Add message source address as reservation past node.
+                                _logger->trace("[Handler] [{}] (D.1.2.3.2.1.2.4) Add message source address as reservation past node.", _uuid);
                                 _reservation->set_past_node(_source_identifier);
 
-                                // (D.3.2.1.2.5) Begin timer for EAR timeout.
-                                _logger->trace("[Handler] [{}] (D.3.2.1.2.5) Begin timer for EAR timeout.", _uuid);
+                                // (D.1.2.3.2.1.2.5) Begin timer for EAR timeout.
+                                _logger->trace("[Handler] [{}] (D.1.2.3.2.1.2.5) Begin timer for EAR timeout.", _uuid);
                                 _timeout_handler->initiate_timeout(this, RANK_EAR_TO_EAR_TIMEOUT);
 
-                                // (D.3.2.1.2.6) Delete UUID from the Store.
-                                _logger->trace("[Handler] [{}] (D.3.2.1.2.6) Delete UUID from the Store.", _uuid);
+                                // (D.1.2.3.2.1.2.6) Delete UUID from the Store.
+                                _logger->trace("[Handler] [{}] (D.1.2.3.2.1.2.6) Delete UUID from the Store.", _uuid);
                                 stop();
                                 break;
                             }

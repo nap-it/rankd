@@ -160,7 +160,7 @@ void Process::operator()() {
     _logger->info("Process is now waiting for messages in the dispatcher's receiving queue at each {} seconds.", _waiting_time);
 
     while (_running) {
-        // Check depositing queue of the dispatcher and retrieve a message, if there is one.
+        // Check depositing queue of the dispatcher and retrieve a message, if there is one. (A.2)
         if (_dispatcher->receiving_queue_has_message()) {
             _logger->info("The process watched a message being dropped in the dispatcher's receiving queue.");
 
@@ -187,23 +187,24 @@ void Process::operator()() {
 
                 _logger->trace("[Process] [{}] This UUID is in store and its handler is in {} state.", message_uuid, handler_state_to_string(uuid_state));
 
-                // If state is CLOSED, then simply close the socket and ignore.
+                // If state is CLOSED, then simply close the socket and ignore. (A.3.1.1)
                 if (uuid_state == HandlerState::CLOSED) {
+                    // Ignore the message. (A.3.1.1.1.1)
                     _logger->info("Ignoring message since its UUID {} reports being closed.", message_uuid);
                     continue;
                 } else {
-                    // Otherwise, resume handling the request.
+                    // Otherwise, resume handling the request. (A.3.1.1.2.1)
                     _logger->trace("[Process] [{}] Resuming handler on this UUID.", message_uuid);
-                    handler = resume_handler(message_uuid);
+                    handler = resume_handler(message_uuid); // (A.3.1.1.2.2)
                 }
             } else {
-                // If the UUID is not known in the Store, then create one and save it.
+                // If the UUID is not known in the Store, then create one and save it. (A.3.2.1)
                 _logger->trace("[Process] [{}] This UUID does not exist yet. Registering...", message_uuid);
                 handler = create_handler(message_uuid);
-                _store[message_uuid] = handler;
+                _store[message_uuid] = handler; // (A.3.2.2)
 
                 _logger->trace("[Process] [{}] The handler was created and will be executed now...", message_uuid);
-                handler->borrow(_dispatcher)->execute();
+                handler->borrow(_dispatcher)->execute(); // (A.3.2.3)
             }
 
             _logger->info("A handler for {} is ready to receive message.", message_uuid);
@@ -212,6 +213,8 @@ void Process::operator()() {
             Header message_header = message->header();
 
             _logger->trace("[Process] [{}] Getting the type of message received in this instance.", message_uuid);
+
+            // Parse the message type. (A.4)
             switch (message_header.type()) {
                 case MessageType::EAR:
                     _logger->trace("[Process] [{}] This message is an EAR message.", message_uuid);
