@@ -89,8 +89,10 @@ add_subdirectory(vendor)
 # Compile and produce the needed eBPF skeletons.
 list(APPEND CMAKE_MODULE_PATH ${RANK_PRELUDE_LIBBPF_ROOT}/tools/cmake)
 find_package(BpfObject REQUIRED)
-bpf_object(rank_l2 structs/dispatchers/bpf/rank_l2.bpf.c)
-add_dependencies(rank_l2_skel libbpf-build bpftool-build)
+if(NOT EXTERNALLY_SOURCED)
+    bpf_object(rank_l2 structs/dispatchers/bpf/rank_l2.bpf.c)
+    add_dependencies(rank_l2_skel libbpf-build bpftool-build)
+endif()
 
 if (EXISTS ${CMAKE_CURRENT_BINARY_DIR}/rank_l2.skel.h)
     configure_file(${CMAKE_CURRENT_BINARY_DIR}/rank_l2.skel.h ${CMAKE_CURRENT_SOURCE_DIR}/include/structs/dispatchers/bpf/rank_l2.skel.h COPYONLY)
