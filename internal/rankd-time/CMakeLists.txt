@@ -33,7 +33,9 @@ if (DOCKER)
     add_definitions(-DHAVE_VCLOCKS)
 endif()
 
-add_subdirectory(vendor)
+if(NOT EXTERNALLY_SOURCED)
+    add_subdirectory(vendor)
+endif()
 
 # Read options to enable features.
 if (RELYUM)

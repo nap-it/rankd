@@ -21,8 +21,10 @@ set(SOURCE_LIST
         utils/strings.cpp
         )
 
-add_subdirectory(vendor/libsensors-cpp)
-add_subdirectory(vendor/pfs)
+if(NOT EXTERNALLY_SOURCED)
+        add_subdirectory(vendor/libsensors-cpp)
+        add_subdirectory(vendor/pfs)
+endif()
 
 # Make the rankd-comp library (librankd-comp).
 set(RANKD_COMP include)
