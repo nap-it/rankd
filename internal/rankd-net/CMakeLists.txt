@@ -44,7 +44,7 @@ set(RANKD_NET include)
 if(NOT EXTERNALLY_SOURCED)
     add_library(rankd-net lib.cpp ${HEADER_LIST} ${SOURCE_LIST})
 endif()
-target_include_directories(rankd-net PUBLIC include vendor/rapidjson)
+target_include_directories(rankd-net PUBLIC include vendor)
 target_link_libraries(rankd-net PRIVATE fastrtps fastcdr)
 
 # All users to compile this library need, at least, C++20.
