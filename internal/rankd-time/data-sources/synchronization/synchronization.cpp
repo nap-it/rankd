@@ -7,7 +7,7 @@ Synchronization::Synchronization() {
 
 void Synchronization::snap() {
 #ifndef LINUX_PTP
-    snap_ptp_via_linux_ptp();
+    //snap_ptp_via_linux_ptp();
 #elif defined(RELYUM)
     snap_ptp_via_relyum();
 #endif

@@ -18,11 +18,11 @@ public:
     void disable_json_output();
     void set_output(uint8_t type);
     [[nodiscard]] rapidjson::Document json() const;
-    friend std::string print_synchronization(const Synchronization& synchronization);
-    friend std::ostream& operator<<(std::ostream& os, const Synchronization& synchronization);
+    //friend std::string print_synchronization(const Synchronization& synchronization);
+    //friend std::ostream& operator<<(std::ostream& os, const Synchronization& synchronization);
 private:
 #ifndef LINUX_PTP
-    void snap_ptp_via_linux_ptp();
+    //void snap_ptp_via_linux_ptp();
 #elif define(RELYUM)
     void snap_ptp_via_relyum();
 #endif

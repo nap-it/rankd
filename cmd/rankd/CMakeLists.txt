@@ -31,11 +31,15 @@ set(SOURCE_LIST
         )
 
 # Add vendor project directories. TODO Add conditional for If it already has yanp, then no need...
-#add_subdirectory(vendor/restbed)
+if (NOT YANP_INTEGRATED)
+    set(BUILD_SSL OFF)
+    set(BUILD_TESTS OFF)
+    add_subdirectory(vendor/restbed)
+endif()
 
 # Make the rankd executable.
 add_executable(rankd main.cpp ${HEADER_LIST} ${SOURCE_LIST})
-target_include_directories(rankd PUBLIC include vendor ${rankd-comp} ${rankd-time} ${rankd-net} ${rank-prelude})
+target_include_directories(rankd PUBLIC include vendor vendor/restbed/source ${rankd-comp} ${rankd-time} ${rankd-net} ${rank-prelude})
 target_link_libraries(rankd pthread rankd-comp rankd-time rankd-net rank-prelude restbed-static fastcdr fastrtps)
 
 # All users of this library will need, at least, C++20.
