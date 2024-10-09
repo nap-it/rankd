@@ -2,15 +2,19 @@
 
 Synchronization::Synchronization() {
     _output_type = OUTPUT_SYNC_TYPE_ALL;
-
 }
 
 void Synchronization::snap() {
 #ifndef LINUX_PTP
     //snap_ptp_via_linux_ptp();
+    snap_ptp_via_linux_ptpmgmt();
 #elif defined(RELYUM)
     snap_ptp_via_relyum();
 #endif
+}
+
+void Synchronization::snap_ptp_via_linux_ptpmgmt() {
+    
 }
 
 void Synchronization::enable_json_output() {
