@@ -88,7 +88,7 @@ if(NOT EXTERNALLY_SOURCED)
     add_subdirectory(vendor)
 endif()
 
-if (NOT UNDER_SIMULATION)
+if (NOT FROM_SIMUZILLA)
     # Compile and produce the needed eBPF skeletons.
     list(APPEND CMAKE_MODULE_PATH ${RANK_PRELUDE_LIBBPF_ROOT}/tools/cmake)
     find_package(BpfObject REQUIRED)
@@ -130,7 +130,7 @@ else()
     target_include_directories(rank-prelude PUBLIC ../rankd-time/include)
 endif()
 
-if (NOT UNDER_SIMULATION)
+if (NOT FROM_SIMUZILLA)
     target_link_libraries(rank-prelude PRIVATE rank_l2_skel)
 endif()
 target_link_libraries(rank-prelude PRIVATE pthread)
