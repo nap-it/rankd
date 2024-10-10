@@ -105,9 +105,9 @@ endif()
 
 set(RANK_PRELUDE include)
 
-if(NOT EXTERNALLY_SOURCED)
-    add_library(rank-prelude STATIC prelude.cpp ${SOURCE_LIST} ${HEADER_LIST})
-endif()
+#if(NOT EXTERNALLY_SOURCED)
+add_library(rank-prelude STATIC prelude.cpp ${SOURCE_LIST} ${HEADER_LIST})
+#endif()
 
 target_include_directories(rank-prelude PUBLIC include)
 target_include_directories(rank-prelude PUBLIC
