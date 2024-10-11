@@ -133,7 +133,7 @@ std::string get_subfeature_name(const SubfeatureType& type) {
 
 Sensors::Sensors() {
     // Initialize all the variables for future snapping.
-    // TODO
+    _sensors = {};
 
     // Take a snapshot of the system, CPU-wise.
     snap();

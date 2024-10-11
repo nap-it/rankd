@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <map>
 #include <numeric>
+#include <random>
 #include <string>
 
 enum class ProcessStatus {
@@ -46,6 +47,12 @@ struct Kernel {
 
 std::string get_username_from_uid(int uid);
 
+ProcessStatus random_status();
+
+std::string random_user();
+
+std::string random_command();
+
 class OperativeSystem {
 public:
   OperativeSystem();
@@ -60,6 +67,7 @@ public:
 private:
   Kernel _kernel;
   std::chrono::seconds _uptime{};
+  double _starting_time_point;
   double _load1m;
   double _load5m;
   double _load15m;

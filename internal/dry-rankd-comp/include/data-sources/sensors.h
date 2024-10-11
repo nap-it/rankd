@@ -1,8 +1,6 @@
 #ifndef DRYRANKD_SENSORS_H
 #define DRYRANKD_SENSORS_H
 
-#define RAPIDJSON_HAS_STDSTRING 1
-
 #include <map>
 #include <string>
 #include <utility>
@@ -183,7 +181,6 @@ public:
   Sensors();
   void snap();
   [[nodiscard]] const std::map<std::string, Sensor>& sensors() const { return _sensors; }
-  friend std::ostream& operator<<(std::ostream& os, const Sensors& sensors);
 private:
   void update_sensors(const std::string& key, Sensor value) {
     _sensors[key] = std::move(value);

@@ -1,4 +1,4 @@
-project(rankd-comp
+project(dry-rankd-comp
         VERSION 0.1.0
         DESCRIPTION "Dry-run computational Rank daemon library for Simuzilla"
         LANGUAGES CXX C)

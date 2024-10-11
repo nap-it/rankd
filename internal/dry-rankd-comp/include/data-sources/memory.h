@@ -1,10 +1,12 @@
 #ifndef DRYRANKD_LINUX_MEMORY_H
 #define DRYRANKD_LINUX_MEMORY_H
 
+#include <chrono>
 #include <cstdlib>
 #include <fstream>
 #include <map>
 #include <optional>
+#include <random>
 
 class Memory {
 public:

@@ -2,17 +2,17 @@
 #define DRYRANKDCOMP_LINUX_CPU_H
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <fstream>
 #include <map>
 #include <optional>
 #include <ostream>
+#include <random>
 #include <set>
 #include <sstream>
 #include <string>
-
-#include "utils/strings.h"
 
 struct CPUCore {
   /// Identifier of the CPU core.
