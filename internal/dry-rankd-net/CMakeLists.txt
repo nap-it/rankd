@@ -8,12 +8,13 @@ set(HEADER_LIST
         include/data-sources/interfaces.h
         include/data-sources/neighbors.h
         include/data-sources/routes.h
+        include/utils/addresses.h
 )
 set(SOURCE_LIST
         data-sources/interfaces.cpp
         data-sources/neighbors.cpp
         data-sources/routes.cpp
-
+        utils/addresses.cpp
 )
 
 add_library(dry-rankd-net lib.cpp ${HEADER_LIST} ${SOURCE_LIST})

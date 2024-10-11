@@ -40,6 +40,7 @@ Dispatcher::Dispatcher() {
     _logger->trace("[Dispatcher] Setting an intermediate queue between raw-simulator and simulator receivers.");
     _receiver_simulation->set_queue(sim_queue.first, sim_queue.second);
 
+#ifndef FROM_SIMUZILLA
     _logger->trace("[Dispatcher] Setting the depositing queue in L2 receiver.");
     _receiver_l2->set_message_deposit_queue(_received_messages, &_received_messages_locker);
     auto l2_queue = _raw_receiver_l2->queue_access();
@@ -51,21 +52,26 @@ Dispatcher::Dispatcher() {
 
     _logger->trace("[Dispatcher] Setting the depositing queue in DDS receiver.");
     _receiver_dds->set_queue(_received_messages, &_received_messages_locker);
+#endif
 
     _logger->trace("[Dispatcher] Setting the sending queue in sender component.");
     _sender->set_queue(_sending_messages, &_sending_messages_locker);
 
     // Borrow the control of the receivers to the raw receivers.
     _logger->trace("[Dispatcher] Borrow the control of the receivers to the raw receivers.");
+#ifndef FROM_SIMUZILLA
     _raw_receiver_l2->receive_control_borrowing_from(_receiver_l2);
+#endif
     _raw_receiver_simulation->receive_control_borrowing_from(_receiver_simulation);
 
     // Run the receivers.
     _logger->trace("[Dispatcher] Executing all the receivers.");
     _raw_receiver_simulation->execute();
+#ifndef FROM_SIMUZILLA
     _raw_receiver_l2->execute();
     _receiver_l3->execute();
     _receiver_dds->execute();
+#endif
 }
 
 #ifndef SIMUZILLA
@@ -87,8 +93,10 @@ Dispatcher *Dispatcher::borrow_simulation_sender_function(std::function<void(uin
 Dispatcher::~Dispatcher() {
     _logger->trace("[Dispatcher] Stopping all the dispatching units...");
     _receiver_simulation->stop();
+#ifndef FROM_SIMUZILLA
     _receiver_l2->stop();
     _receiver_l3->stop();
     _receiver_dds->stop();
+#endif
     _sender->stop();
 }

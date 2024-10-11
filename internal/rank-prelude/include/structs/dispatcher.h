@@ -31,10 +31,12 @@ private:
     Sender* _sender = Sender::get_instance();
     ReceiverSimulation* _receiver_simulation = ReceiverSimulation::get_instance();
     RawReceiverSimulation* _raw_receiver_simulation = RawReceiverSimulation::get_instance();
+#ifndef FROM_SIMUZILLA
     ReceiverL2* _receiver_l2 = ReceiverL2::get_instance();
     RawReceiverL2* _raw_receiver_l2 = RawReceiverL2::get_instance();
     ReceiverL3* _receiver_l3 = ReceiverL3::get_instance();
     ReceiverDDS* _receiver_dds = ReceiverDDS::get_instance();
+#endif
     std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _received_messages = new std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>();
     std::mutex _received_messages_locker{};
     std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _sending_messages = new std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>();

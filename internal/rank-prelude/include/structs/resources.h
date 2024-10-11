@@ -11,6 +11,16 @@
 
 #include "constants.h"
 
+#ifdef FROM_SIMUZILLA
+#include "dry-comp-lib.h"
+#include "dry-net-lib.h"
+#include "dry-time-lib.h"
+#else
+#include "comp-lib.h"
+#include "net-lib.h"
+#include "time-lib.h"
+#endif
+
 #include "structs/current_capabilities.h"
 #include "structs/identifier.h"
 #include "structs/requesting_capabilities.h"

@@ -11,7 +11,11 @@
 
 #include "structs/message.h"
 
+#ifdef FROM_SIMUZILLA
+#include "dry-net-lib.h"
+#else
 #include "net-lib.h"
+#endif
 
 #include "EthLayer.h"
 #include "PayloadLayer.h"
