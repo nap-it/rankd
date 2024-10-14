@@ -1,6 +1,7 @@
 #ifndef DRYRANKD_NET_LIB_ROUTES_H
 #define DRYRANKD_NET_LIB_ROUTES_H
 
+#include <functional>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -28,10 +29,12 @@ struct NetworkRoute {
 
 class NetworkRoutes {
 public:
-    NetworkRoutes();
+    NetworkRoutes(std::function<const std::vector<int>*()> topology, unsigned int own_address);
     void snap();
 private:
     std::vector<NetworkRoute> _routes;
+    std::function<const std::vector<int>*()> _topology;
+    unsigned int _own_address;
 };
 
 #endif //DRYRANKD_NET_LIB_ROUTES_H

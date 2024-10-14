@@ -1,6 +1,7 @@
 #ifndef DRYRANKD_NET_LIB_INTERFACES_H
 #define DRYRANKD_NET_LIB_INTERFACES_H
 
+#include <functional>
 #include <map>
 #include <iostream>
 #include <string>
@@ -51,10 +52,12 @@ struct NetworkDevice {
 
 class NetworkDevices {
 public:
-    NetworkDevices();
+    NetworkDevices(std::function<const std::vector<int>*()> topology, unsigned int own_address);
     void snap();
 private:
     std::map<int, NetworkDevice> _devices;
+    std::function<const std::vector<int>*()> _topology;
+    unsigned int _own_address;
 };
 
 #endif //DRYRANKD_NET_LIB_INTERFACES_H

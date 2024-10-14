@@ -92,6 +92,13 @@ void Sender::operator()() {
     }
 }
 
+#ifdef FROM_SIMUZILLA
+void Sender::set_topology_and_current_address(std::function<const std::vector<int>*()> topology, unsigned int address) {
+    _topology = topology;
+    _own_address = address;
+}
+#endif
+
 #ifndef SIMUZILLA
 Sender *Sender::borrow_sender_function(std::function<void(uint8_t, const std::vector<uint8_t> &)> *function) {
     _simulated_send = function;

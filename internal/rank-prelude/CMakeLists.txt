@@ -163,8 +163,6 @@ else()
     )
 endif()
 
-
-
 # Add external projects (vendor).
 if(NOT EXTERNALLY_SOURCED)
     add_subdirectory(vendor)

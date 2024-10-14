@@ -30,6 +30,12 @@ std::tuple<Message*, std::vector<uint8_t>, IdentifierType> Dispatcher::dequeue_i
     return message_source_and_type;
 }
 
+#ifdef FROM_SIMUZILLA
+void Dispatcher::set_topology_and_current_address(std::function<const std::vector<int>*()> topology, unsigned int address) {
+    _sender->set_topology_and_current_address(topology, address);
+}
+#endif
+
 Dispatcher::Dispatcher() {
     _logger->info("Preparing the dispatcher unit...");
 

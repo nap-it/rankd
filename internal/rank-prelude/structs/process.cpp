@@ -283,6 +283,14 @@ void Process::operator()() {
     }
 }
 
+#ifdef FROM_SIMUZILLA
+Process* Process::set_topology_and_current_address(std::function<const std::vector<int>*()> topology, unsigned int address) {
+    _dispatcher->set_topology_and_current_address(topology, address);
+
+    return this;
+}
+#endif
+
 #ifndef SIMUZILLA
 Process *Process::borrow_simulation_recv_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)> *function) {
     _logger->trace("[Process] Registering Rx function in dispatcher.");

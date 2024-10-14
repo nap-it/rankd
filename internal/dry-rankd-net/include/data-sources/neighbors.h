@@ -1,6 +1,7 @@
 #ifndef DRYRANKD_NET_LIB_NEIGHBORS_H
 #define DRYRANKD_NET_LIB_NEIGHBORS_H
 
+#include <functional>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -18,11 +19,13 @@ struct NetworkNeighbor {
 
 class NetworkNeighbors {
 public:
-    NetworkNeighbors();
+    NetworkNeighbors(std::function<const std::vector<int>*()> topology, unsigned int own_address);
     void snap();
     std::vector<NetworkNeighbor> neighbors();
 private:
     std::vector<NetworkNeighbor> _neighbors;
+    std::function<const std::vector<int>*()> _topology;
+    unsigned int _own_address;
 };
 
 #endif //DRYRANKD_NET_LIB_NEIGHBORS_H
