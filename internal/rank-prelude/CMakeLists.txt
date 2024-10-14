@@ -4,6 +4,7 @@ project(rank-prelude
         LANGUAGES CXX C)
 
 if (FROM_SIMUZILLA)
+    message("-- Preparing rank-prelude from simuzilla: Adding defintion -DFROM_SIMUZILLA.")
     add_definitions(-DFROM_SIMUZILLA)
 endif()
 
