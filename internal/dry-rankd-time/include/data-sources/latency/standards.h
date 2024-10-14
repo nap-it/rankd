@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <optional>
+#include <string>
 #include <vector>
 
 #include "standards/ieee.h"
@@ -18,7 +19,6 @@ namespace CBS {
 
     struct CBSAConfig {
         std::optional<CBSAParameters> cbsa_parameters;
-        rapidjson::Document json() const;
     };
 
     typedef CBSAConfig CBS;
@@ -63,8 +63,6 @@ namespace TAS {
     typedef std::vector<GateParameterTableEntry> GateParameterTable;
 
     struct SchedParameters {
-        [[nodiscard]] rapidjson::Document json() const;
-
         std::optional<GateParameterTable> gate_parameter_table;
         std::optional<bool> gate_enabled = false;
         std::optional<uint8_t> admin_gate_states = 255;

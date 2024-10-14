@@ -180,7 +180,6 @@ if (NOT FROM_SIMUZILLA)
     if (EXISTS ${CMAKE_CURRENT_BINARY_DIR}/rank_l2.skel.h)
         configure_file(${CMAKE_CURRENT_BINARY_DIR}/rank_l2.skel.h ${CMAKE_CURRENT_SOURCE_DIR}/include/structs/dispatchers/bpf/rank_l2.skel.h COPYONLY)
     endif()
-
 endif()
 
 set(RANK_PRELUDE include)
@@ -222,7 +221,11 @@ endif()
 target_link_libraries(rank-prelude PRIVATE pthread)
 target_link_libraries(rank-prelude PRIVATE cborcpp)
 target_link_libraries(rank-prelude PRIVATE Pcap++ Packet++ Common++ pcap)
-target_link_libraries(rank-prelude PRIVATE rankd-comp rankd-net rankd-time)
+if (NOT FROM_SIMUZILLA)
+    target_link_libraries(rank-prelude PRIVATE rankd-comp rankd-net rankd-time)
+else()
+    target_link_libraries(rank-prelude PRIVATE dry-rankd-comp dry-rankd-net dry-rankd-time)
+endif()
 
 target_compile_features(rank-prelude PUBLIC cxx_std_20)
 

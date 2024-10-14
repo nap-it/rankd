@@ -11,6 +11,7 @@ set(HEADER_LIST
         include/data-sources/reliability/reliability.h
         include/data-sources/synchronization/standards.h
         include/data-sources/synchronization/synchronization.h
+        include/data-sources/standards/ieee.h
 )
 set(SOURCE_LIST
         data-sources/configuration/configuration.cpp

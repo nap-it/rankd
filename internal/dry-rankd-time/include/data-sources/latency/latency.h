@@ -23,7 +23,6 @@ public:
     std::map<uint8_t, CBS::CBS *> cbs();
     ~Latency();
 private:
-#ifndef LIUNX_TC
     void snap_tas();
     void snap_cbs();
     std::map<uint8_t, TAS::TAS *> _time_aware_shaping_rules{};
