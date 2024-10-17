@@ -189,6 +189,11 @@ set(RANK_PRELUDE include)
 add_library(rank-prelude STATIC prelude.cpp ${SOURCE_LIST} ${HEADER_LIST})
 #endif()
 
+if (FROM_SIMUZILLA)
+    target_compile_definitions(rank-prelude PUBLIC -DFROM_SIMUZILLA)
+endif()
+
+
 target_include_directories(rank-prelude PUBLIC include)
 target_include_directories(rank-prelude PUBLIC
         vendor
