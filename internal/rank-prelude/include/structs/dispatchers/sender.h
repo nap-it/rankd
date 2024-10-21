@@ -36,8 +36,6 @@ public:
     void operator()();
 #ifdef FROM_SIMUZILLA
     void set_topology_and_current_address(std::function<const std::vector<int>*()> topology, unsigned int address);
-#endif
-#ifndef SIMUZILLA
     Sender* borrow_sender_function(std::function<void(uint8_t, const std::vector<uint8_t>&)>* function);
 #endif
 private:
@@ -51,7 +49,7 @@ private:
     std::thread _thread;
     std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _queue;
     std::mutex* _queue_mutex;
-#if FROM_SIMUZILLA
+#ifdef FROM_SIMUZILLA
     std::function<const std::vector<int>*()> _topology;
     unsigned int _own_address;
     NetworkNeighbors _neighbors_data_source = NetworkNeighbors(_topology, _own_address);

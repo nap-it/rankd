@@ -289,9 +289,7 @@ Process* Process::set_topology_and_current_address(std::function<const std::vect
 
     return this;
 }
-#endif
 
-#ifndef SIMUZILLA
 Process *Process::borrow_simulation_recv_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)> *function) {
     _logger->trace("[Process] Registering Rx function in dispatcher.");
     _dispatcher->borrow_simulation_receiver_function(function);

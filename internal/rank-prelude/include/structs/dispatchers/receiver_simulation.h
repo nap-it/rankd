@@ -47,7 +47,7 @@ public:
     RawReceiverSimulation* stop();
     bool is_running();
     void operator()();
-#ifndef SIMUZILLA
+#ifdef FROM_SIMUZILLA
     RawReceiverSimulation* borrow_receiver_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)>* function);
 #endif
     ~RawReceiverSimulation();

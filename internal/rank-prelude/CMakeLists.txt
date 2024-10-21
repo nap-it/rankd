@@ -53,7 +53,7 @@ if (FROM_SIMUZILLA)
             structs/capabilities.cpp
             structs/current_capabilities.cpp
             structs/dispatcher.cpp
-            structs/dispatchers/receiver_dds.cpp
+            structs/dispatchers/receiver_simulation.cpp
             structs/dispatchers/sender.cpp
             structs/handler.cpp
             structs/identifier.cpp

@@ -42,11 +42,12 @@ Dispatcher::Dispatcher() {
     // Set queues and respective mutexes for synchronization on accesses.
     _logger->trace("[Dispatcher] Setting the depositing queue in simulator receiver.");
     _receiver_simulation->set_message_deposit_queue(_received_messages, &_received_messages_locker);
+
+#ifdef FROM_SIMUZILLA
     auto sim_queue = _raw_receiver_simulation->queue_access();
     _logger->trace("[Dispatcher] Setting an intermediate queue between raw-simulator and simulator receivers.");
     _receiver_simulation->set_queue(sim_queue.first, sim_queue.second);
-
-#ifndef FROM_SIMUZILLA
+#else
     _logger->trace("[Dispatcher] Setting the depositing queue in L2 receiver.");
     _receiver_l2->set_message_deposit_queue(_received_messages, &_received_messages_locker);
     auto l2_queue = _raw_receiver_l2->queue_access();
@@ -65,22 +66,25 @@ Dispatcher::Dispatcher() {
 
     // Borrow the control of the receivers to the raw receivers.
     _logger->trace("[Dispatcher] Borrow the control of the receivers to the raw receivers.");
-#ifndef FROM_SIMUZILLA
+
+#ifdef FROM_SIMUZILLA
+    _raw_receiver_simulation->receive_control_borrowing_from(_receiver_simulation);
+#else
     _raw_receiver_l2->receive_control_borrowing_from(_receiver_l2);
 #endif
-    _raw_receiver_simulation->receive_control_borrowing_from(_receiver_simulation);
 
     // Run the receivers.
     _logger->trace("[Dispatcher] Executing all the receivers.");
+#ifdef FROM_SIMUZILLA
     _raw_receiver_simulation->execute();
-#ifndef FROM_SIMUZILLA
+#else
     _raw_receiver_l2->execute();
     _receiver_l3->execute();
     _receiver_dds->execute();
 #endif
 }
 
-#ifndef SIMUZILLA
+#ifdef FROM_SIMUZILLA
 Dispatcher *Dispatcher::borrow_simulation_receiver_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>()> *function) {
     _logger->trace("[Dispatcher] Registering Rx function in raw receiver.");
     _raw_receiver_simulation->borrow_receiver_function(function);
@@ -98,8 +102,9 @@ Dispatcher *Dispatcher::borrow_simulation_sender_function(std::function<void(uin
 
 Dispatcher::~Dispatcher() {
     _logger->trace("[Dispatcher] Stopping all the dispatching units...");
+#ifdef FROM_SIMUZILLA
     _receiver_simulation->stop();
-#ifndef FROM_SIMUZILLA
+#else
     _receiver_l2->stop();
     _receiver_l3->stop();
     _receiver_dds->stop();
