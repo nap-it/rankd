@@ -23,8 +23,8 @@ public:
     std::tuple<Message*, std::vector<uint8_t>, IdentifierType> dequeue_item();
 #ifdef FROM_SIMUZILLA
     void set_topology_and_current_address(std::function<const std::vector<int>*()> topology, unsigned int address);
-    Dispatcher* borrow_simulation_receiver_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>()>* function);
-    Dispatcher* borrow_simulation_sender_function(std::function<void(uint8_t, const std::vector<uint8_t>&)>* function);
+    Dispatcher* borrow_simulation_receiver_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>()>& function);
+    Dispatcher* borrow_simulation_sender_function(std::function<void(uint8_t, const std::vector<uint8_t>&)>& function);
 #endif
     ~Dispatcher();
 private:

@@ -85,14 +85,14 @@ Dispatcher::Dispatcher() {
 }
 
 #ifdef FROM_SIMUZILLA
-Dispatcher *Dispatcher::borrow_simulation_receiver_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>()> *function) {
+Dispatcher *Dispatcher::borrow_simulation_receiver_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>()>& function) {
     _logger->trace("[Dispatcher] Registering Rx function in raw receiver.");
     _raw_receiver_simulation->borrow_receiver_function(function);
 
     return this;
 }
 
-Dispatcher *Dispatcher::borrow_simulation_sender_function(std::function<void(uint8_t, const std::vector<uint8_t> &)> *function) {
+Dispatcher *Dispatcher::borrow_simulation_sender_function(std::function<void(uint8_t, const std::vector<uint8_t> &)>& function) {
     _logger->trace("[Dispatcher] Registering Tx function in sender.");
     _sender->borrow_sender_function(function);
 
