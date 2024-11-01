@@ -2,7 +2,7 @@
 <a href="https://code.nap.av.it.pt/ruieduardo.fa.lopes/rankd/-/wikis/home" rel="some text"><img src="https://img.shields.io/badge/wiki-repo%20wiki-blue"></a>
 <img src="https://img.shields.io/badge/build-none-inactive">
 <img src="https://img.shields.io/badge/docs-none-inactive">
-<img src="https://img.shields.io/badge/version-0.1.0%20(alpha)-green">
+<img src="https://img.shields.io/badge/version-0.1.0%20(rev E)-green">
 
 # Rankd
 
