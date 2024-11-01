@@ -11,7 +11,11 @@
 
 #include "structs/message.h"
 
+#ifdef FROM_SIMUZILLA
+#include "dry-net-lib.h"
+#else
 #include "net-lib.h"
+#endif
 
 #include "EthLayer.h"
 #include "PayloadLayer.h"
@@ -30,9 +34,9 @@ public:
     Sender* stop();
     bool is_running();
     void operator()();
-
-#ifndef SIMUZILLA
-    Sender* borrow_sender_function(std::function<void(uint8_t, const std::vector<uint8_t>&)>* function);
+#ifdef FROM_SIMUZILLA
+    void set_topology_and_current_address(std::function<const std::vector<int>*()> topology, unsigned int address);
+    Sender* borrow_sender_function(std::function<void(uint8_t, const std::vector<uint8_t>&)>& function);
 #endif
 private:
     Sender();
@@ -40,12 +44,18 @@ private:
     void make_and_send_packet(Message* message, const std::vector<uint8_t>& target) const;
     void make_and_send_message(Message* message, const std::vector<uint8_t>& target) const;
     void make_and_send_bytes(Message* message, const std::vector<uint8_t>& target) const;
-    void* _simulated_send = nullptr;
+    std::function<void(uint8_t, const std::vector<uint8_t>&)> _simulated_send;
     bool _running = false;
     std::thread _thread;
     std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _queue;
     std::mutex* _queue_mutex;
+#ifdef FROM_SIMUZILLA
+    std::function<const std::vector<int>*()> _topology;
+    unsigned int _own_address;
+    NetworkNeighbors _neighbors_data_source = NetworkNeighbors(_topology, _own_address);
+#else
     NetworkNeighbors _neighbors_data_source = NetworkNeighbors();
+#endif
     std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
 };
 

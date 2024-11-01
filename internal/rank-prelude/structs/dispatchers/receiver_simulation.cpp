@@ -59,10 +59,8 @@ void RawReceiverSimulation::operator()() {
     while (_running) {
         // Receive a message from the recv function.
         std::pair<uint8_t, std::vector<uint8_t>> data{};
-#ifndef SIMUZILLA
         _logger->trace("[RawReceiverSimulation] Waiting for a message to come…");
-        data = (*(static_cast<std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)>*>(_simulated_recv)))();
-#endif
+        data = _simulated_recv();
 
         // If the data response is empty, ignore it.
         if (data.second.empty()) {
@@ -84,9 +82,9 @@ void RawReceiverSimulation::operator()() {
     }
 }
 
-#ifndef SIMUZILLA
+#ifdef FROM_SIMUZILLA
 RawReceiverSimulation *
-RawReceiverSimulation::borrow_receiver_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>()> *function) {
+RawReceiverSimulation::borrow_receiver_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>()>& function) {
     _logger->trace("[RawReceiverSimulation] Registering Rx function from Simuzilla.");
     _simulated_recv = function;
 

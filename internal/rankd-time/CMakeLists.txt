@@ -34,9 +34,9 @@ endif()
 
 find_library(libptpmgmt ptpmgmt)
 if (NOT libptpmgmt)
-    message("-- Library ptpmgmt was not found")
+    message("-- Library libptpmgmt was not found")
 else()
-    message("-- Library ptpmgmt was found")
+    message("-- Library libptpmgmt was found")
 endif()
 
 # Make the rankd-time library (librankd-net).

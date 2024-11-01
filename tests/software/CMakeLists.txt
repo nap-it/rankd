@@ -19,8 +19,11 @@ target_link_libraries(os-monitor rankd-comp)
 add_executable(relyum-monitor relyum-snmp-monitor.cpp)
 target_link_libraries(relyum-monitor rankd-time netsnmp linuxptp)
 
-add_executable(ptp-monitor ptp-monitor.cpp)
-target_link_libraries(ptp-monitor rankd-time)
+add_executable(ptp-ptpmgmt-monitor ptp2-monitor.cpp)
+target_link_libraries(ptp-ptpmgmt-monitor ptpmgmt)
+
+# add_executable(ptp-monitor ptp-monitor.cpp)
+# target_link_libraries(ptp-monitor rankd-time)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBNL_PKG REQUIRED IMPORTED_TARGET libnl-genl-3.0)

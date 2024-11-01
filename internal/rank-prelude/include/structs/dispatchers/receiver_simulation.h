@@ -47,13 +47,13 @@ public:
     RawReceiverSimulation* stop();
     bool is_running();
     void operator()();
-#ifndef SIMUZILLA
-    RawReceiverSimulation* borrow_receiver_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)>* function);
+#ifdef FROM_SIMUZILLA
+    RawReceiverSimulation* borrow_receiver_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)>& function);
 #endif
     ~RawReceiverSimulation();
 private:
     RawReceiverSimulation();
-    void* _simulated_recv = nullptr;
+    std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)> _simulated_recv;
     bool _running = false;
     std::thread _thread;
     std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>* _queue = new std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>();

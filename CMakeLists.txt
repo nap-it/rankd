@@ -7,6 +7,13 @@ project(rankd
 
 message("-> Initiating CMake for cmd/rank/cmd/rankd project")
 
+# Check if this project is being called on from Simuzilla's integration.
+if(FROM_SIMUZILLA)
+    message("-- Preparing cmake project with considerations for Simuzilla.")
+    add_subdirectory(internal)
+    return()
+endif()
+
 set(EXTERNALLY_SOURCED OFF)
 
 include(ExternalProject)

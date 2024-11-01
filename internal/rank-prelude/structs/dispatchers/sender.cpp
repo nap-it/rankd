@@ -92,8 +92,15 @@ void Sender::operator()() {
     }
 }
 
-#ifndef SIMUZILLA
-Sender *Sender::borrow_sender_function(std::function<void(uint8_t, const std::vector<uint8_t> &)> *function) {
+#ifdef FROM_SIMUZILLA
+void Sender::set_topology_and_current_address(std::function<const std::vector<int>*()> topology, unsigned int address) {
+    _topology = topology;
+    _own_address = address;
+}
+#endif
+
+#ifdef FROM_SIMUZILLA
+Sender *Sender::borrow_sender_function(std::function<void(uint8_t, const std::vector<uint8_t> &)>& function) {
     _simulated_send = function;
 
     return this;
@@ -242,9 +249,9 @@ void Sender::make_and_send_bytes(Message *message, const std::vector<uint8_t> &t
     _logger->debug("[Sender] [Make Bytes] Message in bytes: {} bytes.", serialized_message.size());
 
     // Send this message through simulated send function.
-#ifndef SIMUZILLA
+#ifdef FROM_SIMUZILLA
     _logger->trace("[Sender] [Make Bytes] Send Rank bytes through Simuzilla.");
-    (*(static_cast<std::function<void(uint8_t, const std::vector<uint8_t> &)>*>(_simulated_send)))(target_identifier, serialized_message);
+    _simulated_send(target_identifier, serialized_message);
     _logger->info("Data with {} bytes were successfully sent to \"Node {}\" via Simuzilla.", serialized_message.size(), target_identifier);
 #endif
 }

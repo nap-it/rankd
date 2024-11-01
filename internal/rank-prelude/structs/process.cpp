@@ -283,8 +283,14 @@ void Process::operator()() {
     }
 }
 
-#ifndef SIMUZILLA
-Process *Process::borrow_simulation_recv_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)> *function) {
+#ifdef FROM_SIMUZILLA
+Process* Process::set_topology_and_current_address(std::function<const std::vector<int>*()> topology, unsigned int address) {
+    _dispatcher->set_topology_and_current_address(topology, address);
+
+    return this;
+}
+
+Process *Process::borrow_simulation_recv_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)>& function) {
     _logger->trace("[Process] Registering Rx function in dispatcher.");
     _dispatcher->borrow_simulation_receiver_function(function);
 
@@ -294,7 +300,7 @@ Process *Process::borrow_simulation_recv_function(std::function<std::pair<uint8_
 }
 
 Process *
-Process::borrow_simulation_send_function(std::function<void(uint8_t, const std::vector<uint8_t> &)> *function) {
+Process::borrow_simulation_send_function(std::function<void(uint8_t, const std::vector<uint8_t> &)>& function) {
     _logger->trace("[Process] Registering Tx function in dispatcher.");
     _dispatcher->borrow_simulation_sender_function(function);
 

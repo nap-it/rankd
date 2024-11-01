@@ -7,6 +7,10 @@
 #include "stringbuffer.h"
 #include "writer.h"
 
+#ifndef LINUX_PTP
+#include <ptpmgmt/init.h>
+#endif
+
 #define OUTPUT_SYNC_TYPE_PTP 1
 #define OUTPUT_SYNC_TYPE_ALL OUTPUT_SYNC_TYPE_PTP
 
@@ -22,6 +26,7 @@ public:
     //friend std::ostream& operator<<(std::ostream& os, const Synchronization& synchronization);
 private:
 #ifndef LINUX_PTP
+    void snap_ptp_via_linux_ptpmgmt();
     //void snap_ptp_via_linux_ptp();
 #elif define(RELYUM)
     void snap_ptp_via_relyum();
