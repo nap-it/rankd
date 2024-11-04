@@ -325,6 +325,7 @@ Process::~Process() {
 }
 
 Process::Process() {
+#ifndef FROM_SIMUZILLA
     _logger->info("Preparing the Rank process...");
 
     // Initialize the inner structures.
@@ -411,4 +412,15 @@ Process::Process() {
     // Initialize the dispatcher.
     _logger->info("Initializing the dispatcher...");
     _dispatcher = Dispatcher::get_instance();
+#else
+    _logger->info("Preparing the Rank process from Simuzilla...");
+
+    // Initialize the inner structures.
+    _resources = Resources::get_instance();
+    _timeout_handler = TimeoutHandler::get_instance();
+
+    // Initialize the dispatcher.
+    _logger->info("Initializing the dispatcher...");
+    _dispatcher = Dispatcher::get_instance();
+#endif
 }

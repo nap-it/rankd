@@ -84,7 +84,7 @@ void RawReceiverSimulation::operator()() {
 
 #ifdef FROM_SIMUZILLA
 RawReceiverSimulation *
-RawReceiverSimulation::borrow_receiver_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>()>& function) {
+RawReceiverSimulation::borrow_receiver_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)>& function) {
     _logger->trace("[RawReceiverSimulation] Registering Rx function from Simuzilla.");
     _simulated_recv = function;
 

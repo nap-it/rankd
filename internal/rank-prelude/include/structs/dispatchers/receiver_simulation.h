@@ -1,6 +1,7 @@
 #ifndef RANK_PRELUDE_DISPATCHER_RECEIVER_SIMULATION_H
 #define RANK_PRELUDE_DISPATCHER_RECEIVER_SIMULATION_H
 
+#include <functional>
 #include <mutex>
 #include <queue>
 #include <thread>
@@ -59,7 +60,11 @@ private:
     std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>* _queue = new std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>();
     std::mutex* _queue_mutex;
     ReceiverSimulation* _receiver_controller = nullptr;
+#ifdef FROM_SIMUZILLA
+    std::shared_ptr<spdlog::logger> _logger = spdlog::get("simuzilla-logger");
+#else
     std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
+#endif
 };
 
 #endif //RANK_PRELUDE_DISPATCHER_RECEIVER_SIMULATION_H

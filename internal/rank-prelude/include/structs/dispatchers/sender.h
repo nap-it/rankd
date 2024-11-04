@@ -56,7 +56,11 @@ private:
 #else
     NetworkNeighbors _neighbors_data_source = NetworkNeighbors();
 #endif
+#ifdef FROM_SIMUZILLA
+    std::shared_ptr<spdlog::logger> _logger = spdlog::get("simuzilla-logger");
+#else
     std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
+#endif
 };
 
 #endif //RANK_PRELUDE_DISPATCHER_SENDER_H
