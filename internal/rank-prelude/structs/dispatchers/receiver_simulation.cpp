@@ -6,6 +6,7 @@ RawReceiverSimulation::queue_access() {
 }
 
 RawReceiverSimulation *RawReceiverSimulation::receive_control_borrowing_from(ReceiverSimulation *controller) {
+    _logger->trace("[RawReceiverSimulation] A recv function was borrowed from other to be used...");
     _receiver_controller = controller;
 
     return this;
@@ -60,7 +61,11 @@ void RawReceiverSimulation::operator()() {
         // Receive a message from the recv function.
         std::pair<uint8_t, std::vector<uint8_t>> data{};
         _logger->trace("[RawReceiverSimulation] Waiting for a message to come…");
-        data = _simulated_recv();
+        if (_simulated_recv) {
+            data = _simulated_recv();
+        } else {
+            _logger->error("[RawReceiverSimulation] No simulated receiving function registered.");
+        }
 
         // If the data response is empty, ignore it.
         if (data.second.empty()) {
