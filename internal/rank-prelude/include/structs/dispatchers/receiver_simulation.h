@@ -49,7 +49,7 @@ public:
     bool is_running();
     void operator()();
 #ifdef FROM_SIMUZILLA
-    RawReceiverSimulation* borrow_receiver_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)>& function);
+    RawReceiverSimulation* borrow_receiver_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)> function);
 #endif
     ~RawReceiverSimulation();
 private:

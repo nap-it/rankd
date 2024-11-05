@@ -1,5 +1,7 @@
 #include "structs/dispatchers/receiver_simulation.h"
 
+#include <utility>
+
 std::pair<std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>> *, std::mutex *>
 RawReceiverSimulation::queue_access() {
     return std::make_pair(_queue, _queue_mutex);
@@ -89,9 +91,9 @@ void RawReceiverSimulation::operator()() {
 
 #ifdef FROM_SIMUZILLA
 RawReceiverSimulation *
-RawReceiverSimulation::borrow_receiver_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)>& function) {
+RawReceiverSimulation::borrow_receiver_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)> function) {
     _logger->trace("[RawReceiverSimulation] Registering Rx function from Simuzilla.");
-    _simulated_recv = function;
+    _simulated_recv = std::move(function);
 
     return this;
 }

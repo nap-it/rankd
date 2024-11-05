@@ -36,7 +36,7 @@ public:
     void operator()();
 #ifdef FROM_SIMUZILLA
     void set_topology_and_current_address(std::function<const std::vector<int>*()> topology, unsigned int address);
-    Sender* borrow_sender_function(std::function<void(uint8_t, const std::vector<uint8_t>&)>& function);
+    Sender* borrow_sender_function(std::function<void(uint8_t, std::vector<uint8_t>)> function);
 #endif
 private:
     Sender();
@@ -44,7 +44,7 @@ private:
     void make_and_send_packet(Message* message, const std::vector<uint8_t>& target) const;
     void make_and_send_message(Message* message, const std::vector<uint8_t>& target) const;
     void make_and_send_bytes(Message* message, const std::vector<uint8_t>& target) const;
-    std::function<void(uint8_t, const std::vector<uint8_t>&)> _simulated_send;
+    std::function<void(uint8_t, std::vector<uint8_t>)> _simulated_send;
     bool _running = false;
     std::thread _thread;
     std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _queue;
