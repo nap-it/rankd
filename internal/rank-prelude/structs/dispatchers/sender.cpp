@@ -102,7 +102,7 @@ void Sender::set_topology_and_current_address(std::function<const std::vector<in
 #ifdef FROM_SIMUZILLA
 Sender *Sender::borrow_sender_function(std::function<void(uint8_t, std::vector<uint8_t>)> function) {
     _logger->trace("[Sender] A send function was borrowed from other to be used for simulation...");
-    _simulated_send = std::move(function);
+    _simulated_send.swap(function);
 
     return this;
 }

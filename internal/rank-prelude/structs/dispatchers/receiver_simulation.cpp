@@ -67,6 +67,7 @@ void RawReceiverSimulation::operator()() {
             data = _simulated_recv();
         } else {
             _logger->error("[RawReceiverSimulation] No simulated receiving function registered.");
+            continue;
         }
 
         // If the data response is empty, ignore it.
@@ -93,7 +94,7 @@ void RawReceiverSimulation::operator()() {
 RawReceiverSimulation *
 RawReceiverSimulation::borrow_receiver_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)> function) {
     _logger->trace("[RawReceiverSimulation] Registering Rx function from Simuzilla.");
-    _simulated_recv = std::move(function);
+    _simulated_recv.swap(function);
 
     return this;
 }
