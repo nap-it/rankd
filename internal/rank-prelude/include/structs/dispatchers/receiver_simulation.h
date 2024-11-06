@@ -15,8 +15,12 @@
 class ReceiverSimulation {
 public:
     static ReceiverSimulation* get_instance() {
+#ifdef FROM_SIMUZILLA
+        return new ReceiverSimulation();
+#else
         static ReceiverSimulation instance;
         return &instance;
+#endif
     }
     ReceiverSimulation(const ReceiverSimulation&) = delete;
     void set_queue(std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>* queue, std::mutex* mutex);
@@ -39,8 +43,12 @@ private:
 class RawReceiverSimulation {
 public:
     static RawReceiverSimulation* get_instance() {
+#ifdef FROM_SIMUZILLA
+        return new RawReceiverSimulation();
+#else
         static RawReceiverSimulation instance;
         return &instance;
+#endif
     }
     std::pair<std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>*, std::mutex*> queue_access();
     RawReceiverSimulation* receive_control_borrowing_from(ReceiverSimulation* controller);

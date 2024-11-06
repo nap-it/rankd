@@ -3,8 +3,12 @@
 using namespace rank;
 
 Process* Process::get_instance() {
+#ifdef FROM_SIMUZILLA
+    return new Process();
+#else
     static auto* instance = new Process();
     return instance;
+#endif
 }
 
 bool Process::store(Handler* handler) {

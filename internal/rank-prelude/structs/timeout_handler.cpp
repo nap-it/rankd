@@ -1,8 +1,12 @@
 #include "structs/timeout_handler.h"
 
 TimeoutHandler* TimeoutHandler::get_instance() {
+#ifdef FROM_SIMUZILLA
+    return new TimeoutHandler();
+#else
     static auto* instance = new TimeoutHandler();
     return instance;
+#endif
 }
 
 void TimeoutHandler::initiate_timeout(Handler* handler, uint8_t timeout) {

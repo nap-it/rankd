@@ -62,7 +62,7 @@ void RawReceiverSimulation::operator()() {
     while (_running) {
         // Receive a message from the recv function.
         std::pair<uint8_t, std::vector<uint8_t>> data{};
-        _logger->trace("[RawReceiverSimulation] Waiting for a message to come…");
+        _logger->debug("[RawReceiverSimulation] Waiting for a message to come…");
         if (_simulated_recv) {
             data = _simulated_recv();
         } else {

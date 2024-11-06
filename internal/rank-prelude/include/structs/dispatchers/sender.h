@@ -26,8 +26,12 @@
 class Sender {
 public:
     static Sender* get_instance() {
+#ifdef FROM_SIMUZILLA
+        return new Sender();
+#else
         static Sender instance;
         return &instance;
+#endif
     }
     Sender* set_queue(std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* queue, std::mutex* mutex);
     Sender* execute();

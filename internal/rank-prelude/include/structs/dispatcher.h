@@ -14,8 +14,12 @@
 class Dispatcher {
 public:
     static Dispatcher* get_instance() {
+#ifdef FROM_SIMUZILLA
+        return new Dispatcher();
+#else
         static Dispatcher instance;
         return &instance;
+#endif
     }
     void send_message(Message* message, const std::vector<uint8_t>& target, const IdentifierType& type);
     bool receiving_queue_is_empty() const;

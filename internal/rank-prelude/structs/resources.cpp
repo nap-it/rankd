@@ -1,8 +1,12 @@
 #include "structs/resources.h"
 
 Resources* Resources::get_instance() {
+#ifdef FROM_SIMUZILLA
+    return new Resources();
+#else
     static Resources* instance = new Resources();
     return instance;
+#endif
 }
 
 float Resources::estimate_bid(const RequestingCapabilities& capabilities) const {
