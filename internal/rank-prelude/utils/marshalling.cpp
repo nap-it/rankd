@@ -8,6 +8,17 @@ uint8_t* marshal(const RequestingCapabilities& capabilities) {
     return serialized_object;
 }
 
+std::vector<uint8_t> marshall(const std::string& stringified_json) {
+    // Parse stringified_json variable onto a JSON document.
+    rapidjson::Document json;
+    json.Parse(stringified_json.c_str());
+
+    // Serialize as CBOR.
+    auto serialized_object = serialize_json_as_vector(json);
+
+    return serialized_object;
+}
+
 RequestingCapabilities unmarshal(const std::vector<uint8_t>& data) {
     auto capabilities_as_json = deserialize_json(data.data(), data.size());
 

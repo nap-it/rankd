@@ -14,6 +14,20 @@ uint8_t* serialize_json(const rapidjson::Document& json) {
     return output.data();
 }
 
+std::vector<uint8_t> serialize_json_as_vector(const rapidjson::Document& json) {
+    rapidjson::StringBuffer string_buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(string_buffer);
+    json.Accept(writer);
+
+    std::string stringified_json(string_buffer.GetString(), string_buffer.GetSize());
+
+    cbor::output_dynamic output;
+    cbor::encoder encoder(output);
+    encoder.write_bytes(reinterpret_cast<const unsigned char*>(stringified_json.c_str()), stringified_json.size());
+
+    return std::vector<uint8_t>{output.data(), output.data()+output.size()};
+}
+
 rapidjson::Document deserialize_json(const uint8_t* data, int length) {
     cbor::input input((void*) data, length);
     cbor::listener_debug listener;
