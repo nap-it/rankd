@@ -209,6 +209,9 @@ void Process::operator()() {
 
                 _logger->trace("[Process] [{}] The handler was created and will be executed now...", message_uuid);
                 handler->borrow(_dispatcher)->execute(); // (A.3.2.3)
+#ifdef FROM_SIMUZILLA
+                handler->borrow(_simulated_connections);
+#endif
             }
 
             _logger->info("A handler for {} is ready to receive message.", message_uuid);
@@ -306,7 +309,16 @@ Process *Process::borrow_simulation_recv_function(std::function<std::pair<uint8_
 Process *
 Process::borrow_simulation_send_function(std::function<void(uint8_t, std::vector<uint8_t>)> function) {
     _logger->trace("[Process] Registering Tx function in dispatcher.");
-    _dispatcher->borrow_simulation_sender_function(function);
+    _dispatcher->borrow_simulation_sender_function(std::move(function));
+
+    _in_simulation = true;
+
+    return this;
+}
+
+Process *Process::borrow_simulation_connections_function(std::function<std::set<uint8_t>(uint8_t)> function) {
+    _logger->trace("[Process] Registering connections function in process.");
+    _simulated_connections = std::move(function);
 
     _in_simulation = true;
 

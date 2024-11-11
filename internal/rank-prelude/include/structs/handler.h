@@ -68,6 +68,10 @@ public:
     // Dispatcher configurations.
     Handler* borrow(Dispatcher* dispatcher);
 
+#ifdef FROM_SIMUZILLA
+    Handler* borrow(std::function<std::set<uint8_t>(uint8_t)> function);
+#endif
+
     // Source and accepting node identifier setter.
     Handler* mark_source(const std::pair<std::vector<uint8_t>, IdentifierType>& source);
     Handler* mark_accepting_node(const std::pair<std::vector<uint8_t>, IdentifierType>& node);
@@ -81,6 +85,19 @@ public:
 private:
     UUIDv4 _uuid;
     Dispatcher* _dispatcher = nullptr;
+#ifdef FROM_SIMUZILLA
+    std::function<std::set<uint8_t>(uint8_t)> _get_connections_to;
+    std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> get_connections_to(uint8_t target) {
+        std::set<uint8_t> connections = _get_connections_to(target);
+        std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> to_return;
+
+        for (const auto& connection : connections) {
+            to_return.push_back({ {connection}, IdentifierType::Simulation });
+        }
+
+        return to_return;
+    }
+#endif
     std::pair<std::vector<uint8_t>, IdentifierType> _source_identifier{};
     std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> _accepting_nodes{};
     Message* _message = nullptr;

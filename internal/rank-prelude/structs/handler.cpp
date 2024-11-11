@@ -196,6 +196,14 @@ Handler *Handler::borrow(Dispatcher *dispatcher) {
     return this;
 }
 
+#ifdef FROM_SIMUZILLA
+Handler *Handler::borrow(std::function<std::set<uint8_t>(uint8_t)> function) {
+    _get_connections_to = std::move(function);
+
+    return this;
+}
+#endif
+
 Handler *Handler::mark_source(const std::pair<std::vector<uint8_t>, IdentifierType> &source) {
     _source_identifier = source;
 
@@ -371,8 +379,13 @@ void Handler::operator()() {
                                     default:
                                         throw std::exception();  // TODO
                                 }
+#ifdef FROM_SIMUZILLA
+                                std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target =
+                                        get_connections_to(target.at(0));
+#else
                                 std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target =
                                         get_connections_to(target);
+#endif
 
                                 // (B.1.2.2) Depending on the cardinal of connections...
                                 _logger->trace("[Handler] [{}] (B.1.2.2) Depending on the cardinal of connections...", _uuid);

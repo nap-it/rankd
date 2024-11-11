@@ -2,6 +2,8 @@
 #define RANK_PRELUDE_PROCESS_H
 
 #include <chrono>
+#include <functional>
+#include <set>
 #include <string>
 #include <thread>
 #include <vector>
@@ -81,6 +83,8 @@ public:
     Process *borrow_simulation_recv_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)> function);
 
     Process *borrow_simulation_send_function(std::function<void(uint8_t, std::vector<uint8_t>)> function);
+
+    Process *borrow_simulation_connections_function(std::function<std::set<uint8_t>(uint8_t)> function);
 #endif
 
     // Logging registry.
@@ -105,6 +109,7 @@ private:
     bool _in_simulation = false;
 #ifdef FROM_SIMUZILLA
     std::shared_ptr<spdlog::logger> _logger = spdlog::get("simuzilla-logger");
+    std::function<std::set<uint8_t>(uint8_t)> _simulated_connections;
 #else
     std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
 #endif
