@@ -1,5 +1,33 @@
 #include "structs/dispatcher.h"
 
+Dispatcher *Dispatcher::execute_dispatchers() {
+    _logger->trace("[Dispatcher] Executing all the receivers.");
+#ifdef FROM_SIMUZILLA
+    _raw_receiver_simulation->execute();
+#else
+    _raw_receiver_l2->execute();
+    _receiver_l3->execute();
+    _receiver_dds->execute();
+#endif
+    //_sender->execute();
+
+    return this;
+}
+
+Dispatcher *Dispatcher::stop_dispatchers() {
+    _logger->trace("[Dispatcher] Stopping all the dispatching units...");
+#ifdef FROM_SIMUZILLA
+    _raw_receiver_simulation->stop();
+#else
+    _receiver_l2->stop();
+    _receiver_l3->stop();
+    _receiver_dds->stop();
+#endif
+    //_sender->stop();
+
+    return this;
+}
+
 void Dispatcher::send_message(Message* message, const std::vector<uint8_t>& target, const IdentifierType& type) {
     {
         std::lock_guard<std::mutex> guard(_sending_messages_locker);
@@ -72,16 +100,6 @@ Dispatcher::Dispatcher() {
 #else
     _raw_receiver_l2->receive_control_borrowing_from(_receiver_l2);
 #endif
-
-    // Run the receivers.
-    _logger->trace("[Dispatcher] Executing all the receivers.");
-#ifdef FROM_SIMUZILLA
-    _raw_receiver_simulation->execute();
-#else
-    _raw_receiver_l2->execute();
-    _receiver_l3->execute();
-    _receiver_dds->execute();
-#endif
 }
 
 #ifdef FROM_SIMUZILLA
@@ -103,7 +121,7 @@ Dispatcher *Dispatcher::borrow_simulation_sender_function(std::function<void(uin
 Dispatcher::~Dispatcher() {
     _logger->trace("[Dispatcher] Stopping all the dispatching units...");
 #ifdef FROM_SIMUZILLA
-    _receiver_simulation->stop();
+    _raw_receiver_simulation->stop();
 #else
     _receiver_l2->stop();
     _receiver_l3->stop();

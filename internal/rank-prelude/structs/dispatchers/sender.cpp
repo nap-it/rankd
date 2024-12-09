@@ -25,13 +25,13 @@ Sender *Sender::execute() {
 Sender *Sender::stop() {
     _logger->trace("[Sender] Stopping a Sender...");
     if (not _running) {
-        _logger->warn("[Sender] A sender was already stopped. Someone is calling to stop again.");
+        //_logger->warn("[Sender] A sender was already stopped. Someone is calling to stop again.");
         return this;
     }
 
     _logger->trace("[Sender] Stopping the main thread...");
     _running = false;
-    _thread.join();
+    std::terminate();
 
     _logger->info("The sender has been stopped.");
 

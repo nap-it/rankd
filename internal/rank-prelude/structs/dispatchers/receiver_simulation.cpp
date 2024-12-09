@@ -71,8 +71,9 @@ void RawReceiverSimulation::operator()() {
         }
 
         // If the data response is empty, ignore it.
-        if (data.second.empty()) {
-            _logger->error("[RawReceiverSimulation] The received message came without any data at all. We will ignore this message.");
+        if (data.first == UINT8_MAX) {
+            //_logger->error("[RawReceiverSimulation] The received message came without any data at all. We will ignore this message.");
+            std::this_thread::sleep_for(std::chrono::seconds(1));
             continue;
         }
 
@@ -87,6 +88,8 @@ void RawReceiverSimulation::operator()() {
         // Execute the Receiver to handle such messages.
         _logger->trace("[RawReceiverSimulation] Awakening the receiver for simulation to handle these data.");
         _receiver_controller->execute();
+
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
 
@@ -111,13 +114,13 @@ void ReceiverSimulation::set_message_deposit_queue(std::queue<std::tuple<Message
 }
 
 ReceiverSimulation *ReceiverSimulation::execute() {
-    _logger->trace("[ReceiverSimulation] Executing a ReceiverSimulation...");
+    //_logger->trace("[ReceiverSimulation] Executing a ReceiverSimulation...");
     if (_running) {
-        _logger->warn("[ReceiverSimulation] A receiver for simulation was already running. Someone is calling for execution again.");
+        //_logger->warn("[ReceiverSimulation] A receiver for simulation was already running. Someone is calling for execution again.");
         return this;
     }
 
-    _logger->trace("[ReceiverSimulation] Starting the main thread...");
+    //_logger->trace("[ReceiverSimulation] Starting the main thread...");
     _running = true;
     _thread = std::thread(std::ref(*this));
 
@@ -125,17 +128,17 @@ ReceiverSimulation *ReceiverSimulation::execute() {
 }
 
 ReceiverSimulation *ReceiverSimulation::stop() {
-    _logger->trace("[ReceiverSimulation] Stopping a ReceiverSimulation...");
+    //_logger->trace("[ReceiverSimulation] Stopping a ReceiverSimulation...");
     if (not _running) {
-        _logger->warn("[ReceiverSimulation] A raw receiver for simulation was already stopped. Someone is calling to stop again.");
+        //_logger->warn("[ReceiverSimulation] A raw receiver for simulation was already stopped. Someone is calling to stop again.");
         return this;
     }
 
-    _logger->trace("[ReceiverSimulation] Stopping the main thread...");
+    //_logger->trace("[ReceiverSimulation] Stopping the main thread...");
     _running = false;
     _thread.join();
 
-    _logger->info("The receiver for simulation has been stopped.");
+    //_logger->info("The receiver for simulation has been stopped.");
 
     return this;
 }
@@ -145,36 +148,36 @@ bool ReceiverSimulation::is_running() {
 }
 
 void ReceiverSimulation::operator()() {
-    _logger->info("The receiver for simulation was awakened to handle messages that were deposited in the queue.");
+    //_logger->info("The receiver for simulation was awakened to handle messages that were deposited in the queue.");
 
     while (_running) {
         if (not _queue->empty()) {
-            _logger->trace("[ReceiverSimulation] The queue still has an item to be handled (a total of {} items).", _queue->size());
+            //_logger->trace("[ReceiverSimulation] The queue still has an item to be handled (a total of {} items).", _queue->size());
             std::pair<std::vector<uint8_t>, std::vector<uint8_t>> source_and_bytes;
             {
                 std::lock_guard<std::mutex> guard(*_queue_mutex);
                 source_and_bytes = _queue->front();
                 _queue->pop();
             }
-            _logger->trace("[ReceiverSimulation] Received a source with {} bytes, and {} message bytes.", source_and_bytes.first.size(), source_and_bytes.second.size());
+            //_logger->trace("[ReceiverSimulation] Received a source with {} bytes, and {} message bytes.", source_and_bytes.first.size(), source_and_bytes.second.size());
 
             Message* message = parse_message_from_bytes(source_and_bytes.second, false);
-            _logger->debug("[ReceiverSimulation] Bytes --> Message(bytes): {} bytes into a {} message.", source_and_bytes.second.size(), (message != nullptr ? "parseable" : "non-parseable"));
+            //_logger->debug("[ReceiverSimulation] Bytes --> Message(bytes): {} bytes into a {} message.", source_and_bytes.second.size(), (message != nullptr ? "parseable" : "non-parseable"));
             if (message == nullptr) {
                 // TODO Handle this error, since it means that this message will be ignored.
-                _logger->error("[ReceiverSimulation] Ignoring erroneous message as it was parsed out from data bytes.");
+                //_logger->error("[ReceiverSimulation] Ignoring erroneous message as it was parsed out from data bytes.");
                 continue;
             }
-            _logger->trace("[ReceiverSimulation] Enqueueing the parsed message into the depositing queue of the dispatcher.");
+            //_logger->trace("[ReceiverSimulation] Enqueueing the parsed message into the depositing queue of the dispatcher.");
             {
                 std::lock_guard guard(*_message_deposit_mutex);
                 _message_deposit->emplace(message, source_and_bytes.first, IdentifierType::Simulation);
             }
-            _logger->info("The receiver for simulation have just enqueued a message into the Dispatcher's depositing queue.");
+            //_logger->info("The receiver for simulation have just enqueued a message into the Dispatcher's depositing queue.");
         } else {
-            _logger->trace("[ReceiverSimulation] The receiver for simulation does not have any item to handle in its queue. Stopping function.");
+            //_logger->trace("[ReceiverSimulation] The receiver for simulation does not have any item to handle in its queue. Stopping function.");
             stop();
-            _logger->info("The receiver for simulation has now ceased functions as there is no data waiting to be handled.");
+            //_logger->info("The receiver for simulation has now ceased functions as there is no data waiting to be handled.");
         }
     }
 }

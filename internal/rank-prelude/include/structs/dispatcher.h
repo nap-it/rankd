@@ -21,6 +21,8 @@ public:
         return &instance;
 #endif
     }
+    Dispatcher* execute_dispatchers();
+    Dispatcher* stop_dispatchers();
     void send_message(Message* message, const std::vector<uint8_t>& target, const IdentifierType& type);
     bool receiving_queue_is_empty() const;
     bool receiving_queue_has_message() const;

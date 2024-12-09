@@ -51,6 +51,9 @@ const std::vector<uint8_t> EAR::raw_payload() const {
 
     // Copy listener ID to marshalled_data.
     switch (_listener_length) {
+        case RANK_EAR_MESSAGE_LEN_LT_CODE_0:
+            marshalled_data.insert(marshalled_data.end(), _listener.begin(), _listener.begin()+SIMUZILLA_ADDR_LEN);
+            break;
         case RANK_EAR_MESSAGE_LEN_LT_IP4:
             marshalled_data.insert(marshalled_data.end(), _listener.begin(), _listener.begin()+IPV4_ADDR_LEN);
             break;

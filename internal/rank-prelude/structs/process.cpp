@@ -133,6 +133,7 @@ Process* Process::execute() {
     }
 
     _logger->trace("[Process] Starting the main thread...");
+    _dispatcher->execute_dispatchers();
     _running = true;
     _thread = std::thread(std::ref(*this));
 
@@ -148,6 +149,7 @@ Process* Process::stop() {
 
     _logger->trace("[Process] Stopping the main thread...");
     _running = false;
+    _dispatcher->stop_dispatchers();
     _thread.join();
 
     _logger->info("The Process has been stopped.");

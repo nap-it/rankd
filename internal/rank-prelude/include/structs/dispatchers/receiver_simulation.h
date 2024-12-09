@@ -66,7 +66,7 @@ private:
     bool _running = false;
     std::thread _thread;
     std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>* _queue = new std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>();
-    std::mutex* _queue_mutex;
+    std::mutex* _queue_mutex = new std::mutex();
     ReceiverSimulation* _receiver_controller = nullptr;
 #ifdef FROM_SIMUZILLA
     std::shared_ptr<spdlog::logger> _logger = spdlog::get("simuzilla-logger");
