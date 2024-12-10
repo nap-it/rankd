@@ -90,6 +90,10 @@ void RawReceiverSimulation::operator()() {
 
         // Execute the Receiver to handle such messages.
         _logger->trace("[RawReceiverSimulation] Awakening the receiver for simulation to handle these data.");
+        // FIXME This is not logical... maybe using a conditional variable here?
+        if (_receiver_controller->is_running()) {
+            _receiver_controller->stop();
+        }
         _receiver_controller->execute();
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -139,7 +143,9 @@ ReceiverSimulation *ReceiverSimulation::stop() {
 
     _logger->trace("[ReceiverSimulation] Stopping the main thread...");
     _running = false;
-    //_thread.join();
+    if (_thread.get_id() != std::this_thread::get_id()) {
+        _thread.join();
+    }
 
     _logger->info("The receiver for simulation has been stopped.");
 
@@ -184,8 +190,8 @@ void ReceiverSimulation::operator()() {
             _logger->info("The receiver for simulation have just enqueued a message into the Dispatcher's depositing queue.");
         } else {
             _logger->trace("[ReceiverSimulation] The receiver for simulation does not have any item to handle in its queue. Stopping function.");
-            stop();
-            _logger->info("The receiver for simulation has now ceased functions as there is no data waiting to be handled.");
+            break;
         }
     }
+    _logger->info("The receiver for simulation has now ceased functions as there is no data waiting to be handled.");
 }
