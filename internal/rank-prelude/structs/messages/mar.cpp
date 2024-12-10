@@ -23,8 +23,12 @@ uint8_t MAR::reserved() const {
 std::vector<uint8_t> MAR::listener() const {
     std::vector<uint8_t> listener;
 
-    for (int i = 0; i != _listener_length; ++i) {
-        listener.push_back(_listener.at(i));
+    if (_listener_length == RANK_MAR_MESSAGE_LEN_LT_CODE_0) {
+        listener.push_back(_listener.at(0));
+    } else {
+        for (int i = 0; i != _listener_length; ++i) {
+            listener.push_back(_listener.at(i));
+        }
     }
 
     return listener;
@@ -79,4 +83,4 @@ const std::vector<uint8_t> MAR::raw_payload() const {
     return marshalled_data;
 }
 
-MAR:: ~MAR() {}
+MAR::~MAR() {}

@@ -207,6 +207,12 @@ Handler *Handler::borrow(std::function<std::set<uint8_t>(uint8_t)> function) {
 
     return this;
 }
+
+Handler* Handler::borrow(std::function<bool(uint8_t)> function) {
+    _is_me = std::move(function);
+
+    return this;
+}
 #endif
 
 Handler *Handler::mark_source(const std::pair<std::vector<uint8_t>, IdentifierType> &source) {
@@ -275,6 +281,16 @@ void Handler::operator()() {
                     auto listener_field_length = ear_message->listener_length();
                     bool i_am_listener = false;
                     switch (listener_field_length) {
+#ifdef FROM_SIMUZILLA
+                        case RANK_MAR_MESSAGE_LEN_LT_CODE_0: {
+                            uint8_t simuzilla_address = listener_field.at(0);
+                            i_am_listener = simulated_is_me(simuzilla_address);
+
+                            // Update inner reservation with the requirements of the message.
+                            produce_reservation(ear_message->requirements(), ear_message->priority(),
+                                                std::vector<uint8_t>({simuzilla_address}));
+                        } break;
+#endif
                         case RANK_EAR_MESSAGE_LEN_LT_IP4: {
                             std::array<uint8_t, 4> ip4_address {};
                             for (int byte = 0; byte != 4; byte++) {

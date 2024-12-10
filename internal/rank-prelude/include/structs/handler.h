@@ -70,6 +70,7 @@ public:
 
 #ifdef FROM_SIMUZILLA
     Handler* borrow(std::function<std::set<uint8_t>(uint8_t)> function);
+    Handler* borrow(std::function<bool(uint8_t)> function);
 #endif
 
     // Source and accepting node identifier setter.
@@ -99,6 +100,10 @@ private:
         }
 
         return to_return;
+    }
+    std::function<bool(uint8_t)> _is_me;
+    bool simulated_is_me(uint8_t target) {
+        return _is_me(target);
     }
 #endif
     std::pair<std::vector<uint8_t>, IdentifierType> _source_identifier{};

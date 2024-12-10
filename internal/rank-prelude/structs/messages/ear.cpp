@@ -23,8 +23,12 @@ uint8_t EAR::reserved() const {
 std::vector<uint8_t> EAR::listener() const {
     std::vector<uint8_t> listener;
 
-    for (int i = 0; i != _listener_length; ++i) {
-        listener.push_back(_listener.at(i));
+    if (_listener_length == RANK_EAR_MESSAGE_LEN_LT_CODE_0) {
+        listener.push_back(_listener.at(0));
+    } else {
+        for (int i = 0; i != _listener_length; ++i) {
+            listener.push_back(_listener.at(i));
+        }
     }
 
     return listener;
