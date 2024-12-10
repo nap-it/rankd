@@ -15,7 +15,11 @@ bool validate_yang(const rapidjson::Document* json) {
 
     // Create a libyang context and parse the corresponding YANG module.
     libyang::Context context;
-    context.parseModule(yang_module, libyang::SchemaFormat::YANG);
+    try {
+        context.parseModule(yang_module, libyang::SchemaFormat::YANG);
+    } catch (const libyang::ErrorWithCode& error) {
+        throw std::invalid_argument(error.what());
+    }
 
     // Parse the JSON string as data to verify against.
     auto data_node = context.parseData(json_string, libyang::DataFormat::JSON, std::nullopt, libyang::ValidationOptions::NoState);

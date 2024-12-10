@@ -244,7 +244,7 @@ Handler* Handler::stop() {
     }
 
     _running = false;
-    _thread.join();
+    //_thread.join();
 
     return this;
 }
@@ -287,8 +287,16 @@ void Handler::operator()() {
                             i_am_listener = simulated_is_me(simuzilla_address);
 
                             // Update inner reservation with the requirements of the message.
-                            produce_reservation(ear_message->requirements(), ear_message->priority(),
-                                                std::vector<uint8_t>({simuzilla_address}));
+                            try {
+                                produce_reservation(ear_message->requirements(), ear_message->priority(),
+                                                    std::vector<uint8_t>({simuzilla_address}));
+                            } catch (const std::invalid_argument& ia) {
+                                _logger->error("[Handler] [{}] Received message has non-compliant list of requirements. Ignoring messages and deleting handler.", _uuid);
+                                old_state = _state;
+                                _state = HandlerState::CLOSED;
+                                stop();
+                                return;
+                            }
                         } break;
 #endif
                         case RANK_EAR_MESSAGE_LEN_LT_IP4: {
