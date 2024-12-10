@@ -136,7 +136,7 @@ ReceiverSimulation *ReceiverSimulation::stop() {
 
     //_logger->trace("[ReceiverSimulation] Stopping the main thread...");
     _running = false;
-    _thread.join();
+    //_thread.join();
 
     //_logger->info("The receiver for simulation has been stopped.");
 

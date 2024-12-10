@@ -44,7 +44,7 @@ Message* parse_message_from_bytes(std::vector<uint8_t> bytes, bool from_network)
 
     // Parse the rest of the message, according to its type.
     std::vector<uint8_t> message_content{};
-    std::copy_n(bytes.begin()+RANK_HEADER_LEN, bytes.size()-RANK_HEADER_LEN, message_content.begin());
+    std::copy_n(bytes.begin()+RANK_HEADER_LEN, bytes.size()-RANK_HEADER_LEN, std::back_inserter(message_content));
     switch (header.type()) {
         case MessageType::NOTYPE:
             return nullptr;
