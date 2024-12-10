@@ -48,7 +48,10 @@ bool RawReceiverSimulation::is_running() {
     return _running;
 }
 
-RawReceiverSimulation::RawReceiverSimulation() {
+RawReceiverSimulation::RawReceiverSimulation(const std::string& logger_name) {
+    // Configure logging.
+    _logger = spdlog::get(logger_name);
+
     _logger->trace("[RawReceiverSimulation] Preparing the simulation raw receiver...");
     _logger->trace("[RawReceiverSimulation] The simulation raw receiver is ready to run.");
 }
@@ -145,6 +148,11 @@ ReceiverSimulation *ReceiverSimulation::stop() {
 
 bool ReceiverSimulation::is_running() {
     return _running;
+}
+
+ReceiverSimulation::ReceiverSimulation(const std::string &logger_name) {
+    // Configure logging.
+    _logger = spdlog::get(logger_name);
 }
 
 void ReceiverSimulation::operator()() {

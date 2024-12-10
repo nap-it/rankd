@@ -15,8 +15,8 @@
 class Reservation {
 public:
     // Instance handling.
-    Reservation(const Reservation& reservation);
-    Reservation(const RequestingCapabilities& capabilities, uint8_t priority);
+    Reservation(const Reservation& reservation, const std::string& logger_name);
+    Reservation(const RequestingCapabilities& capabilities, uint8_t priority, const std::string& logger_name);
 
     // Past and next nodes handling.
     void add_next_node(const std::pair<std::vector<uint8_t>, IdentifierType>& node);
@@ -63,7 +63,7 @@ private:
     std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> _next_nodes{};
     std::pair<std::vector<uint8_t>, IdentifierType> _past_node{};
     std::array<uint8_t, RANK_LISTENER_MAX_LEN> _listener{};
-    std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
+    std::shared_ptr<spdlog::logger> _logger;
 };
 
 

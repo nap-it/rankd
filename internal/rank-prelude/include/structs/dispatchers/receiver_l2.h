@@ -27,8 +27,8 @@
 
 class ReceiverL2 {
 public:
-    static ReceiverL2* get_instance() {
-        static ReceiverL2 instance;
+    static ReceiverL2* get_instance(const std::string& logger_name) {
+        static ReceiverL2 instance = ReceiverL2(logger_name);
         return &instance;
     }
     ReceiverL2(const ReceiverL2&) = delete;
@@ -39,20 +39,20 @@ public:
     bool is_running();
     void operator()();
 private:
-    ReceiverL2() = default;
+    ReceiverL2(const std::string& logger_name);
     bool _running = false;
     std::thread _thread;
     std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>* _queue = nullptr;
     std::mutex* _queue_mutex;
     std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _message_deposit = nullptr;
     std::mutex* _message_deposit_mutex = nullptr;
-    std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
+    std::shared_ptr<spdlog::logger> _logger;
 };
 
 class RawReceiverL2 {
 public:
-    static RawReceiverL2* get_instance() {
-        static RawReceiverL2 instance;
+    static RawReceiverL2* get_instance(const std::string& logger_name) {
+        static RawReceiverL2 instance = RawReceiverL2(logger_name);
         return &instance;
     }
     std::pair<std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>*, std::mutex*> queue_access();
@@ -63,7 +63,7 @@ public:
     void operator()();
     ~RawReceiverL2();
 private:
-    RawReceiverL2();
+    RawReceiverL2(const std::string& logger_name);
     bool _running = false;
     int _raw_socket;
     unsigned char* _temporary_buffer;
@@ -71,7 +71,7 @@ private:
     std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>* _queue = new std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>();
     std::mutex* _queue_mutex;
     ReceiverL2* _receiver_controller = nullptr;
-    std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
+    std::shared_ptr<spdlog::logger> _logger;
 };
 
 

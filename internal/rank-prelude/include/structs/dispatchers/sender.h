@@ -25,11 +25,11 @@
 
 class Sender {
 public:
-    static Sender* get_instance() {
+    static Sender* get_instance(const std::string& logger_name) {
 #ifdef FROM_SIMUZILLA
-        return new Sender();
+        return new Sender(logger_name);
 #else
-        static Sender instance;
+        static Sender instance = Sender(logger_name);
         return &instance;
 #endif
     }
@@ -43,7 +43,7 @@ public:
     Sender* borrow_sender_function(std::function<void(uint8_t, std::vector<uint8_t>)> function);
 #endif
 private:
-    Sender();
+    Sender(const std::string& logger_name);
     void make_and_send_frame(Message* message, const std::vector<uint8_t>& target);
     void make_and_send_packet(Message* message, const std::vector<uint8_t>& target) const;
     void make_and_send_message(Message* message, const std::vector<uint8_t>& target) const;
@@ -53,17 +53,13 @@ private:
     std::thread _thread;
     std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _queue;
     std::mutex* _queue_mutex;
+    std::shared_ptr<spdlog::logger> _logger;
 #ifdef FROM_SIMUZILLA
     std::function<const std::vector<int>*()> _topology;
     unsigned int _own_address;
     NetworkNeighbors _neighbors_data_source = NetworkNeighbors(_topology, _own_address);
 #else
     NetworkNeighbors _neighbors_data_source = NetworkNeighbors();
-#endif
-#ifdef FROM_SIMUZILLA
-    std::shared_ptr<spdlog::logger> _logger = spdlog::get("simuzilla-logger");
-#else
-    std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
 #endif
 };
 

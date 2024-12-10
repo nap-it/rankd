@@ -3,13 +3,15 @@
 
 #include <thread>
 
+#include "spdlog/spdlog.h"
+
 #include "structs/handler.h"
 #include "structs/timeout_table.h"
 
 class TimeoutHandler {
 public:
     // Instance handling.
-    static TimeoutHandler* get_instance();
+    static TimeoutHandler* get_instance(const std::string& logger_name);
 
     // Timeout controls.
     void initiate_timeout(Handler* handler, uint8_t timeout);
@@ -25,11 +27,12 @@ public:
     ~TimeoutHandler();
 
 private:
-    TimeoutHandler();
+    explicit TimeoutHandler(const std::string& logger_name);
     TimeoutTable _timeout_table;
     unsigned int _waiting_time = 1000;
     bool _running = false;
     std::thread _thread;
+    std::shared_ptr<spdlog::logger> _logger;
 };
 
 

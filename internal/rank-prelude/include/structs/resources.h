@@ -21,6 +21,8 @@
 #include "time-lib.h"
 #endif
 
+#include "spdlog/spdlog.h"
+
 #include "structs/current_capabilities.h"
 #include "structs/identifier.h"
 #include "structs/requesting_capabilities.h"
@@ -29,7 +31,7 @@
 class Resources {
 public:
     // Instance handling.
-    static Resources* get_instance();
+    static Resources* get_instance(const std::string& logger_name);
 
     // Bid estimation.
     float estimate_bid(const RequestingCapabilities& capabilities) const;
@@ -53,14 +55,14 @@ public:
     ~Resources();
 
 private:
-    Resources();
+    explicit Resources(const std::string& logger_name);
     std::list<Reservation> _reservations;
     CurrentCapabilities _current_capabilities;
     unsigned int _waiting_time = 1000;
     bool _running = false;
     std::thread _thread;
     std::mutex _reservations_mutex;
-    std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
+    std::shared_ptr<spdlog::logger> _logger;
 };
 
 #endif  // RANK_PRELUDE_RESOURCES_H

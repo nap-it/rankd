@@ -1,7 +1,9 @@
 #include "structs/handler.h"
 
 Handler::Handler(Resources* resources, TranslationTable* translation_table, std::mutex* translation_table_mutex,
-                 TimeoutHandler* timeout_handler, Store* store, std::mutex* store_mutex, const UUIDv4& uuid) {
+                 TimeoutHandler* timeout_handler, Store* store, std::mutex* store_mutex, const UUIDv4& uuid, const std::string& logger_name) {
+    // Update logging mechanism.
+    _logger = spdlog::get(logger_name);
     _logger->trace("[Handler] [{}] Creating handler for this UUID...", uuid);
 
     // Update all attributes from caller.
@@ -27,7 +29,10 @@ Handler::Handler(Resources* resources, TranslationTable* translation_table, std:
 }
 
 Handler::Handler(Resources* resources, TranslationTable* translation_table, std::mutex* translation_table_mutex,
-                 TimeoutHandler* timeout_handler, Store* store, std::mutex* store_mutex, const Header& header) {
+                 TimeoutHandler* timeout_handler, Store* store, std::mutex* store_mutex, const Header& header, const std::string& logger_name) {
+    // Update logging mechanism.
+    _logger = spdlog::get(logger_name);
+
     // Update all attributes from caller.
     _uuid = header.uuid();
     _bids = {};
@@ -172,7 +177,7 @@ bool Handler::is_uuid_in_store(const UUIDv4& id) const {
 void Handler::produce_reservation(const RequestingCapabilities& capabilities, uint8_t priority,
                                   const std::vector<uint8_t>& listener) {
     // Create a new reservation object via a pointer.
-    _reservation = new Reservation(capabilities, priority);
+    _reservation = new Reservation(capabilities, priority, _logger->name());
 
     // Mark listener as the listener of this reservation.
     _reservation->mark_listener(listener);
@@ -881,4 +886,10 @@ void Handler::operator()() {
     }
 
     // Closing data before thread death.
+}
+
+Handler *Handler::log_on(const std::string &logger_name) {
+    _logger = spdlog::get(logger_name);
+
+    return this;
 }

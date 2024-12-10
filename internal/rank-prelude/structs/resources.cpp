@@ -1,10 +1,10 @@
 #include "structs/resources.h"
 
-Resources* Resources::get_instance() {
+Resources* Resources::get_instance(const std::string& logger_name) {
 #ifdef FROM_SIMUZILLA
-    return new Resources();
+    return new Resources(logger_name);
 #else
-    static Resources* instance = new Resources();
+    static Resources* instance = new Resources(logger_name);
     return instance;
 #endif
 }
@@ -158,5 +158,7 @@ void Resources::operator()() {
 Resources::~Resources() {
 }
 
-Resources::Resources() {
+Resources::Resources(const std::string& logger_name) {
+    // Configure logging.
+    _logger = spdlog::get(logger_name);
 }

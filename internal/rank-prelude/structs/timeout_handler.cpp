@@ -1,10 +1,10 @@
 #include "structs/timeout_handler.h"
 
-TimeoutHandler* TimeoutHandler::get_instance() {
+TimeoutHandler* TimeoutHandler::get_instance(const std::string& logger_name) {
 #ifdef FROM_SIMUZILLA
-    return new TimeoutHandler();
+    return new TimeoutHandler(logger_name);
 #else
-    static auto* instance = new TimeoutHandler();
+    static auto* instance = new TimeoutHandler(logger_name);
     return instance;
 #endif
 }
@@ -51,4 +51,7 @@ TimeoutHandler::~TimeoutHandler() {
 
 }
 
-TimeoutHandler::TimeoutHandler() {}
+TimeoutHandler::TimeoutHandler(const std::string& logger_name) {
+    // Configure logging.
+    _logger = spdlog::get(logger_name);
+}

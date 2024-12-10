@@ -2,11 +2,11 @@
 
 using namespace rank;
 
-Process* Process::get_instance() {
+Process* Process::get_instance(const std::string& logger_name) {
 #ifdef FROM_SIMUZILLA
-    return new Process();
+    return new Process(logger_name);
 #else
-    static auto* instance = new Process();
+    static auto* instance = new Process(logger_name);
     return instance;
 #endif
 }
@@ -42,7 +42,7 @@ void Process::delete_handler(const UUIDv4& id) {
 Handler* Process::create_handler(const UUIDv4& id) {
     // Create the handler instance with the given UUID.
     auto* handler = new Handler(_resources, &_translation_table, &_translation_table_locker, _timeout_handler, &_store,
-                                &_store_locker, id);
+                                &_store_locker, id, _logger->name());
 
     // Associate the handler item in the store.
     {
@@ -328,8 +328,8 @@ Process *Process::borrow_simulation_connections_function(std::function<std::set<
 }
 #endif
 
-Process *Process::log_on(std::shared_ptr<spdlog::logger> logger) {
-    _logger = logger;
+Process *Process::log_on(const std::string& logger_name) {
+    _logger = spdlog::get(logger_name);
 
     // TODO Change all the other entities logger's too.
 
@@ -342,8 +342,10 @@ Process::~Process() {
     stop();
 }
 
-Process::Process() {
+Process::Process(const std::string& logger_name) {
 #ifndef FROM_SIMUZILLA
+    // Configure logging.
+    _logger = spdlog::get(logger_name);
     _logger->info("Preparing the Rank process...");
 
     // Initialize the inner structures.
@@ -431,14 +433,15 @@ Process::Process() {
     _logger->info("Initializing the dispatcher...");
     _dispatcher = Dispatcher::get_instance();
 #else
+    _logger = spdlog::get(logger_name);
     _logger->info("Preparing the Rank process from Simuzilla...");
 
     // Initialize the inner structures.
-    _resources = Resources::get_instance();
-    _timeout_handler = TimeoutHandler::get_instance();
+    _resources = Resources::get_instance(_logger->name());
+    _timeout_handler = TimeoutHandler::get_instance(_logger->name());
 
     // Initialize the dispatcher.
     _logger->info("Initializing the dispatcher...");
-    _dispatcher = Dispatcher::get_instance();
+    _dispatcher = Dispatcher::get_instance(_logger->name());
 #endif
 }

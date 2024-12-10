@@ -14,11 +14,11 @@
 
 class ReceiverSimulation {
 public:
-    static ReceiverSimulation* get_instance() {
+    static ReceiverSimulation* get_instance(const std::string& logger_name) {
 #ifdef FROM_SIMUZILLA
-        return new ReceiverSimulation();
+        return new ReceiverSimulation(logger_name);
 #else
-        static ReceiverSimulation instance;
+        static ReceiverSimulation instance = ReceiverSimulation(logger_name);
         return &instance;
 #endif
     }
@@ -30,23 +30,23 @@ public:
     bool is_running();
     void operator()();
 private:
-    ReceiverSimulation() = default;
+    explicit ReceiverSimulation(const std::string& logger_name);
     bool _running = false;
     std::thread _thread;
     std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>* _queue = nullptr;
-    std::mutex* _queue_mutex;
+    std::mutex* _queue_mutex = nullptr;
     std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _message_deposit = nullptr;
     std::mutex* _message_deposit_mutex = nullptr;
-    std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
+    std::shared_ptr<spdlog::logger> _logger;
 };
 
 class RawReceiverSimulation {
 public:
-    static RawReceiverSimulation* get_instance() {
+    static RawReceiverSimulation* get_instance(const std::string& logger_name) {
 #ifdef FROM_SIMUZILLA
-        return new RawReceiverSimulation();
+        return new RawReceiverSimulation(logger_name);
 #else
-        static RawReceiverSimulation instance;
+        static RawReceiverSimulation instance = RawReceiverSimulation(logger_name);
         return &instance;
 #endif
     }
@@ -61,18 +61,14 @@ public:
 #endif
     ~RawReceiverSimulation();
 private:
-    RawReceiverSimulation();
+    explicit RawReceiverSimulation(const std::string& logger_name);
     std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)> _simulated_recv;
     bool _running = false;
     std::thread _thread;
     std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>* _queue = new std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>();
     std::mutex* _queue_mutex = new std::mutex();
     ReceiverSimulation* _receiver_controller = nullptr;
-#ifdef FROM_SIMUZILLA
-    std::shared_ptr<spdlog::logger> _logger = spdlog::get("simuzilla-logger");
-#else
-    std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
-#endif
+    std::shared_ptr<spdlog::logger> _logger;
 };
 
 #endif //RANK_PRELUDE_DISPATCHER_RECEIVER_SIMULATION_H

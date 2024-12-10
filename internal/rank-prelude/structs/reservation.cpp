@@ -1,6 +1,7 @@
 #include "structs/reservation.h"
 
-Reservation::Reservation(const Reservation& reservation) {
+Reservation::Reservation(const Reservation& reservation, const std::string& logger_name) {
+    _logger = spdlog::get(logger_name);
     _state = ReservationState::CREATED;
     _priority = reservation.priority();
     _capabilities = reservation.requirements();
@@ -11,7 +12,8 @@ Reservation::Reservation(const Reservation& reservation) {
     _logger->debug("[Reservation] [{}] Reservation object created with state {}.", _uuid, reservation_state_as_string(_state));
 }
 
-Reservation::Reservation(const RequestingCapabilities& capabilities, uint8_t priority) {
+Reservation::Reservation(const RequestingCapabilities& capabilities, uint8_t priority, const std::string& logger_name) {
+    _logger = spdlog::get(logger_name);
     _state = ReservationState::CREATED;
     _priority = priority;
     _capabilities = capabilities;

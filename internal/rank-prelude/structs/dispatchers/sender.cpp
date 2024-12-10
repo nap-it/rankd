@@ -108,7 +108,10 @@ Sender *Sender::borrow_sender_function(std::function<void(uint8_t, std::vector<u
 }
 #endif
 
-Sender::Sender() {
+Sender::Sender(const std::string& logger_name) {
+    // Configure logging.
+    _logger = spdlog::get(logger_name);
+
     _logger->trace("[Sender] Preparing the sender...");
     _logger->trace("[Sender] The sender is ready to run.");
 }

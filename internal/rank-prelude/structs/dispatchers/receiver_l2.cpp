@@ -44,7 +44,10 @@ bool RawReceiverL2::is_running() {
     return _running;
 }
 
-RawReceiverL2::RawReceiverL2() {
+RawReceiverL2::RawReceiverL2(const std::string& logger_name) {
+    // Configure logging.
+    _logger = spdlog::get(logger_name);
+
     _logger->trace("[RawReceiverL2] Preparing the L2 raw receiver...");
 
     // Load eBPF program.
@@ -194,6 +197,11 @@ ReceiverL2 *ReceiverL2::stop() {
 
 bool ReceiverL2::is_running() {
     return _running;
+}
+
+ReceiverL2::ReceiverL2(const std::string &logger_name) {
+    // Configure logging.
+    _logger = spdlog::get(logger_name);
 }
 
 void ReceiverL2::operator()() {

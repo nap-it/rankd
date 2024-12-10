@@ -64,18 +64,34 @@ void Dispatcher::set_topology_and_current_address(std::function<const std::vecto
 }
 #endif
 
-Dispatcher::Dispatcher() {
+Dispatcher::Dispatcher(const std::string& logger_name) {
+    // Configure logger.
+    _logger = spdlog::get(logger_name);
     _logger->info("Preparing the dispatcher unit...");
+
+    // Set sender.
+    _sender = Sender::get_instance(_logger->name());
+
+#ifdef FROM_SIMUZILLA
+    // Set receiver simulation dispatchers.
+    _receiver_simulation = ReceiverSimulation::get_instance(_logger->name());
+    _raw_receiver_simulation = RawReceiverSimulation::get_instance(_logger->name());
+
+    auto sim_queue = _raw_receiver_simulation->queue_access();
 
     // Set queues and respective mutexes for synchronization on accesses.
     _logger->trace("[Dispatcher] Setting the depositing queue in simulator receiver.");
     _receiver_simulation->set_message_deposit_queue(_received_messages, &_received_messages_locker);
 
-#ifdef FROM_SIMUZILLA
-    auto sim_queue = _raw_receiver_simulation->queue_access();
     _logger->trace("[Dispatcher] Setting an intermediate queue between raw-simulator and simulator receivers.");
     _receiver_simulation->set_queue(sim_queue.first, sim_queue.second);
 #else
+    // Set L2, L3, and DDS receivers.
+    _receiver_l2 = ReceiverL2::get_instance(_logger->name());
+    _raw_receiver_l2 = RawReceiverL2::get_instance(_logger->name());
+    _receiver_l3 =  ReceiverL3::get_instance();
+    _receiver_dds = ReceiverDDS::get_instance();
+
     _logger->trace("[Dispatcher] Setting the depositing queue in L2 receiver.");
     _receiver_l2->set_message_deposit_queue(_received_messages, &_received_messages_locker);
     auto l2_queue = _raw_receiver_l2->queue_access();

@@ -41,7 +41,7 @@ namespace rank {
 class Process {
 public:
     // Instance handling.
-    static Process *get_instance();
+    static Process *get_instance(const std::string& logger_name = "rank-logger");
 
     // Store and handlers management.
     bool store(Handler *handler);
@@ -88,13 +88,13 @@ public:
 #endif
 
     // Logging registry.
-    Process* log_on(std::shared_ptr<spdlog::logger> logger);
+    Process* log_on(const std::string& logger_name);
 
     // Destructor.
     ~Process();
 
 private:
-    Process();
+    Process(const std::string& logger_name);
 
     Dispatcher *_dispatcher;
     Resources *_resources;
@@ -108,10 +108,10 @@ private:
     std::thread _thread;
     bool _in_simulation = false;
 #ifdef FROM_SIMUZILLA
-    std::shared_ptr<spdlog::logger> _logger = spdlog::get("simuzilla-logger");
+    std::shared_ptr<spdlog::logger> _logger;
     std::function<std::set<uint8_t>(uint8_t)> _simulated_connections;
 #else
-    std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
+    std::shared_ptr<spdlog::logger> _logger;
 #endif
 };
 

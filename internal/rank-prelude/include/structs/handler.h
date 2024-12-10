@@ -35,9 +35,9 @@ class Handler {
 public:
     // Instance handling.
     Handler(Resources* resources, TranslationTable* translation_table, std::mutex* translation_table_mutex,
-            TimeoutHandler* timeout_handler, Store* store, std::mutex* store_mutex, const UUIDv4& uuid);
+            TimeoutHandler* timeout_handler, Store* store, std::mutex* store_mutex, const UUIDv4& uuid, const std::string& logger_name);
     Handler(Resources* resources, TranslationTable* translation_table, std::mutex* translation_table_mutex,
-            TimeoutHandler* timeout_handler, Store* store, std::mutex* store_mutex, const Header& header);
+            TimeoutHandler* timeout_handler, Store* store, std::mutex* store_mutex, const Header& header, const std::string& logger_name);
 
     // Handling actions.
     Handler* handle(Message* message);
@@ -82,6 +82,9 @@ public:
     bool is_running() const;
     void operator()();
 
+    // Logging mechanism.
+    Handler* log_on(const std::string& logger_name);
+
 private:
     UUIDv4 _uuid;
     Dispatcher* _dispatcher = nullptr;
@@ -114,7 +117,7 @@ private:
     bool _running = false;
     unsigned int _waiting_time = 1000;
     std::thread _thread;
-    std::shared_ptr<spdlog::logger> _logger = spdlog::get("rank-logger");
+    std::shared_ptr<spdlog::logger> _logger;
 };
 
 
