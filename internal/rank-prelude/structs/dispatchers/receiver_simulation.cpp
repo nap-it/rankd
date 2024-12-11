@@ -93,11 +93,6 @@ void RawReceiverSimulation::operator()() {
 
         // Execute the Receiver to handle such messages.
         _logger->trace("[RawReceiverSimulation] Awakening the receiver for simulation to handle these data.");
-        //// FIXME This is not logical... maybe using a conditional variable here?
-        //if (_receiver_controller->is_running()) {
-        //    _receiver_controller->stop();
-        //}
-        //_receiver_controller->execute();
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
