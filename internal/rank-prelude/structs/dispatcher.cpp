@@ -84,7 +84,7 @@ Dispatcher::Dispatcher(const std::string& logger_name) {
     _receiver_simulation->set_message_deposit_queue(_received_messages, &_received_messages_locker);
 
     _logger->trace("[Dispatcher] Setting an intermediate queue between raw-simulator and simulator receivers.");
-    _receiver_simulation->set_queue(sim_queue.first, sim_queue.second);
+    _receiver_simulation->set_queue(std::get<0>(sim_queue), std::get<1>(sim_queue), std::get<2>(sim_queue));
 #else
     // Set L2, L3, and DDS receivers.
     _receiver_l2 = ReceiverL2::get_instance(_logger->name());

@@ -2,9 +2,9 @@
 
 #include <utility>
 
-std::pair<std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>> *, std::mutex *>
+std::tuple<std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>> *, std::mutex *, std::condition_variable *>
 RawReceiverSimulation::queue_access() {
-    return std::make_pair(_queue, _queue_mutex);
+    return std::make_tuple(_queue, _queue_mutex, _referee);
 }
 
 RawReceiverSimulation *RawReceiverSimulation::receive_control_borrowing_from(ReceiverSimulation *controller) {
@@ -62,10 +62,12 @@ void RawReceiverSimulation::operator()() {
     _logger->info("Starting the raw receiver for simulation main thread...");
     _logger->info("The raw receiver for simulation is now waiting for messages from other simulated nodes in blocking manner.");
 
+    _receiver_controller->execute();
+
     while (_running) {
         // Receive a message from the recv function.
         std::pair<uint8_t, std::vector<uint8_t>> data{};
-        _logger->debug("[RawReceiverSimulation] Waiting for a message to come…");
+        _logger->trace("[RawReceiverSimulation] Waiting for a message to come…");
         if (_simulated_recv) {
             data = _simulated_recv();
         } else {
@@ -87,14 +89,15 @@ void RawReceiverSimulation::operator()() {
         _logger->trace("[RawReceiverSimulation] Adding the received data onto the queue to be handled by the receiver for simulation.");
         std::lock_guard<std::mutex> guard(*_queue_mutex);
         _queue->emplace(source_identifier, data.second);
+        _referee->notify_one();
 
         // Execute the Receiver to handle such messages.
         _logger->trace("[RawReceiverSimulation] Awakening the receiver for simulation to handle these data.");
-        // FIXME This is not logical... maybe using a conditional variable here?
-        if (_receiver_controller->is_running()) {
-            _receiver_controller->stop();
-        }
-        _receiver_controller->execute();
+        //// FIXME This is not logical... maybe using a conditional variable here?
+        //if (_receiver_controller->is_running()) {
+        //    _receiver_controller->stop();
+        //}
+        //_receiver_controller->execute();
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
@@ -110,9 +113,10 @@ RawReceiverSimulation::borrow_receiver_function(std::function<std::pair<uint8_t,
 }
 #endif
 
-void ReceiverSimulation::set_queue(std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>> *queue, std::mutex *mutex) {
+void ReceiverSimulation::set_queue(std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>> *queue, std::mutex *mutex, std::condition_variable* referee) {
     _queue = queue;
     _queue_mutex = mutex;
+    _referee = referee;
 }
 
 void ReceiverSimulation::set_message_deposit_queue(std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>> *queue, std::mutex *mutex) {
@@ -165,14 +169,15 @@ void ReceiverSimulation::operator()() {
     _logger->info("The receiver for simulation was awakened to handle messages that were deposited in the queue.");
 
     while (_running) {
-        if (not _queue->empty()) {
+        //if (not _queue->empty()) {
+            std::unique_lock<std::mutex> guard(*_queue_mutex);
+            _referee->wait(guard, [this]() { return not _queue->empty(); });
+
             _logger->trace("[ReceiverSimulation] The queue still has an item to be handled (a total of {} items).", _queue->size());
             std::pair<std::vector<uint8_t>, std::vector<uint8_t>> source_and_bytes;
-            {
-                std::lock_guard<std::mutex> guard(*_queue_mutex);
-                source_and_bytes = _queue->front();
-                _queue->pop();
-            }
+            source_and_bytes = _queue->front();
+            _queue->pop();
+            guard.unlock();
             _logger->trace("[ReceiverSimulation] Received a source with {} bytes, and {} message bytes.", source_and_bytes.first.size(), source_and_bytes.second.size());
 
             Message* message = parse_message_from_bytes(source_and_bytes.second, false);
@@ -184,14 +189,13 @@ void ReceiverSimulation::operator()() {
             }
             _logger->trace("[ReceiverSimulation] Enqueueing the parsed message into the depositing queue of the dispatcher.");
             {
-                std::lock_guard guard(*_message_deposit_mutex);
+                std::lock_guard guard_deposit(*_message_deposit_mutex);
                 _message_deposit->emplace(message, source_and_bytes.first, IdentifierType::Simulation);
             }
             _logger->info("The receiver for simulation have just enqueued a message into the Dispatcher's depositing queue.");
-        } else {
-            _logger->trace("[ReceiverSimulation] The receiver for simulation does not have any item to handle in its queue. Stopping function.");
-            break;
-        }
+        //} else {
+        //    _logger->trace("[ReceiverSimulation] The receiver for simulation does not have any item to handle in its queue. Stopping function.");
+        //}
     }
     _logger->info("The receiver for simulation has now ceased functions as there is no data waiting to be handled.");
 }

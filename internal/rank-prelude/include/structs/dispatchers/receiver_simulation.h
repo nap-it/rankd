@@ -1,10 +1,12 @@
 #ifndef RANK_PRELUDE_DISPATCHER_RECEIVER_SIMULATION_H
 #define RANK_PRELUDE_DISPATCHER_RECEIVER_SIMULATION_H
 
+#include <condition_variable>
 #include <functional>
 #include <mutex>
 #include <queue>
 #include <thread>
+#include <tuple>
 #include <vector>
 
 #include "spdlog/spdlog.h"
@@ -23,7 +25,7 @@ public:
 #endif
     }
     ReceiverSimulation(const ReceiverSimulation&) = delete;
-    void set_queue(std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>* queue, std::mutex* mutex);
+    void set_queue(std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>* queue, std::mutex* mutex, std::condition_variable* referee);
     void set_message_deposit_queue(std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* queue, std::mutex* mutex);
     ReceiverSimulation* execute();
     ReceiverSimulation* stop();
@@ -35,6 +37,7 @@ private:
     std::thread _thread;
     std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>* _queue = nullptr;
     std::mutex* _queue_mutex = nullptr;
+    std::condition_variable* _referee;
     std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _message_deposit = nullptr;
     std::mutex* _message_deposit_mutex = nullptr;
     std::shared_ptr<spdlog::logger> _logger;
@@ -50,7 +53,7 @@ public:
         return &instance;
 #endif
     }
-    std::pair<std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>*, std::mutex*> queue_access();
+    std::tuple<std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>*, std::mutex*, std::condition_variable*> queue_access();
     RawReceiverSimulation* receive_control_borrowing_from(ReceiverSimulation* controller);
     RawReceiverSimulation* execute();
     RawReceiverSimulation* stop();
@@ -67,6 +70,7 @@ private:
     std::thread _thread;
     std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>* _queue = new std::queue<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>>();
     std::mutex* _queue_mutex = new std::mutex();
+    std::condition_variable* _referee = new std::condition_variable();
     ReceiverSimulation* _receiver_controller = nullptr;
     std::shared_ptr<spdlog::logger> _logger;
 };
