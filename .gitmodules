@@ -31,9 +31,6 @@
 [submodule "internal/rank-prelude/vendor/doctest"]
 	path = internal/rank-prelude/vendor/doctest
 	url = https://code.nap.av.it.pt/external-tools/doctest.git
-[submodule "internal/rank-prelude/vendor/cbor-cpp"]
-	path = internal/rank-prelude/vendor/cbor-cpp
-	url = https://code.nap.av.it.pt/external-tools/cbor-cpp.git
 [submodule "internal/rank-prelude/vendor/libbpf-bootstrap"]
 	path = internal/rank-prelude/vendor/libbpf-bootstrap
 	url = https://code.nap.av.it.pt/external-tools/libbpf-bootstrap.git
@@ -43,3 +40,9 @@
 [submodule "internal/rank-prelude/vendor/spdlog"]
 	path = internal/rank-prelude/vendor/spdlog
 	url = https://code.nap.av.it.pt/external-tools/spdlog.git
+[submodule "internal/rank-prelude/include/utils/marshalling/validation/yang-repo"]
+	path = internal/rank-prelude/include/utils/marshalling/validation/yang-repo
+	url = https://code.nap.av.it.pt/schemas/yang.git
+[submodule "internal/rank-prelude/vendor/libcbor"]
+	path = internal/rank-prelude/vendor/libcbor
+	url = https://code.nap.av.it.pt/external-tools/libcbor

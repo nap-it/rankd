@@ -4,6 +4,7 @@
 #include "rapidjson/document.h"
 
 #include "structs/requesting_capabilities.h"
+#include "utils/marshalling/validation.h"
 
 rapidjson::Document transform_to_json(const RequestingCapabilities& capabilities);
 

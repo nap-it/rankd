@@ -39,7 +39,7 @@ Message* parse_message_from_bytes(std::vector<uint8_t> bytes, bool from_network)
 
     // Retrieve header from bytes.
     std::array<uint8_t, RANK_HEADER_LEN> header_bytes{};
-    std::copy_n(bytes.begin(), RANK_HEADER_LEN, header_bytes.begin());
+    std::copy_n(bytes.begin(), header_bytes.size(), header_bytes.begin());
     Header header = Header(header_bytes);
 
     // Parse the rest of the message, according to its type.

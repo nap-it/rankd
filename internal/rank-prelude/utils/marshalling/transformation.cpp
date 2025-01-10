@@ -48,8 +48,6 @@ rapidjson::Document transform_to_json(const RequestingCapabilities& capabilities
 }
 
 RequestingCapabilities transform_to_requirements(const rapidjson::Document& json) {
-    assert(json.HasMember("nap-rank:statement"));
-
     // Create an empty RequestingCapabilities structure to be returned later.
     RequestingCapabilities capabilities {};
 

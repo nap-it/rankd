@@ -50,7 +50,7 @@ const std::vector<uint8_t> EAR::raw_payload() const {
     marshalled_data.insert(marshalled_data.begin(), marshalled_array.begin(), marshalled_array.end());
 
     // Serialize first byte of message.
-    uint8_t first_byte = (_priority << 5) | ((_listener_length & 0x111) << 2) | (_reserved & 0x11);
+    uint8_t first_byte = (_priority << 5) | ((_listener_length & 0x7) << 2) | (_reserved & 0x3);
     marshalled_data.push_back(first_byte);
 
     // Copy listener ID to marshalled_data.
@@ -75,10 +75,13 @@ const std::vector<uint8_t> EAR::raw_payload() const {
     }
 
     // Add payload length to marshalled_data.
-    uint8_t const * pointer = reinterpret_cast<uint8_t const *>(&_payload_length);
-    for (std::size_t i = 0; i != sizeof(uint16_t); i++) {
-        marshalled_data.push_back(pointer[i]);
-    }
+    marshalled_data.push_back(_payload_length >> 8 & 0xFF);
+    marshalled_data.push_back(_payload_length & 0xFF);
+
+    //uint8_t const * pointer = reinterpret_cast<uint8_t const *>(&_payload_length);
+    //for (std::size_t i = 0; i != sizeof(uint16_t); i++) {
+    //    marshalled_data.push_back(pointer[i]);
+    //}
 
     // Add payload to marshalled_data.
     marshalled_data.insert(marshalled_data.end(), _payload.begin(), _payload.end());

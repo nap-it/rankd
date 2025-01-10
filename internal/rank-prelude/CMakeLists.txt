@@ -8,6 +8,10 @@ if (FROM_SIMUZILLA)
     add_definitions(-DFROM_SIMUZILLA)
 endif()
 
+# Add YANG repo path as a definition.
+get_filename_component(yang-repo "include/utils/marshalling/validation/yang-repo" REALPATH BASE_DIR "${CMAKE_BINARY_DIR}")
+add_compile_definitions(RANK_YANG_REPO_PATH="${yang-repo}")
+
 if (FROM_SIMUZILLA)
     set(HEADER_LIST
             include/prelude.h
@@ -200,11 +204,12 @@ target_include_directories(rank-prelude PUBLIC
         vendor/libyang-cpp/include
         vendor/rapidjson
         vendor/doctest/doctest
-        vendor/cbor-cpp/src
+        vendor/libcbor/src/
         vendor/pcap-plus-plus/Common++/header
         vendor/pcap-plus-plus/Packet++/header
         vendor/pcap-plus-plus/Pcap++/header
 )
+target_include_directories(rank-prelude PUBLIC ${PROJECT_BINARY_DIR}/vendor/libcbor)
 if (NOT FROM_SIMUZILLA)
     if (GLOBAL_PROJECT_SCOPE)
         target_include_directories(rank-prelude PUBLIC ${GLOBALLY_RANKD_INTERNAL_COMP_INCLUDES})
@@ -226,7 +231,8 @@ if (NOT FROM_SIMUZILLA)
 endif()
 target_link_libraries(rank-prelude PUBLIC pthread)
 target_link_libraries(rank-prelude PUBLIC yang-cpp)
-target_link_libraries(rank-prelude PUBLIC cborcpp)
+set(SANITIZE OFF CACHE BOOL "" FORCE)
+target_link_libraries(rank-prelude PUBLIC cbor)
 target_link_libraries(rank-prelude PUBLIC Pcap++ Packet++ Common++ pcap)
 if (NOT FROM_SIMUZILLA)
     target_link_libraries(rank-prelude PUBLIC rankd-comp rankd-net rankd-time)

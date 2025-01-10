@@ -15,8 +15,6 @@ class Header;
 
 //class Header;
 
-uint8_t* marshal(const RequestingCapabilities& capabilities);
-
 std::vector<uint8_t> marshall(const std::string& stringified_json);
 
 RequestingCapabilities unmarshal(const std::vector<uint8_t>& data);

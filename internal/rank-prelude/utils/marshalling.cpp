@@ -1,17 +1,10 @@
 #include "utils/marshalling.h"
 
-uint8_t* marshal(const RequestingCapabilities& capabilities) {
-    auto capabilities_as_json = transform_to_json(capabilities);
-
-    auto serialized_object = serialize_json(capabilities_as_json);
-
-    return serialized_object;
-}
-
 std::vector<uint8_t> marshall(const std::string& stringified_json) {
     // Parse stringified_json variable onto a JSON document.
+    rapidjson::StringStream stream(stringified_json.c_str());
     rapidjson::Document json;
-    json.Parse(stringified_json.c_str());
+    json.ParseStream(stream);
 
     // Serialize as CBOR.
     auto serialized_object = serialize_json_as_vector(json);
@@ -21,6 +14,14 @@ std::vector<uint8_t> marshall(const std::string& stringified_json) {
 
 RequestingCapabilities unmarshal(const std::vector<uint8_t>& data) {
     auto capabilities_as_json = deserialize_json(data.data(), data.size());
+
+    // Para tirar...
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    capabilities_as_json.Accept(writer);
+
+    auto element = buffer.GetString();
+    // ...
 
     auto yang_compliant_json = validate_yang(&capabilities_as_json);
     if (not yang_compliant_json) {

@@ -7,6 +7,10 @@
 #define IPV6_ADDR_LEN 16
 #define DDS_ADDR_LEN 16
 
+#ifndef RANK_YANG_REPO_PATH
+#define RANK_YANG_REPO_PATH "internal/rank-prelude/include/utils/marshalling/validation/yang-repo/"
+#endif
+
 #define RANK_PORT 7265
 #define RANK_IP_PROTO 0x9B
 #define RANK_ETHERTYPE 0x7265

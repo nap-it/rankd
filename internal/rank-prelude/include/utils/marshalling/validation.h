@@ -10,6 +10,9 @@
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 
+
 bool validate_yang(const rapidjson::Document* json);
+
+RequestTypes parse_admission_request_type(const rapidjson::Document* json);
 
 #endif // RANK_PRELUDE_MARSHALLING_VALIDATION_H
