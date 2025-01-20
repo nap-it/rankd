@@ -11,6 +11,7 @@ endif()
 # Add YANG repo path as a definition.
 get_filename_component(yang-repo "include/utils/marshalling/validation/yang-repo" REALPATH BASE_DIR "${CMAKE_BINARY_DIR}")
 add_compile_definitions(RANK_YANG_REPO_PATH="${yang-repo}")
+file(COPY "include/utils/marshalling/validation/yang-repo" DESTINATION "${CMAKE_BINARY_DIR}/include/utils/marshalling/validation")
 
 if (FROM_SIMUZILLA)
     set(HEADER_LIST

@@ -66,29 +66,32 @@ void cbor_stream_decode(void *src, const struct cbor_callbacks* callbacks, void*
         callbacks->null(context);
         return;
     }
-    if (source->IsFloat()) {
-        callbacks->float4(context, source->GetFloat());
-        return;
-    }
-    if (source->IsDouble()) {
-        callbacks->float8(context, source->GetDouble());
-        return;
-    }
-    if (source->IsInt()) {
-        callbacks->negint32(context, source->GetInt());
-        return;
-    }
-    if (source->IsInt64()) {
-        callbacks->negint64(context, source->GetInt64());
-        return;
-    }
-    if (source->IsUint()) {
-        callbacks->uint32(context, source->GetUint());
-        return;
-    }
-    if (source->IsUint64()) {
-        callbacks->uint64(context, source->GetUint64());
-        return;
+
+    if (source->IsNumber()) {
+        if (source->IsDouble()) {
+            callbacks->float8(context, source->GetDouble());
+            return;
+        }
+        if (source->IsFloat()) {
+            callbacks->float4(context, source->GetFloat());
+            return;
+        }
+        if (source->IsUint64()) {
+            callbacks->uint64(context, source->GetUint64());
+            return;
+        }
+        if (source->IsUint()) {
+            callbacks->uint32(context, source->GetUint());
+            return;
+        }
+        if (source->IsInt64()) {
+            callbacks->negint64(context, source->GetInt64());
+            return;
+        }
+        if (source->IsInt()) {
+            callbacks->negint32(context, source->GetInt());
+            return;
+        }
     }
     if (source->IsString()) {
         callbacks->string(context, (unsigned char*) source->GetString(), source->GetStringLength());
@@ -119,18 +122,9 @@ void cbor_stream_decode(void *src, const struct cbor_callbacks* callbacks, void*
 rapidjson::Value load_cbor_to_decode(cbor_item_t* item, rapidjson::Document::AllocatorType& allocator) {
     switch (cbor_typeof(item)) {
         case CBOR_TYPE_UINT:
-            switch (cbor_int_get_width(item)) {
-                case CBOR_INT_8:
-                    return rapidjson::Value(cbor_get_uint8(item));
-                case CBOR_INT_16:
-                    return rapidjson::Value(cbor_get_uint16(item));
-                case CBOR_INT_32:
-                    return rapidjson::Value(cbor_get_uint32(item));
-                case CBOR_INT_64:
-                    return rapidjson::Value(cbor_get_uint64(item));
-            }
-        case CBOR_TYPE_NEGINT:
             return rapidjson::Value(cbor_get_int(item));
+        case CBOR_TYPE_NEGINT:
+            return rapidjson::Value(-1 - cbor_get_int(item));
         case CBOR_TYPE_BYTESTRING:
             return rapidjson::Value("Unimplemented feature (Byte string).");
         case CBOR_TYPE_STRING:
@@ -152,15 +146,13 @@ rapidjson::Value load_cbor_to_decode(cbor_item_t* item, rapidjson::Document::All
         case CBOR_TYPE_MAP: {
             rapidjson::Value object(rapidjson::kObjectType);
             for (size_t i = 0; i != cbor_map_size(item); i++) {
-                const auto& pair = cbor_map_handle(item);
-
                 std::string key;
                 if (cbor_isa_string(cbor_map_handle(item)[i].key) and cbor_string_is_definite(cbor_map_handle(item)[i].key)) {
-                    key.assign(reinterpret_cast<const char *>(cbor_string_handle(pair->key)), cbor_string_length(pair->key));
+                    key.assign(reinterpret_cast<const char *>(cbor_string_handle(cbor_map_handle(item)[i].key)), cbor_string_length(cbor_map_handle(item)[i].key));
                 }
 
                 rapidjson::Value key_value(key.c_str(), allocator);
-                object.AddMember(key_value, load_cbor_to_decode(pair->value, allocator), allocator);
+                object.AddMember(key_value, load_cbor_to_decode(cbor_map_handle(item)[i].value, allocator), allocator);
             }
             return object;
         }

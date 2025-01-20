@@ -5,6 +5,7 @@
 
 #include "utils/marshalling/validation/yang.h"
 
+#include "libyang-cpp/Context.hpp"
 #include "libyang-cpp/Utils.hpp"
 
 #include "rapidjson/document.h"

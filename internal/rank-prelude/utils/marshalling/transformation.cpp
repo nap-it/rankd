@@ -51,7 +51,7 @@ RequestingCapabilities transform_to_requirements(const rapidjson::Document& json
     // Create an empty RequestingCapabilities structure to be returned later.
     RequestingCapabilities capabilities {};
 
-    for (const auto& requirement : json["nap-rank:statement"]["requirements"].GetArray()) {
+    for (const auto& requirement : json["nap-rank-requirements:requirements"]["items"].GetArray()) {
         auto type = static_cast<CapabilityItemType>((unsigned int) FnvHash(requirement["name"].GetString()));
 
         switch (type) {

@@ -24,26 +24,26 @@ std::string get_yang_module_content(const RequestTypes& type) {
 std::string stringify(const RequestTypes& type) {
     switch (type) {
         case RequestTypes::CPURequest:
-            return std::string(YANG_PREFIX) + ":" + "cpu-request";
+            return "cpu"; //std::string(YANG_PREFIX) + ":" + "cpu-request";
         case RequestTypes::MemoryRequest:
-            return std::string(YANG_PREFIX) + ":" + "memory-request";
+            return "memory"; //std::string(YANG_PREFIX) + ":" + "memory-request";
         case RequestTypes::InterfaceRequest:
-            return std::string(YANG_PREFIX) + ":" + "interface-request";
+            return "interface"; //std::string(YANG_PREFIX) + ":" + "interface-request";
         case RequestTypes::Unknown:
             return "";
     }
 }
 
 RequestTypes typify(const std::string& string) {
-    if (string == (std::string(YANG_PREFIX) + ":" + "cpu-request")) {
+    if (string == "cpu") {
         return RequestTypes::CPURequest;
     }
 
-    if (string == (std::string(YANG_PREFIX) + ":" + "memory-request")) {
+    if (string == "memory") {
         return RequestTypes::MemoryRequest;
     }
 
-    if (string == (std::string(YANG_PREFIX) + ":" + "interface-request")) {
+    if (string == "interface") {
         return RequestTypes::InterfaceRequest;
     }
 

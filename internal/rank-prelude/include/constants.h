@@ -81,13 +81,13 @@ inline const char* identifier_to_string(const IdentifierType& type) {
 
 #include "utils/hashing.h"
 
-constexpr unsigned int RANK_YANG_KEY_TIME_TAS = FnvHash("time-tas");
-constexpr unsigned int RANK_YANG_KEY_TIME_CBS = FnvHash("time-cbs");
+constexpr unsigned int RANK_YANG_KEY_TIME_TAS = FnvHash("tas-request");
+constexpr unsigned int RANK_YANG_KEY_TIME_CBS = FnvHash("cbs-request");
 
-constexpr unsigned int RANK_YANG_KEY_NET_BANDWIDTH = FnvHash("net-bandwidth");
-constexpr unsigned int RANK_YANG_KEY_NET_DDS = FnvHash("net-dds");
+constexpr unsigned int RANK_YANG_KEY_NET_BANDWIDTH = FnvHash("interface-request");
+constexpr unsigned int RANK_YANG_KEY_NET_DDS = FnvHash("dds-request");
 
-constexpr unsigned int RANK_YANG_KEY_COMP_CPUUSAGE = FnvHash("comp-cpu-usage");
-constexpr unsigned int RANK_YANG_KEY_COMP_MEMORY = FnvHash("comp-memory");
+constexpr unsigned int RANK_YANG_KEY_COMP_CPUUSAGE = FnvHash("cpu-request");
+constexpr unsigned int RANK_YANG_KEY_COMP_MEMORY = FnvHash("memory-request");
 
 #endif  // RANK_PRELUDE_CONSTANTS_H

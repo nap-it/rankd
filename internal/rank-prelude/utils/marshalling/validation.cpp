@@ -8,42 +8,82 @@ bool validate_yang(const rapidjson::Document* document) {
     // Retrieve the admission request type from the JSON, if possible. If not, throw exception.
     if (json.MemberCount() != 1) {
         if (json.ObjectEmpty()) {
-            throw std::invalid_argument("Admission request was received while empty.");
+            throw std::invalid_argument("Admission request was received empty.");
         }
         if (json.MemberCount() > 1) {
             throw std::invalid_argument("Admission request was received with more than one argument.");
         }
     }
-    RequestTypes request_type = typify(json.MemberBegin()->name.GetString());
-    if (request_type == RequestTypes::Unknown) {
-        throw std::invalid_argument("Admission request was received with an invalid or unknown argument."); // FIXME: The detection of type cannot be done here...
+
+    if (json.MemberBegin()->name != "nap-rank-requirements:requirements") {
+        throw std::invalid_argument("Received admission request is not a list of requirements.");
     }
 
-    // Retrieve the main Rank YANG module to confront this JSON against.
-    rapidjson::StringBuffer string_buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(string_buffer);
-    document->Accept(writer);
-
-    std::string json_string(string_buffer.GetString(), string_buffer.GetSize());
-
-    // Load given YANG module and fix YANG string variable.
-    std::string yang_module = std::string(RANK_YANG_REPO_PATH) + "/" + RANK_YANG_SUFFIX + "/" + RANK_YANG_REQUIREMENTS;
-
-    // Create a libyang context and parse the corresponding YANG module.
-    libyang::Context context;
-    try {
-        context.parseModule(yang_module, libyang::SchemaFormat::YANG);
-    } catch (const libyang::ErrorWithCode& error) {
-        throw std::invalid_argument(error.what());
+    if (not json.MemberBegin()->value.HasMember("items")) {
+        throw std::invalid_argument("Received admission request has requirements, but not in an items array structure.");
     }
 
-    // Parse the JSON string as data to verify against.
-    auto data_node = context.parseData(json_string, libyang::DataFormat::JSON, std::nullopt, libyang::ValidationOptions::NoState);
+    if (not json.MemberBegin()->value["items"].IsArray()) {
+        throw std::invalid_argument("Received admission request has requirements, but not in an array structure.");
+    }
+    auto requirements_as_json_array = json.MemberBegin()->value["items"].GetArray();
 
-    // Validate the data against the module.
-    libyang::validateAll(data_node, libyang::ValidationOptions::NoState);
+    std::optional<libyang::Context> context{std::in_place, std::nullopt, libyang::ContextOptions::NoYangLibrary | libyang::ContextOptions::SetPrivParsed};
+    int expected_order = 0;
+    for (const auto& pair : requirements_as_json_array) {
+        if (not pair.HasMember("order") or not pair.HasMember("requirement")) {
+            throw std::invalid_argument("Received admission request badly-defined requirement, in expected order " + std::to_string(expected_order) + ".");
+        }
 
-    return data_node.has_value();
+        int order = pair.FindMember("order")->value.GetUint();
+        if (order != expected_order++) {
+            throw std::invalid_argument("Received admission request badly-defined order, in expected order + std::to_string(expected_order) + .");
+        }
+
+        auto requirement_as_json_object = pair.FindMember("requirement")->value.GetObject();
+        RequestTypes request_type = typify(requirement_as_json_object.MemberBegin()->name.GetString());
+        if (request_type == RequestTypes::Unknown) {
+            throw std::invalid_argument("Received admission request badly-defined requirement, in expected order + std::to_string(expected_order) + .");
+        }
+
+        // Retrieve the main Rank YANG module to confront this JSON against.
+        rapidjson::StringBuffer string_buffer;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(string_buffer);
+        document->Accept(writer);
+
+        std::string json_string(string_buffer.GetString(), string_buffer.GetSize());
+
+        std::filesystem::path yang_module = std::filesystem::path(RANK_YANG_REPO_PATH) / RANK_YANG_SUFFIX / RANK_YANG_REQUIREMENTS;
+
+        context->setSearchDir(std::filesystem::path(RANK_YANG_REPO_PATH));
+        auto module = context->loadModule("nap-rank-requirements", std::nullopt);
+
+        auto data_node = context->parseData(json_string, libyang::DataFormat::JSON, libyang::ParseOptions::Strict);
+        libyang::validateAll(data_node, libyang::ValidationOptions::Present);
+        /*
+        // Load given YANG module and fix YANG string variable.
+        //std::string yang_module = std::string(RANK_YANG_REPO_PATH) + "/" + RANK_YANG_SUFFIX + "/" + RANK_YANG_REQUIREMENTS;
+
+        // Create a libyang context and parse the corresponding YANG module.
+        libyang::Context context;
+        try {
+            context.parseModule(yang_module, libyang::SchemaFormat::YANG);
+        } catch (const libyang::ErrorWithCode& error) {
+            throw std::invalid_argument(error.what());
+        }
+
+        // Parse the JSON string as data to verify against.
+        auto data_node = context.parseData(json_string, libyang::DataFormat::JSON, std::nullopt, libyang::ValidationOptions::NoState);
+
+        // Validate the data against the module.
+        libyang::validateAll(data_node, libyang::ValidationOptions::NoState);
+        if (not data_node.has_value()) {
+            return false;
+        }
+         */
+    }
+
+    return true;
 }
 
 RequestTypes parse_admission_request_type(const rapidjson::Document* json) {

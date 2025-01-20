@@ -21,6 +21,7 @@ RequestingCapabilities unmarshal(const std::vector<uint8_t>& data) {
     capabilities_as_json.Accept(writer);
 
     auto element = buffer.GetString();
+    printf("%s", element);
     // ...
 
     auto yang_compliant_json = validate_yang(&capabilities_as_json);
