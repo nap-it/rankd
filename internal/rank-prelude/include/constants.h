@@ -1,6 +1,8 @@
 #ifndef RANK_PRELUDE_CONSTANTS_H
 #define RANK_PRELUDE_CONSTANTS_H
 
+#include "rankd-api.h"
+
 #define SIMUZILLA_ADDR_LEN 1
 #define IPV4_ADDR_LEN 4
 #define MAC_ADDR_LEN 6

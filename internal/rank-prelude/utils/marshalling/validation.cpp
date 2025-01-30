@@ -60,27 +60,6 @@ bool validate_yang(const rapidjson::Document* document) {
 
         auto data_node = context->parseData(json_string, libyang::DataFormat::JSON, libyang::ParseOptions::Strict);
         libyang::validateAll(data_node, libyang::ValidationOptions::Present);
-        /*
-        // Load given YANG module and fix YANG string variable.
-        //std::string yang_module = std::string(RANK_YANG_REPO_PATH) + "/" + RANK_YANG_SUFFIX + "/" + RANK_YANG_REQUIREMENTS;
-
-        // Create a libyang context and parse the corresponding YANG module.
-        libyang::Context context;
-        try {
-            context.parseModule(yang_module, libyang::SchemaFormat::YANG);
-        } catch (const libyang::ErrorWithCode& error) {
-            throw std::invalid_argument(error.what());
-        }
-
-        // Parse the JSON string as data to verify against.
-        auto data_node = context.parseData(json_string, libyang::DataFormat::JSON, std::nullopt, libyang::ValidationOptions::NoState);
-
-        // Validate the data against the module.
-        libyang::validateAll(data_node, libyang::ValidationOptions::NoState);
-        if (not data_node.has_value()) {
-            return false;
-        }
-         */
     }
 
     return true;

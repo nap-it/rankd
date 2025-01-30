@@ -31,7 +31,6 @@ Sender *Sender::stop() {
 
     _logger->trace("[Sender] Stopping the main thread...");
     _running = false;
-    std::terminate();
 
     _logger->info("The sender has been stopped.");
 

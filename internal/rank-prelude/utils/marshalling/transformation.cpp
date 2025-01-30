@@ -51,8 +51,9 @@ RequestingCapabilities transform_to_requirements(const rapidjson::Document& json
     // Create an empty RequestingCapabilities structure to be returned later.
     RequestingCapabilities capabilities {};
 
-    for (const auto& requirement : json["nap-rank-requirements:requirements"]["items"].GetArray()) {
-        auto type = static_cast<CapabilityItemType>((unsigned int) FnvHash(requirement["name"].GetString()));
+    for (const auto& item : json["nap-rank-requirements:requirements"]["items"].GetArray()) {
+        auto type = static_cast<CapabilityItemType>((unsigned int) FnvHash(item["requirement"].MemberBegin()->name.GetString()));
+        auto requirement = item["requirement"].MemberBegin()->value.GetObject();
 
         switch (type) {
             case CapabilityItemType::UNSPECIFIED:
@@ -65,7 +66,9 @@ RequestingCapabilities transform_to_requirements(const rapidjson::Document& json
                 break;
             case CapabilityItemType::NET_DDS:
                 break;
-            case CapabilityItemType::COMP_CPU:
+            case CapabilityItemType::COMP_CPU: {
+                    capabilities.add_item({CapabilityItemType::COMP_CPU, requirement["cpu_cores"].GetUint()}, item["order"].GetUint());
+                }
                 break;
             case CapabilityItemType::COMP_MEMORY:
                 break;

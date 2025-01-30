@@ -15,15 +15,6 @@ std::vector<uint8_t> marshall(const std::string& stringified_json) {
 RequestingCapabilities unmarshal(const std::vector<uint8_t>& data) {
     auto capabilities_as_json = deserialize_json(data.data(), data.size());
 
-    // Para tirar...
-    rapidjson::StringBuffer buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    capabilities_as_json.Accept(writer);
-
-    auto element = buffer.GetString();
-    printf("%s", element);
-    // ...
-
     auto yang_compliant_json = validate_yang(&capabilities_as_json);
     if (not yang_compliant_json) {
         throw std::exception(); // TODO Would it be better to simply return another thing? Like a Rust's result?

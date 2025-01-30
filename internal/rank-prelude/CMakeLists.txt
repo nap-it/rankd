@@ -15,11 +15,13 @@ file(COPY "include/utils/marshalling/validation/yang-repo" DESTINATION "${CMAKE_
 
 if (FROM_SIMUZILLA)
     set(HEADER_LIST
+            include/rankd-api.h
             include/prelude.h
             include/constants.h
             include/structs/capabilities.h
             include/structs/current_capabilities.h
             include/structs/dispatcher.h
+            include/structs/dispatchers/api.h
             include/structs/dispatchers/receiver_simulation.h
             include/structs/dispatchers/sender.h
             include/structs/handler.h
@@ -58,6 +60,7 @@ if (FROM_SIMUZILLA)
             structs/capabilities.cpp
             structs/current_capabilities.cpp
             structs/dispatcher.cpp
+            structs/dispatchers/api.cpp
             structs/dispatchers/receiver_simulation.cpp
             structs/dispatchers/sender.cpp
             structs/handler.cpp
@@ -89,11 +92,13 @@ if (FROM_SIMUZILLA)
     )
 else()
     set(HEADER_LIST
+            include/rankd-api.h
             include/prelude.h
             include/constants.h
             include/structs/capabilities.h
             include/structs/current_capabilities.h
             include/structs/dispatcher.h
+            include/structs/dispatchers/api.h
             include/structs/dispatchers/receiver_simulation.h
             include/structs/dispatchers/receiver_l2.h
             include/structs/dispatchers/receiver_l3.h
@@ -135,6 +140,7 @@ else()
             structs/capabilities.cpp
             structs/current_capabilities.cpp
             structs/dispatcher.cpp
+            structs/dispatchers/api.cpp
             structs/dispatchers/receiver_simulation.cpp
             structs/dispatchers/receiver_l2.cpp
             structs/dispatchers/receiver_l3.cpp
