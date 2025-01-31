@@ -1,7 +1,7 @@
 #include "structs/dispatchers/api.h"
 
-API *API::get_instance() {
-    static API* instance = new API();
+API *API::get_instance(const std::string& logger_name) {
+    static API* instance = new API(logger_name);
     return instance;
 }
 
@@ -18,6 +18,12 @@ void API::get_message_from_fifo() {
 }
 
 //#endif
+
+API *API::set_dispatcher(Dispatcher *dispatcher) {
+    _dispatcher = dispatcher;
+
+    return this;
+}
 
 API *API::execute() {
     if (_running) {
@@ -64,12 +70,18 @@ void API::operator()() {
             }
         }
 
-        // TODO
+        // Deserialize bytestream, convert it to message, and deliver it to the Rx queue in dispatcher.
+        AdmissionRequest admission_request = deserialize(bytestream);
+        EAR* ear_message = build_message_from_admission_request(admission_request);
+        _dispatcher->enqueue_item(std::make_tuple(ear_message, ear_message->listener(), admission_request.target_type));
 //#endif
     }
 }
 
-API::API() {
+API::API(const std::string& logger_name) {
+    // Configure logger.
+    _logger = spdlog::get(logger_name);
+
     // Create the well-known FIFO in system, and open it for reading.
     umask(0);
     if (mkfifo(RANK_SERVER_API_FIFO_PATH, S_IRUSR | S_IWUSR | S_IWGRP) == -1 && errno != EEXIST) {
@@ -80,4 +92,26 @@ API::API() {
     if (_server_fifo_fd == -1) {
         // TODO Handle this error.
     }
+}
+
+EAR* API::build_message_from_admission_request(const AdmissionRequest &admission_request) {
+    // Specify a header.
+    Header header = Header(RANK_HEADER_VERSION, MessageType::EAR, UUIDv4());
+
+    // Specify a priority.
+    uint8_t priority = admission_request.priority;
+
+    // Specify the listener.
+    uint8_t listener_length = static_cast<uint8_t>(admission_request.target_type);
+    std::array<uint8_t, RANK_LISTENER_MAX_LEN> listener{};
+    std::copy(admission_request.target.begin(), admission_request.target.end(), listener.begin());
+
+    // Specify the list of requirements.
+    std::vector<uint8_t> payload = marshall(admission_request.requirements);
+    uint16_t payload_length = payload.size();
+
+    // Create EAR message.
+    EAR* ear_message = new EAR(header, priority, listener_length, listener, payload_length, payload);
+
+    return ear_message;
 }

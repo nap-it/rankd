@@ -10,14 +10,43 @@
 #include <string>
 #include <sstream>
 #include <vector>
+
+#include <fcntl.h>
+#include <unistd.h>
 #include <sys/stat.h>
 
 constexpr std::array<uint8_t, RANK_FIFO_DELIMITER_LENGTH> RANK_FIFO_DELIMITER = {0x23, 0x52, 0x41, 0x4e, 0x4b, 0x23};
+
+enum class IdentifierType {
+    Simulation = 0, // Equivalent to RANK_EAR_MESSAGE_LEN_LT_CODE_0.
+    MAC = 2,        // Equivalent to RANK_EAR_MESSAGE_LEN_LT_IP4.
+    IPv4 = 3,       // Equivalent to RANK_EAR_MESSAGE_LEN_LT_MAC.
+    IPv6 = 4,       // Equivalent to RANK_EAR_MESSAGE_LEN_LT_IP6.
+    DDS = 5,        // Equivalent to RANK_EAR_MESSAGE_LEN_LT_DDS.
+};
+
+inline const char* identifier_to_string(const IdentifierType& type) {
+    switch (type) {
+        case IdentifierType::IPv4:
+            return "IPv4";
+        case IdentifierType::MAC:
+            return "MAC";
+        case IdentifierType::IPv6:
+            return "IPv6";
+        case IdentifierType::DDS:
+            return "DDS";
+        case IdentifierType::Simulation:
+            return "Simulation";
+    }
+
+    return "";
+}
 
 struct AdmissionRequest {
     std::string requirements;
     uint8_t priority = 0;
     std::vector<uint8_t> target;
+    IdentifierType target_type{};
     uint32_t pid = 0;
 };
 
@@ -41,7 +70,18 @@ inline AdmissionRequest deserialize(const std::vector<uint8_t>& serialized) {
     // Read priority.
     admission_request.priority = serialized[pointer++];
 
-    // Read target length size and content.
+    // Read target type, length size and content.
+    uint8_t target_type_code = serialized[pointer++];
+    IdentifierType type;
+    switch (target_type_code) {
+        case 0: type = IdentifierType::Simulation; break;
+        case 2: type = IdentifierType::IPv4; break;
+        case 3: type = IdentifierType::MAC; break;
+        case 4: type = IdentifierType::IPv6; break;
+        case 5: type = IdentifierType::DDS; break;
+        default: throw std::exception(); // TODO Handle this case.
+    }
+    admission_request.target_type = type;
     uint8_t target_length = serialized[pointer++];
     std::vector<uint8_t> target;
     for (int i = 0; i != target_length; i++) {
@@ -59,7 +99,7 @@ inline AdmissionRequest deserialize(const std::vector<uint8_t>& serialized) {
     return admission_request;
 }
 
-inline std::vector<uint8_t> serialize_to_rank(const std::string& json_requirements_list, u_int8_t priority, const std::vector<u_int8_t>& target, uint32_t pid) {
+inline std::vector<uint8_t> serialize_to_rank(const std::string& json_requirements_list, u_int8_t priority, const std::vector<u_int8_t>& target, const IdentifierType& type, uint32_t pid) {
     std::vector<uint8_t> serialized;
 
     // Get length of JSON requirements list and serialize both (length and value).
@@ -74,7 +114,8 @@ inline std::vector<uint8_t> serialize_to_rank(const std::string& json_requiremen
     // Get priority and serialize it.
     serialized.push_back(priority);
 
-    // Get target length and add its value to serialized (length and value).
+    // Get target type, length and add its value to serialized (length and value).
+    serialized.push_back(static_cast<uint8_t>(type));
     serialized.push_back(target.size());
     for (const auto& byte : target) {
         serialized.push_back(byte);
@@ -88,9 +129,9 @@ inline std::vector<uint8_t> serialize_to_rank(const std::string& json_requiremen
     return serialized;
 }
 
-inline std::string place_admission_request(const std::string& json_requirements_list, u_int8_t priority, const std::vector<u_int8_t>& target, uint32_t pid) {
+inline std::string place_admission_request(const std::string& json_requirements_list, u_int8_t priority, const std::vector<u_int8_t>& target, const IdentifierType& type, uint32_t pid) {
     // Serialize input parameters.
-    auto serialized = serialize_to_rank(json_requirements_list, priority, target, pid);
+    auto serialized = serialize_to_rank(json_requirements_list, priority, target, type, pid);
 
     // Create this side's client FIFO for Rank message.
     umask(0);

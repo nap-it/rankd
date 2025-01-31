@@ -58,6 +58,12 @@ std::tuple<Message*, std::vector<uint8_t>, IdentifierType> Dispatcher::dequeue_i
     return message_source_and_type;
 }
 
+void Dispatcher::enqueue_item(const std::tuple<Message *, std::vector<uint8_t>, IdentifierType> &item) {
+    std::lock_guard guard(_received_messages_locker);
+
+    _received_messages->push(item);
+}
+
 #ifdef FROM_SIMUZILLA
 void Dispatcher::set_topology_and_current_address(std::function<const std::vector<int>*()> topology, unsigned int address) {
     _sender->set_topology_and_current_address(topology, address);
@@ -71,6 +77,10 @@ Dispatcher::Dispatcher(const std::string& logger_name) {
 
     // Set sender.
     _sender = Sender::get_instance(_logger->name());
+
+    // Set API.
+    _api = API::get_instance(_logger->name());
+    _api->set_dispatcher(this);
 
 #ifdef FROM_SIMUZILLA
     // Set receiver simulation dispatchers.

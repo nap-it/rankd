@@ -11,10 +11,16 @@
 #include <sys/stat.h>
 //#endif
 
+#include "spdlog/spdlog.h"
+
+class Dispatcher;
+
 #include "constants.h"
+#include "structs/dispatcher.h"
+#include "structs/messages/ear.h"
 
 //#ifndef FROM_SIMUZILLA
-bool found_delimiter(const std::vector<uint8_t>& bytestream) {
+static bool found_delimiter(const std::vector<uint8_t>& bytestream) {
     if (bytestream.size() != RANK_FIFO_DELIMITER.size()) {
         return false;
     }
@@ -25,23 +31,27 @@ bool found_delimiter(const std::vector<uint8_t>& bytestream) {
 
 class API {
 public:
-    static API* get_instance();
+    static API* get_instance(const std::string& logger_name);
 
 //#ifdef FROM_SIMUZILLA
     void deliver_request(const std::string& json_admission_request, int priority, const std::vector<uint8_t>& target);
 //#else
     void get_message_from_fifo();
 //#endif
+    API* set_dispatcher(Dispatcher* dispatcher);
     API* execute();
     API* stop();
     bool is_running() const;
     void operator()();
 private:
-    API();
+    explicit API(const std::string& logger_name);
 //#ifndef FROM_SIMUZILLA
+    static EAR* build_message_from_admission_request(const AdmissionRequest& admission_request);
     std::ifstream _server_fifo;
     int _server_fifo_fd;
 //#endif
+    Dispatcher* _dispatcher;
+    std::shared_ptr<spdlog::logger> _logger;
     bool _running = false;
     std::thread _thread;
 };

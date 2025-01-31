@@ -8,7 +8,10 @@
 
 #include "spdlog/spdlog.h"
 
+class API;
+
 #include "structs/message.h"
+#include "structs/dispatchers/api.h"
 #include "structs/dispatchers/all.h"
 
 class Dispatcher {
@@ -34,6 +37,8 @@ public:
 
     std::tuple<Message *, std::vector<uint8_t>, IdentifierType> dequeue_item();
 
+    void enqueue_item(const std::tuple<Message*, std::vector<uint8_t>, IdentifierType>& item);
+
 #ifdef FROM_SIMUZILLA
 
     void set_topology_and_current_address(std::function<const std::vector<int> *()> topology, unsigned int address);
@@ -52,6 +57,7 @@ private:
     explicit Dispatcher(const std::string &logger_name);
 
     Sender *_sender;
+    API *_api;
 #ifdef FROM_SIMUZILLA
     ReceiverSimulation *_receiver_simulation = nullptr;
     RawReceiverSimulation *_raw_receiver_simulation = nullptr;

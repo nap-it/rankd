@@ -56,31 +56,6 @@
 #define RANK_MAR_MESSAGE_LEN_LT_CODE_6 RANK_EAR_MESSAGE_LEN_LT_CODE_6
 #define RANK_MAR_MESSAGE_LEN_LT_CODE_7 RANK_EAR_MESSAGE_LEN_LT_CODE_7
 
-enum class IdentifierType {
-    IPv4,
-    MAC,
-    IPv6,
-    DDS,
-    Simulation
-};
-
-inline const char* identifier_to_string(const IdentifierType& type) {
-    switch (type) {
-        case IdentifierType::IPv4:
-            return "IPv4";
-        case IdentifierType::MAC:
-            return "MAC";
-        case IdentifierType::IPv6:
-            return "IPv6";
-        case IdentifierType::DDS:
-            return "DDS";
-        case IdentifierType::Simulation:
-            return "Simulation";
-    }
-
-    return "";
-}
-
 #include "utils/hashing.h"
 
 constexpr unsigned int RANK_YANG_KEY_TIME_TAS = FnvHash("tas-request");
