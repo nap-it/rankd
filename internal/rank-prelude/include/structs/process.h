@@ -87,6 +87,8 @@ public:
     Process *borrow_simulation_connections_function(std::function<std::set<uint8_t>(uint8_t)> function);
 
     Process *borrow_simulation_identity_function(std::function<bool(uint8_t)> function);
+
+    API* use_api();
 #endif
 
     // Logging registry.
@@ -105,7 +107,7 @@ private:
     std::mutex _store_locker;
     TranslationTable _translation_table;
     std::mutex _translation_table_locker;
-    unsigned int _waiting_time = 1000;
+    unsigned int _waiting_time = 100;
     bool _running = false;
     std::thread _thread;
     bool _in_simulation = false;

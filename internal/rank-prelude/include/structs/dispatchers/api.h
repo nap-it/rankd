@@ -19,7 +19,7 @@ class Dispatcher;
 #include "structs/dispatcher.h"
 #include "structs/messages/ear.h"
 
-//#ifndef FROM_SIMUZILLA
+#ifndef FROM_SIMUZILLA
 static bool found_delimiter(const std::vector<uint8_t>& bytestream) {
     if (bytestream.size() != RANK_FIFO_DELIMITER.size()) {
         return false;
@@ -27,17 +27,15 @@ static bool found_delimiter(const std::vector<uint8_t>& bytestream) {
 
     return std::equal(RANK_FIFO_DELIMITER.begin(), RANK_FIFO_DELIMITER.end(), bytestream.begin());
 }
-//#endif
+#endif
 
 class API {
 public:
     static API* get_instance(const std::string& logger_name);
 
-//#ifdef FROM_SIMUZILLA
-    void deliver_request(const std::string& json_admission_request, int priority, const std::vector<uint8_t>& target);
-//#else
-    void get_message_from_fifo();
-//#endif
+#ifdef FROM_SIMUZILLA
+    void deliver_request(const std::string& json_admission_request, int priority, const std::vector<uint8_t>& target, const IdentifierType& type);
+#endif
     API* set_dispatcher(Dispatcher* dispatcher);
     API* execute();
     API* stop();
@@ -45,11 +43,13 @@ public:
     void operator()();
 private:
     explicit API(const std::string& logger_name);
-//#ifndef FROM_SIMUZILLA
+#ifndef FROM_SIMUZILLA
     static EAR* build_message_from_admission_request(const AdmissionRequest& admission_request);
     std::ifstream _server_fifo;
     int _server_fifo_fd;
-//#endif
+#else
+    static EAR* build_message_from_arguments(const std::string& json_admission_request, int priority, const std::vector<uint8_t>& target, const IdentifierType& type);
+#endif
     Dispatcher* _dispatcher;
     std::shared_ptr<spdlog::logger> _logger;
     bool _running = false;

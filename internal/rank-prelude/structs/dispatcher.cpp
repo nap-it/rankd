@@ -59,9 +59,13 @@ std::tuple<Message*, std::vector<uint8_t>, IdentifierType> Dispatcher::dequeue_i
 }
 
 void Dispatcher::enqueue_item(const std::tuple<Message *, std::vector<uint8_t>, IdentifierType> &item) {
-    std::lock_guard guard(_received_messages_locker);
+    {
+        std::lock_guard guard(_received_messages_locker);
 
-    _received_messages->push(item);
+        _received_messages->push(item);
+    }
+
+    _logger->debug("[Dispatcher] A message was dropped in this node received messages queue.");
 }
 
 #ifdef FROM_SIMUZILLA
@@ -141,6 +145,10 @@ Dispatcher *Dispatcher::borrow_simulation_sender_function(std::function<void(uin
     _sender->borrow_sender_function(function);
 
     return this;
+}
+
+API *Dispatcher::api() {
+    return _api;
 }
 #endif
 

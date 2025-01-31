@@ -47,6 +47,8 @@ public:
 
     Dispatcher *borrow_simulation_sender_function(std::function<void(uint8_t, std::vector<uint8_t>)> function);
 
+    API *api();
+
 #endif
 
     ~Dispatcher();

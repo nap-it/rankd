@@ -483,6 +483,7 @@ void Handler::operator()() {
                                     } break;
                                 }
                             } else {
+                                _logger->warn("[Handler] [{}] The request admission cannot be performed here.", _uuid);
                             }
                         } else {
                             // (B.1.1.2) Create a REF message and send it.
@@ -900,6 +901,8 @@ void Handler::operator()() {
                     _logger->error("[Handler] [{}] An erroneous message was received. It will be ignored.", _uuid);
                     break;
             }
+
+            _logger->debug("[Handler] [{}] The message is being deleted from the system...", _uuid);
 
             // Delete the pointer of the message.
             delete _message;

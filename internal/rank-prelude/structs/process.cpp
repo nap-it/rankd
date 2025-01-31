@@ -336,6 +336,10 @@ Process *Process::borrow_simulation_identity_function(std::function<bool(uint8_t
 
     return this;
 }
+
+API *Process::use_api() {
+    return _dispatcher->api();
+}
 #endif
 
 Process *Process::log_on(const std::string& logger_name) {
