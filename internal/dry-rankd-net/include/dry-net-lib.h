@@ -1,5 +1,5 @@
-#ifndef DRYRANKD_COMP_LIB_H
-#define DRYRANKD_COMP_LIB_H
+#ifndef DRYRANKD_NET_LIB_H
+#define DRYRANKD_NET_LIB_H
 
 #include "data-sources/interfaces.h"
 #include "data-sources/neighbors.h"

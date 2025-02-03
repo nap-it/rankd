@@ -26,7 +26,7 @@ OperativeSystem::OperativeSystem() {
     // Initialize a list of processes.
     int number_of_processes = (full_randomizer(range) % 10) + 10;
     for (int process_index = 0; process_index != number_of_processes; process_index++) {
-        Process process;
+        SystemProcess process;
         process.id = process_index;
         process.user = random_user();
         process.cpu_usage = (full_randomizer(range) % 1000) / 10.0;
@@ -91,7 +91,7 @@ double OperativeSystem::load_15m() const {
     return (_uptime >= std::chrono::minutes(15)) ? _load15m : 0.0;
 }
 
-const std::map<unsigned int, Process>& OperativeSystem::processes() const {
+const std::map<unsigned int, SystemProcess>& OperativeSystem::processes() const {
     return _processes;
 }
 

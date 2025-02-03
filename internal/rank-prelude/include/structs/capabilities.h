@@ -9,6 +9,9 @@
 
 class Capabilities {
 public:
+    // Setters.
+    void add_item(const std::pair<CapabilityItemType, std::any>& item);
+
     // Getters.
     std::map<CapabilityItemType, std::any> items() const;
 

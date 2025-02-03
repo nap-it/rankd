@@ -24,7 +24,7 @@ std::string get_yang_module_content(const RequestTypes& type) {
 std::string stringify(const RequestTypes& type) {
     switch (type) {
         case RequestTypes::CPURequest:
-            return "cpu"; //std::string(YANG_PREFIX) + ":" + "cpu-request";
+            return "cpu_cores"; //std::string(YANG_PREFIX) + ":" + "cpu-request";
         case RequestTypes::MemoryRequest:
             return "memory"; //std::string(YANG_PREFIX) + ":" + "memory-request";
         case RequestTypes::InterfaceRequest:
@@ -35,7 +35,7 @@ std::string stringify(const RequestTypes& type) {
 }
 
 RequestTypes typify(const std::string& string) {
-    if (string == "cpu") {
+    if (string == "cpu_cores") {
         return RequestTypes::CPURequest;
     }
 

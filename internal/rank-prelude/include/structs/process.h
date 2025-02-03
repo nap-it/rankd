@@ -115,6 +115,8 @@ private:
     std::shared_ptr<spdlog::logger> _logger;
     std::function<std::set<uint8_t>(uint8_t)> _simulated_connections;
     std::function<bool(uint8_t)> _simulated_identity;
+    uint8_t _simuzilla_identity;
+    std::function<const std::vector<int>*()> _simulated_topology;
 #else
     std::shared_ptr<spdlog::logger> _logger;
 #endif

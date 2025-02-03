@@ -1,13 +1,15 @@
 #include "structs/resources.h"
 
-Resources* Resources::get_instance(const std::string& logger_name) {
 #ifdef FROM_SIMUZILLA
-    return new Resources(logger_name);
+Resources* Resources::get_instance(const std::function<const std::vector<int>*()>& topology, unsigned int own_address, const std::string& logger_name) {
+    return new Resources(topology, own_address, logger_name);
+}
 #else
+Resources* Resources::get_instance(const std::string& logger_name) {
     static Resources* instance = new Resources(logger_name);
     return instance;
-#endif
 }
+#endif
 
 float Resources::estimate_bid(const RequestingCapabilities& capabilities) const {
     // FIXME Talvez cortar este método?
@@ -16,18 +18,141 @@ float Resources::estimate_bid(const RequestingCapabilities& capabilities) const 
 }
 
 float Resources::estimate_bid(const Reservation& reservation) const {
-    float node_resources = 0;     // TODO
-    float proximity = 0;          // TODO
-    float hysteresis = 0;         // TODO
-    float current_resources = 0;  // TODO
+    // Phase 1: Bare-metal criterium for reservation.
+    float node_resources = bare_metal_resource_assessment(reservation.requirements());
+
+    // Phase 2: Current capability for performance of requirement list.
+    float current_resources = current_resource_assessment(reservation.requirements());
+
+    // Phase 3: Fairness.
     float fairness = reservation.priority() / RANK_MAX_PRIORITY;
+
+    // Phase 4: Proximity criterium.
+    float proximity = proximity_assessment(reservation.listener(), reservation.listener_length());
+
+    // Phase 5: Historical Performance criterium.
+    float hysteresis = hysteresis_assessment(reservation);
 
     return node_resources * (proximity + hysteresis) / 2 * current_resources * (fairness / RANK_MAX_PRIORITY);
 }
 
+float Resources::bare_metal_resource_assessment(const RequestingCapabilities &requirements) const {
+    // For each required item, check its bare-metal resource.
+    for (const auto& [item_order, item]: requirements.ordered_items()) {
+        const CapabilityItemType& item_key = item.first;
+        const std::any& item_value = item.second;
+
+        if (not item_value.has_value()) {
+            return 0.0;
+        }
+
+        switch (item_key) {
+            case CapabilityItemType::TIME:
+                break;
+            case CapabilityItemType::TIME_TAS:
+                break;
+            case CapabilityItemType::TIME_CBS:
+                break;
+            case CapabilityItemType::NET:
+                break;
+            case CapabilityItemType::NET_BANDWIDTH:
+                break;
+            case CapabilityItemType::NET_DDS:
+                break;
+            case CapabilityItemType::COMP:
+                break;
+            case CapabilityItemType::COMP_CPU:
+                if (std::any_cast<uint>(item_value) >= _current_capabilities->bare_metal_cpu_cores()) {
+                    return 0.0;
+                }
+                break;
+            case CapabilityItemType::COMP_MEMORY:
+                if (std::any_cast<uint>(item_value) >= _current_capabilities->bare_metal_memory()) {
+                    return 0.0;
+                }
+                break;
+            case CapabilityItemType::UNSPECIFIED:
+                break;
+        }
+    }
+
+    return 1.0;
+}
+
+float Resources::current_resource_assessment(const RequestingCapabilities &requirements) const {
+    // For each requirement, individually-assess it and sum it at the end, by means of a function.
+    std::vector<float> individual_assessments{};
+
+    for (const auto& [item_order, item]: requirements.ordered_items()) {
+        const CapabilityItemType& item_key = item.first;
+        const std::any& item_value = item.second;
+
+        if (not item_value.has_value()) {
+            return 0.0;
+        }
+
+        switch (item_key) {
+            case CapabilityItemType::TIME:
+                break;
+            case CapabilityItemType::TIME_TAS:
+                break;
+            case CapabilityItemType::TIME_CBS:
+                break;
+            case CapabilityItemType::NET:
+                break;
+            case CapabilityItemType::NET_BANDWIDTH:
+                break;
+            case CapabilityItemType::NET_DDS:
+                break;
+            case CapabilityItemType::COMP:
+                break;
+            case CapabilityItemType::COMP_CPU: {
+                const auto& value = _current_capabilities->current_cpu_cores();
+                if (value == 0) {
+                    return 0.0;
+                }
+                individual_assessments.push_back(value);
+            }
+                break;
+            case CapabilityItemType::COMP_MEMORY: {
+                const auto& value = _current_capabilities->current_memory();
+                if (value == 0) {
+                    return 0.0;
+                }
+                individual_assessments.push_back(value);
+            }
+                break;
+            case CapabilityItemType::UNSPECIFIED:
+                break;
+        }
+    }
+
+    std::function<float(const std::vector<float>&)> alpha;
+    alpha = [&](const std::vector<float>& requirements) -> float {
+        if (requirements.size() == 1) {
+            return requirements.front();
+        }
+        std::vector<float> requirements_subvector;
+        std::copy(requirements.begin()+1, requirements.end(), std::back_inserter(requirements_subvector));
+        return RANK_CURRENT_RESOURCES_EVAL_THRESHOLD*requirements.front() + (1-RANK_CURRENT_RESOURCES_EVAL_THRESHOLD)*alpha(requirements_subvector);
+    };
+
+    return alpha(individual_assessments);
+}
+
+float Resources::proximity_assessment(const std::array<uint8_t, 16> &target, uint8_t target_length) const {
+
+    return 1.0;
+}
+
+float Resources::hysteresis_assessment(const Reservation &reservation) const {
+
+    return 1.0;
+}
+
 Reservation* Resources::available_for_performance(const Reservation& statement, uint8_t priority) {
     // Check if currently there are resources to perform this statement.
-    if (statement.requirements() < _current_capabilities) {
+    if (statement.requirements() < *_current_capabilities) {
         // If so, then simply accept it.
         return new Reservation(statement);
     } else {
@@ -151,6 +276,10 @@ bool Resources::is_running() const {
 
 void Resources::operator()() {
     while (_running) {
+        // Update information on current capabilities.
+        _current_capabilities->update();
+        _logger->debug("[Resources] {}", _current_capabilities->display());
+
         std::this_thread::sleep_for(std::chrono::milliseconds(_waiting_time));
     }
 }
@@ -158,7 +287,16 @@ void Resources::operator()() {
 Resources::~Resources() {
 }
 
+#ifdef FROM_SIMUZILLA
+Resources::Resources(const std::function<const std::vector<int> *()> &topology, unsigned int own_address,
+                     const std::string &logger_name) {
+    // Configure logging.
+    _logger = spdlog::get(logger_name);
+    _current_capabilities = new CurrentCapabilities(topology, own_address);
+}
+#else
 Resources::Resources(const std::string& logger_name) {
     // Configure logging.
     _logger = spdlog::get(logger_name);
 }
+#endif

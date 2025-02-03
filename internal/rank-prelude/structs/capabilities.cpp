@@ -1,5 +1,9 @@
 #include "structs/capabilities.h"
 
+void Capabilities::add_item(const std::pair<CapabilityItemType, std::any> &item) {
+    _items.insert(item);
+}
+
 std::map<CapabilityItemType, std::any> Capabilities::items() const {
     return _items;
 }

@@ -11,16 +11,6 @@
 
 #include "constants.h"
 
-#ifdef FROM_SIMUZILLA
-#include "dry-comp-lib.h"
-#include "dry-net-lib.h"
-#include "dry-time-lib.h"
-#else
-#include "comp-lib.h"
-#include "net-lib.h"
-#include "time-lib.h"
-#endif
-
 #include "spdlog/spdlog.h"
 
 #include "structs/current_capabilities.h"
@@ -31,7 +21,11 @@
 class Resources {
 public:
     // Instance handling.
+#ifdef FROM_SIMUZILLA
+    static Resources* get_instance(const std::function<const std::vector<int>*()>& topology, unsigned int own_address, const std::string& logger_name);
+#else
     static Resources* get_instance(const std::string& logger_name);
+#endif
 
     // Bid estimation.
     float estimate_bid(const RequestingCapabilities& capabilities) const;
@@ -55,9 +49,17 @@ public:
     ~Resources();
 
 private:
+#ifdef FROM_SIMUZILLA
+    Resources(const std::function<const std::vector<int>*()>& topology, unsigned int own_address, const std::string& logger_name);
+#else
     explicit Resources(const std::string& logger_name);
+#endif
+    float bare_metal_resource_assessment(const RequestingCapabilities& requirements) const;
+    float current_resource_assessment(const RequestingCapabilities& requirements) const;
+    float proximity_assessment(const std::array<uint8_t, 16>& target, uint8_t target_length) const;
+    float hysteresis_assessment(const Reservation& reservation) const;
     std::list<Reservation> _reservations;
-    CurrentCapabilities _current_capabilities;
+    CurrentCapabilities* _current_capabilities;
     unsigned int _waiting_time = 1000;
     bool _running = false;
     std::thread _thread;

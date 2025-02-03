@@ -162,6 +162,12 @@ bool Process::is_running() const {
 }
 
 void Process::operator()() {
+#ifdef FROM_SIMUZILLA
+    // Initialize the inner structures.
+    _resources = Resources::get_instance(_simulated_topology, _simuzilla_identity, _logger->name());
+    _resources->execute();
+    _timeout_handler = TimeoutHandler::get_instance(_logger->name());
+#endif
     _logger->info("Starting the process main thread...");
     _logger->info("Process is now waiting for messages in the dispatcher's receiving queue at each {} seconds.", _waiting_time);
 
@@ -295,6 +301,9 @@ void Process::operator()() {
 
 #ifdef FROM_SIMUZILLA
 Process* Process::set_topology_and_current_address(std::function<const std::vector<int>*()> topology, unsigned int address) {
+    _simulated_topology = topology;
+    _simuzilla_identity = address;
+
     _dispatcher->set_topology_and_current_address(topology, address);
 
     return this;
@@ -365,6 +374,7 @@ Process::Process(const std::string& logger_name) {
     // Initialize the inner structures.
     _logger->trace("[Process] Retrieving resources and the timeout handler. (Step 1 of 6)");
     _resources = Resources::get_instance();
+    _resources->execute();
     _timeout_handler = TimeoutHandler::get_instance();
 
     // Initialize the rank0 network interface.
@@ -449,10 +459,6 @@ Process::Process(const std::string& logger_name) {
 #else
     _logger = spdlog::get(logger_name);
     _logger->info("Preparing the Rank process from Simuzilla...");
-
-    // Initialize the inner structures.
-    _resources = Resources::get_instance(_logger->name());
-    _timeout_handler = TimeoutHandler::get_instance(_logger->name());
 
     // Initialize the dispatcher.
     _logger->info("Initializing the dispatcher...");

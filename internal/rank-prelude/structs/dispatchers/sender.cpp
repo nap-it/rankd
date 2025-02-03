@@ -1,4 +1,6 @@
 #include "structs/dispatchers/sender.h"
+
+#include <utility>
 #include "structs/messages/ear.h"
 
 Sender *Sender::set_queue(std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* queue, std::mutex *mutex) {
@@ -93,7 +95,7 @@ void Sender::operator()() {
 
 #ifdef FROM_SIMUZILLA
 void Sender::set_topology_and_current_address(std::function<const std::vector<int>*()> topology, unsigned int address) {
-    _topology = topology;
+    _topology = std::move(topology);
     _own_address = address;
 }
 #endif

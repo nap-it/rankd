@@ -52,8 +52,9 @@ RequestingCapabilities transform_to_requirements(const rapidjson::Document& json
     RequestingCapabilities capabilities {};
 
     for (const auto& item : json["nap-rank-requirements:requirements"]["items"].GetArray()) {
+        auto string = item["requirement"].MemberBegin()->name.GetString();
         auto type = static_cast<CapabilityItemType>((unsigned int) FnvHash(item["requirement"].MemberBegin()->name.GetString()));
-        auto requirement = item["requirement"].MemberBegin()->value.GetObject();
+        auto requirement = item["requirement"].GetObject();
 
         switch (type) {
             case CapabilityItemType::UNSPECIFIED:

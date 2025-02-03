@@ -26,7 +26,7 @@ enum class ProcessStatus {
   Idle
 };
 
-struct Process {
+struct SystemProcess {
   int id;
   std::string user;
   double cpu_usage;
@@ -62,7 +62,7 @@ public:
   [[nodiscard]] double load_1m() const;
   [[nodiscard]] double load_5m() const;
   [[nodiscard]] double load_15m() const;
-  [[nodiscard]] const std::map<unsigned int, Process> &processes() const;
+  [[nodiscard]] const std::map<unsigned int, SystemProcess> &processes() const;
   friend std::ostream& operator<<(std::ostream& os, const OperativeSystem& operative_system);
 private:
   Kernel _kernel;
@@ -71,7 +71,7 @@ private:
   double _load1m;
   double _load5m;
   double _load15m;
-  std::map<unsigned int, Process> _processes;
+  std::map<unsigned int, SystemProcess> _processes;
 };
 
 const float LOAD = 1.f / (1 << SI_LOAD_SHIFT);
