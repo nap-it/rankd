@@ -5,4 +5,6 @@
 #include "data-sources/neighbors.h"
 #include "data-sources/routes.h"
 
+#include "metrics/metrics.h"
+
 #endif // DRYRANKD_COMP_LIB_H

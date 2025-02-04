@@ -2,16 +2,16 @@
 #define RANK_PRELUDE_RESOURCES_H
 
 #include <algorithm>
+#include <cmath>
 #include <list>
 #include <mutex>
+#include <string>
 #include <thread>
 #include <vector>
 
 #include "spdlog/spdlog.h"
 
 #include "constants.h"
-
-#include "spdlog/spdlog.h"
 
 #include "structs/current_capabilities.h"
 #include "structs/identifier.h"
@@ -29,7 +29,7 @@ public:
 
     // Bid estimation.
     float estimate_bid(const RequestingCapabilities& capabilities) const;
-    float estimate_bid(const Reservation& reservation) const;
+    double estimate_bid(const Reservation& reservation);
 
     // Reservation handling.
     Reservation* available_for_performance(const Reservation& statement, uint8_t priority);
@@ -54,10 +54,15 @@ private:
 #else
     explicit Resources(const std::string& logger_name);
 #endif
-    float bare_metal_resource_assessment(const RequestingCapabilities& requirements) const;
-    float current_resource_assessment(const RequestingCapabilities& requirements) const;
-    float proximity_assessment(const std::array<uint8_t, 16>& target, uint8_t target_length) const;
-    float hysteresis_assessment(const Reservation& reservation) const;
+    double proximity_hops_assessment(const std::vector<uint8_t>& target, bool update = false);
+    double proximity_rtt_assessment(const std::vector<uint8_t>& target, bool update = false);
+    double proximity_pdv_assessment(const std::vector<uint8_t>& target, bool update = false);
+    double proximity_pl_assessment(const std::vector<uint8_t>& target, bool update = false);
+    double bare_metal_resource_assessment(const RequestingCapabilities& requirements) const;
+    double current_resource_assessment(const RequestingCapabilities& requirements) const;
+    double proximity_assessment(const std::array<uint8_t, 16>& target, uint8_t target_length);
+    double hysteresis_assessment(const Reservation& reservation) const;
+    std::map<std::string, std::tuple<long, double, double, double, double>> _proximity_metrics{};
     std::list<Reservation> _reservations;
     CurrentCapabilities* _current_capabilities;
     unsigned int _waiting_time = 1000;
