@@ -210,7 +210,7 @@ std::string Reservation::past_node_as_string() const {
         }
         to_return << ", ";
     } else if (type == IdentifierType::Simulation) {
-        to_return << node.at(0) << ", ";
+        to_return << (int)node.at(0) << ", ";
     }
 
     return to_return.str().substr(0, to_return.str().size()-2);

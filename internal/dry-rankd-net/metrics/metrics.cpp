@@ -27,6 +27,7 @@ double packet_delay_variation_to(const std::vector<uint8_t>& target) {
     return distribution(generator);
 }
 
+// Verificar aplicação de modelo de Gilbert-Elliott.
 double packet_loss_to(const std::vector<uint8_t>& target) {
     std::random_device device;
     std::mt19937 generator(device());

@@ -82,6 +82,10 @@ void Sender::operator()() {
                 case IdentifierType::Simulation:
                     // The target is a simulated unit: Simuzilla, for instance.
                     _logger->trace("[Sender] The target is a simulation identifier, so delegate this to make and send bytes function.");
+                    _logger->debug("[Sender] Targeting node port {}.", std::get<1>(queue_item).at(0));
+                    if (std::get<0>(queue_item)->type() == MessageType::EAR or std::get<0>(queue_item)->type() == MessageType::MAR) {
+                        _logger->debug("[Sender] The Rank message here is being sent with listener {}.", dynamic_cast<EAR*>(std::get<0>(queue_item))->listener().at(0));
+                    }
                     make_and_send_bytes(std::get<0>(queue_item), std::get<1>(queue_item));
                     break;
             }

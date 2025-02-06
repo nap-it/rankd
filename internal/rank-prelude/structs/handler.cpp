@@ -284,6 +284,7 @@ void Handler::operator()() {
 #ifdef FROM_SIMUZILLA
                         case RANK_MAR_MESSAGE_LEN_LT_CODE_0: {
                             uint8_t simuzilla_address = listener_field.at(0);
+                            _logger->trace("[Handler] [{}] Testing if I am id {}.", _uuid, simuzilla_address);
                             i_am_listener = simulated_is_me(simuzilla_address);
 
                             // Update inner reservation with the requirements of the message.
@@ -414,6 +415,10 @@ void Handler::operator()() {
 #ifdef FROM_SIMUZILLA
                                 std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target =
                                         get_connections_to(target.at(0));
+                                _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Items:", _uuid, target.at(0), connections_to_target.size() == 1 ? "" : "s", connections_to_target.size());
+                                for (const auto& [connection, type]: connections_to_target) {
+                                    _logger->trace("               -> {}", connection.at(0));
+                                }
 #else
                                 std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target =
                                         get_connections_to(target);
@@ -442,9 +447,15 @@ void Handler::operator()() {
                                         // If only one connection is found...
                                         // (B.1.2.2.2.1) Create EAR message and send it.
                                         _logger->trace("[Handler] [{}] (B.1.2.2.2.1) If only one connection is found... create EAR message and send it.", _uuid);
+                                        std::array<uint8_t, 16> listener{};
+#ifdef FROM_SIMUZILLA
+                                        listener.at(0) = ear_message->listener().at(0);
+#else
+                                        std::copy_n(ear_message->listener().begin(), ear_message->listener_length(), listener.begin());
+#endif
                                         EAR* new_ear_message =
                                                 new EAR(_uuid, ear_message->priority(), ear_message->listener_length(),
-                                                    listener_message_format(connections_to_target.front().first), ear_message->payload_length(),
+                                                    listener, ear_message->payload_length(),
                                                     ear_message->payload());
                                         _dispatcher->send_message(new_ear_message, connections_to_target.front().first, connections_to_target.front().second);
 

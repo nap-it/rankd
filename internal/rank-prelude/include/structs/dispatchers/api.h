@@ -34,7 +34,7 @@ public:
     static API* get_instance(const std::string& logger_name);
 
 #ifdef FROM_SIMUZILLA
-    void deliver_request(const std::string& json_admission_request, int priority, const std::vector<uint8_t>& target, const IdentifierType& type);
+    void deliver_request(const std::string& json_admission_request, int priority, const std::vector<uint8_t>& target, const std::vector<uint8_t>& own_id, const IdentifierType& type);
 #endif
     API* set_dispatcher(Dispatcher* dispatcher);
     API* execute();

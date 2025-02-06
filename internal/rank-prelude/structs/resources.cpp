@@ -310,14 +310,15 @@ Resources* Resources::mark_reservation(Reservation* reservation) {
     // Find reservation in reservations and if no such reservation was found, then throw exception.
     auto found_reservation = std::find(_reservations.begin(), _reservations.end(), *reservation);
     if (found_reservation == _reservations.end()) {
-        throw std::exception();  // TODO
+        _logger->debug("[Reservation] Reserving directly a request for resources as this is the listener.");
+        reservation->reserve();
+    } else {
+        // Remove reservation in the set of reservations.
+        _reservations.erase(found_reservation);
+
+        // Mark reservation as reserved.
+        reservation->mark_reserved();
     }
-
-    // Remove reservation in the set of reservations.
-    _reservations.erase(found_reservation);
-
-    // Mark reservation as reserved.
-    reservation->mark_reserved();
 
     // Add the modified reservation to the set of reservations.
     _reservations.push_back(*reservation);

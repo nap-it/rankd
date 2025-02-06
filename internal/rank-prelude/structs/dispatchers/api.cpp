@@ -11,10 +11,10 @@ API *API::get_instance(const std::string& logger_name) {
 
 #ifdef FROM_SIMUZILLA
 
-void API::deliver_request(const std::string &json_admission_request, int priority, const std::vector<uint8_t> &target, const IdentifierType& type) {
+void API::deliver_request(const std::string &json_admission_request, int priority, const std::vector<uint8_t> &target, const std::vector<uint8_t>& own_id, const IdentifierType& type) {
     _logger->info("[API] Delivering a message from API to simulated Rank process, to {}, requesting {}.", target.front(), json_admission_request);
     EAR* ear_message = build_message_from_arguments(json_admission_request, priority, target, type);
-    _dispatcher->enqueue_item(std::make_tuple(ear_message, ear_message->listener(), type));
+    _dispatcher->enqueue_item(std::make_tuple(ear_message, own_id, type));
 }
 
 #endif
