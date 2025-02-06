@@ -253,36 +253,40 @@ double Resources::proximity_pl_assessment(const std::vector<uint8_t> &target, bo
 }
 
 Reservation* Resources::available_for_performance(const Reservation& statement, uint8_t priority) {
-    // Check if currently there are resources to perform this statement.
-    if (statement.requirements() < *_current_capabilities) {
-        // If so, then simply accept it.
-        return new Reservation(statement);
+    // Check if there are no resources to perform this statement.
+    if (bare_metal_resource_assessment(statement.requirements()) == 0) {
+        return nullptr;
     } else {
-        // Otherwise, then check if there is a reservation with lower priority that could be unconsidered.
-        auto reservation_pointer = std::min_element(_reservations.begin(), _reservations.end());
+        // Check if currently there are no resources to perform this statement.
+        if (current_resource_assessment(statement.requirements()) == 0) {
+            // Otherwise, then check if there is a reservation with lower priority that could be unconsidered.
+            auto reservation_pointer = std::min_element(_reservations.begin(), _reservations.end());
 
-        // If the list is empty, then the pointer will reach the end, returning nullptr as the requirements could not be
-        // performed.
-        if (reservation_pointer == _reservations.end()) {
-            return nullptr;
+            // If the list is empty, then the pointer will reach the end, returning nullptr as the requirements could not be
+            // performed.
+            if (reservation_pointer == _reservations.end()) {
+                return nullptr;
+            }
+
+            // If the minimum priority is higher or equal than the requested one, terminate will nullptr.
+            if (reservation_pointer->priority() >= priority) {
+                return nullptr;
+            }
+
+            // As the priority is lower than requested, replenish the found reservation, replenishing it from the network.
+            reservation_pointer->replenish();
+
+            // Create a new reservation with the given statement where the minimum reservation was replenished.
+            *reservation_pointer = Reservation(statement);
+
+            // Set the reservation to be waiting for the sacrifice.
+            reservation_pointer->wait_for_sacrifice();
+
+            // Return the location of such a reservation.
+            return &(*reservation_pointer);
+        } else {
+            return new Reservation(statement);
         }
-
-        // If the minimum priority is higher or equal than the requested one, terminate will nullptr.
-        if (reservation_pointer->priority() >= statement.priority()) {
-            return nullptr;
-        }
-
-        // As the priority is lower than requested, replenish the found reservation, replenishing it from the network.
-        reservation_pointer->replenish();
-
-        // Create a new reservation with the given statement where the minimum reservation was replenished.
-        *reservation_pointer = Reservation(statement);
-
-        // Set the reservation to be waiting for the sacrifice.
-        reservation_pointer->wait_for_sacrifice();
-
-        // Return the location of such a reservation.
-        return &(*reservation_pointer);
     }
 }
 
@@ -326,7 +330,10 @@ Resources* Resources::mark_pre_reservation(Reservation* reservation) {
     // Find reservation in reservations and if no such reservation was found, then throw exception.
     auto found_reservation = std::find(_reservations.begin(), _reservations.end(), *reservation);
     if (found_reservation == _reservations.end()) {
-        throw std::exception();  // TODO
+        reservation->pre_reserve();
+        _reservations.push_back(*reservation);
+        _reservations.sort();
+        return this;
     }
 
     // Remove reservation in the set of reservations.

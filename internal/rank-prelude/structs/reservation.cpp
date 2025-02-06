@@ -92,7 +92,7 @@ void Reservation::pre_reserve() {
 
     _state = ReservationState::PRE_RESERVED;
 
-    _logger->debug("[Reservation] [{}] Reservation state changed from {} to {}.", _uuid, reservation_state_as_string(ReservationState::PRE_RESERVED),
+    _logger->debug("[Reservation] [{}] Reservation state changed from {} to {}.", _uuid, reservation_state_as_string(ReservationState::CREATED),
                    reservation_state_as_string(_state));
 }
 
@@ -210,7 +210,7 @@ std::string Reservation::past_node_as_string() const {
         }
         to_return << ", ";
     } else if (type == IdentifierType::Simulation) {
-        to_return << ((node.at(1) << 8) | node.at(0)) << ", ";
+        to_return << node.at(0) << ", ";
     }
 
     return to_return.str().substr(0, to_return.str().size()-2);

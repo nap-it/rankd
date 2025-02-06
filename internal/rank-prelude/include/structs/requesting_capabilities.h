@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "structs/capabilities.h"
+#include "structs/current_capabilities.h"
 
 class RequestingCapabilities : public Capabilities {
 public:
@@ -17,6 +18,9 @@ public:
     void upgrade_item(uint8_t place, uint8_t to_place = 0);
     const std::pair<CapabilityItemType, std::any>& get_item(uint8_t place);
     void remove_item(uint8_t place);
+
+    // Compare methods.
+    bool operator<(const CurrentCapabilities& current) const;
 
     // Getters.
     std::map<uint8_t, std::pair<CapabilityItemType, std::any>> ordered_items() const;

@@ -199,15 +199,24 @@ void Process::operator()() {
 
                 _logger->trace("[Process] [{}] This UUID is in store and its handler is in {} state.", message_uuid, handler_state_to_string(uuid_state));
 
-                // If state is CLOSED, then simply close the socket and ignore. (A.3.1.1)
-                if (uuid_state == HandlerState::CLOSED) {
-                    // Ignore the message. (A.3.1.1.1.1)
-                    _logger->info("Ignoring message since its UUID {} reports being closed.", message_uuid);
-                    continue;
-                } else {
-                    // Otherwise, resume handling the request. (A.3.1.1.2.1)
-                    _logger->trace("[Process] [{}] Resuming handler on this UUID.", message_uuid);
-                    handler = resume_handler(message_uuid); // (A.3.1.1.2.2)
+                switch (uuid_state) {
+                    // If state is ASSESSING, PRESENTING, AUCTION_BIDDING, REPLENISHING, or CLOSED,
+                    // then simply close the socket and ignore. (A.3.1.1)
+                    case HandlerState::ASSESSING:
+                    case HandlerState::PRESENTING:
+                    case HandlerState::AUCTION_BIDDING:
+                    case HandlerState::REPLENISHING:
+                    case HandlerState::CLOSED:
+                        // Ignore the message. (A.3.1.1.1.1)
+                        _logger->info("Ignoring message since its UUID {} reports being closed.", message_uuid);
+                        continue;
+                    case HandlerState::PRE_RESERVED:
+                    case HandlerState::AUCTION_WAITING:
+                    case HandlerState::RESERVED:
+                    case HandlerState::READY:
+                        // Otherwise, resume handling the request. (A.3.1.1.2.1)
+                        _logger->trace("[Process] [{}] Resuming handler on this UUID.", message_uuid);
+                        handler = resume_handler(message_uuid); // (A.3.1.1.2.2)
                 }
             } else {
                 // If the UUID is not known in the Store, then create one and save it. (A.3.2.1)

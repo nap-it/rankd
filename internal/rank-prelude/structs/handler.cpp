@@ -390,6 +390,9 @@ void Handler::operator()() {
                                 _logger->trace("[Handler] [{}] (B.1.2.1.2.1) Get connections towards listener(s).", _uuid);
                                 std::vector<uint8_t> target {};
                                 switch (listener_field_length) {
+                                    case RANK_EAR_MESSAGE_LEN_LT_CODE_0:
+                                        target.push_back(listener_field[0]);
+                                        break;
                                     case RANK_EAR_MESSAGE_LEN_LT_IP4: {
                                         for (int byte = 0; byte != 4; byte++) {
                                             target.push_back(listener_field[byte]);

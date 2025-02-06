@@ -24,6 +24,10 @@ void RequestingCapabilities::remove_item(uint8_t place) {
     _ordered_items.erase(place);
 }
 
+bool RequestingCapabilities::operator<(const CurrentCapabilities &current) const {
+
+}
+
 std::map<uint8_t, std::pair<CapabilityItemType, std::any>> RequestingCapabilities::ordered_items() const {
     return _ordered_items;
 }
