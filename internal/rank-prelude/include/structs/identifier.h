@@ -1,10 +1,21 @@
 #ifndef RANK_PRELUDE_IDENTIFIER_H
 #define RANK_PRELUDE_IDENTIFIER_H
 
+#include <cstdint>
 #include <random>
+#include <string>
+#include <vector>
 
-typedef unsigned long UUIDv4;
+#include "ulid.hh"
+
+typedef ulid::ULID UUIDv4;
 
 UUIDv4 generate_new_uuid();
+
+std::string display(const UUIDv4& uuid);
+
+std::vector<uint8_t> marshall_into_vector(const UUIDv4& uuid);
+
+UUIDv4 unmarshall_from_vector(const std::vector<uint8_t>& marshalled);
 
 #endif  // RANK_PRELUDE_IDENTIFIER_H

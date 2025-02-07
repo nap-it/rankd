@@ -46,3 +46,6 @@
 [submodule "internal/rank-prelude/vendor/libcbor"]
 	path = internal/rank-prelude/vendor/libcbor
 	url = https://code.nap.av.it.pt/external-tools/libcbor
+[submodule "internal/rank-prelude/vendor/ulid"]
+	path = internal/rank-prelude/vendor/ulid
+	url = https://code.nap.av.it.pt/external-tools/ulid.git

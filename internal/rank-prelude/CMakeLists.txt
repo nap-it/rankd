@@ -215,6 +215,7 @@ target_include_directories(rank-prelude PUBLIC
         vendor/pcap-plus-plus/Common++/header
         vendor/pcap-plus-plus/Packet++/header
         vendor/pcap-plus-plus/Pcap++/header
+        vendor/ulid/src
 )
 target_include_directories(rank-prelude PUBLIC ${PROJECT_BINARY_DIR}/vendor/libcbor)
 if (NOT FROM_SIMUZILLA)

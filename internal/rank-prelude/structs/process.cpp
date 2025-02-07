@@ -208,19 +208,19 @@ void Process::operator()() {
             // Get the UUID from the raw data received.
             auto message_uuid = message->uuid();
 
-            _logger->debug("[Process] Outside --> Rank: Message UUID of {}.", message_uuid);
+            _logger->debug("[Process] Outside --> Rank: Message UUID of {}.", display(message_uuid));
             _logger->debug("[Process] Outside --> Rank: Message source address type of {}.", identifier_to_string(source_address_type));
 
             // Create a meta handler.
             Handler *handler = nullptr;
 
             // If UUID is known (A.3)...
-            _logger->trace("[Process] [{}] Checking if the UUID is already known...", message_uuid);
+            _logger->trace("[Process] [{}] Checking if the UUID is already known...", display(message_uuid));
             if (is_uuid_in_store(message_uuid)) {
                 // Check the state of such UUID.
                 auto uuid_state = _store[message_uuid]->state();
 
-                _logger->trace("[Process] [{}] This UUID is in store and its handler is in {} state.", message_uuid, handler_state_to_string(uuid_state));
+                _logger->trace("[Process] [{}] This UUID is in store and its handler is in {} state.", display(message_uuid), handler_state_to_string(uuid_state));
 
                 switch (uuid_state) {
                     // If state is ASSESSING, PRESENTING, AUCTION_BIDDING, REPLENISHING, or CLOSED,
@@ -231,23 +231,23 @@ void Process::operator()() {
                     case HandlerState::REPLENISHING:
                     case HandlerState::CLOSED:
                         // Ignore the message. (A.3.1.1.1.1)
-                        _logger->info("Ignoring message since its UUID {} reports being closed.", message_uuid);
+                        _logger->info("Ignoring message since its UUID {} reports being closed.", display(message_uuid));
                         continue;
                     case HandlerState::PRE_RESERVED:
                     case HandlerState::AUCTION_WAITING:
                     case HandlerState::RESERVED:
                     case HandlerState::READY:
                         // Otherwise, resume handling the request. (A.3.1.1.2.1)
-                        _logger->trace("[Process] [{}] Resuming handler on this UUID.", message_uuid);
+                        _logger->trace("[Process] [{}] Resuming handler on this UUID.", display(message_uuid));
                         handler = resume_handler(message_uuid); // (A.3.1.1.2.2)
                 }
             } else {
                 // If the UUID is not known in the Store, then create one and save it. (A.3.2.1)
-                _logger->trace("[Process] [{}] This UUID does not exist yet. Registering...", message_uuid);
+                _logger->trace("[Process] [{}] This UUID does not exist yet. Registering...", display(message_uuid));
                 handler = create_handler(message_uuid);
                 _store[message_uuid] = handler; // (A.3.2.2)
 
-                _logger->trace("[Process] [{}] The handler was created and will be executed now...", message_uuid);
+                _logger->trace("[Process] [{}] The handler was created and will be executed now...", display(message_uuid));
                 handler->borrow(_dispatcher)->execute(); // (A.3.2.3)
 #ifdef FROM_SIMUZILLA
                 handler->borrow(_simulated_connections);
@@ -255,73 +255,73 @@ void Process::operator()() {
 #endif
             }
 
-            _logger->info("A handler for {} is ready to receive message.", message_uuid);
+            _logger->info("A handler for {} is ready to receive message.", display(message_uuid));
 
             // Parse the raw data as a message header and pass a complete message to the handler to handle.
             Header message_header = message->header();
 
-            _logger->trace("[Process] [{}] Getting the type of message received in this instance.", message_uuid);
+            _logger->trace("[Process] [{}] Getting the type of message received in this instance.", display(message_uuid));
 
             // Parse the message type. (A.4)
             switch (message_header.type()) {
                 case MessageType::EAR:
-                    _logger->trace("[Process] [{}] This message is an EAR message.", message_uuid);
+                    _logger->trace("[Process] [{}] This message is an EAR message.", display(message_uuid));
 
                     // Get the source of this message and set it on the handler.
-                    _logger->trace("[Process] [{}] Marking the handler's source address.", message_uuid);
+                    _logger->trace("[Process] [{}] Marking the handler's source address.", display(message_uuid));
                     handler->mark_source(std::make_pair(source_address, source_address_type));
 
-                    _logger->trace("[Process] [{}] Passing message to the handler.", message_uuid);
+                    _logger->trace("[Process] [{}] Passing message to the handler.", display(message_uuid));
                     handler->handle(dynamic_cast<EAR*>(message));
                     break;
                 case MessageType::MAR:
-                    _logger->trace("[Process] [{}] This message is a MAR message.", message_uuid);
+                    _logger->trace("[Process] [{}] This message is a MAR message.", display(message_uuid));
 
                     // Get the source of this message and set it on the handler.
-                    _logger->trace("[Process] [{}] Marking the handler's source address.", message_uuid);
+                    _logger->trace("[Process] [{}] Marking the handler's source address.", display(message_uuid));
                     handler->mark_source(std::make_pair(source_address, source_address_type));
 
-                    _logger->trace("[Process] [{}] Passing message to the handler.", message_uuid);
+                    _logger->trace("[Process] [{}] Passing message to the handler.", display(message_uuid));
                     handler->handle(dynamic_cast<MAR*>(message));
                     break;
                 case MessageType::BID:
-                    _logger->trace("[Process] [{}] This message is a BID message.", message_uuid);
+                    _logger->trace("[Process] [{}] This message is a BID message.", display(message_uuid));
 
                     // Get the source of this message and set it on the handler.
-                    _logger->trace("[Process] [{}] Marking the handler's source address.", message_uuid);
+                    _logger->trace("[Process] [{}] Marking the handler's source address.", display(message_uuid));
                     handler->mark_source(std::make_pair(source_address, source_address_type));
 
-                    _logger->trace("[Process] [{}] Passing message to the handler.", message_uuid);
+                    _logger->trace("[Process] [{}] Passing message to the handler.", display(message_uuid));
                     handler->handle(dynamic_cast<BID*>(message));
                     break;
                 case MessageType::ACC:
-                    _logger->trace("[Process] [{}] This message is an ACC message.", message_uuid);
+                    _logger->trace("[Process] [{}] This message is an ACC message.", display(message_uuid));
 
                     // Get the source of this message and set it as an accepting node in the handler.
-                    _logger->trace("[Process] [{}] Marking the handler's accepting node address.", message_uuid);
+                    _logger->trace("[Process] [{}] Marking the handler's accepting node address.", display(message_uuid));
                     handler->mark_accepting_node(std::make_pair(source_address, source_address_type));
 
-                    _logger->trace("[Process] [{}] Passing message to the handler.", message_uuid);
+                    _logger->trace("[Process] [{}] Passing message to the handler.", display(message_uuid));
                     handler->handle(dynamic_cast<ACC*>(message));
                     break;
                 case MessageType::REF:
-                    _logger->trace("[Process] [{}] This message is a REF message.", message_uuid);
+                    _logger->trace("[Process] [{}] This message is a REF message.", display(message_uuid));
 
-                    _logger->trace("[Process] [{}] Passing message to the handler.", message_uuid);
+                    _logger->trace("[Process] [{}] Passing message to the handler.", display(message_uuid));
                     handler->handle(dynamic_cast<REF*>(message));
                     break;
                 case MessageType::REP:
-                    _logger->trace("[Process] [{}] This message is a REP message.", message_uuid);
+                    _logger->trace("[Process] [{}] This message is a REP message.", display(message_uuid));
 
                     // Get the source of this message and set it on the handler.
-                    _logger->trace("[Process] [{}] Marking the handler's source address.", message_uuid);
+                    _logger->trace("[Process] [{}] Marking the handler's source address.", display(message_uuid));
                     handler->mark_source(std::make_pair(source_address, source_address_type));
 
-                    _logger->trace("[Process] [{}] Passing message to the handler.", message_uuid);
+                    _logger->trace("[Process] [{}] Passing message to the handler.", display(message_uuid));
                     handler->handle(dynamic_cast<REP*>(message));
                     break;
                 case MessageType::NOTYPE:
-                    _logger->error("[Process] [{}] This message type is supposed to not exist... Nothing to do here...", message_uuid);
+                    _logger->error("[Process] [{}] This message type is supposed to not exist... Nothing to do here...", display(message_uuid));
                     // TODO Handle this case.
                     break;
             }

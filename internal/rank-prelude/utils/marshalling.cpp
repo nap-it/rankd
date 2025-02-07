@@ -30,10 +30,10 @@ Header unmarshal_header(const std::array<uint8_t, RANK_HEADER_LEN>& data) {
     MessageType type = static_cast<MessageType>((data[0] >> 2) & RANK_HEADER_TYPE_BITMASK);
 
     // Retrieve UUID from data byte stream.
-    UUIDv4 uuid = 0;
-    for (int byte = 0; byte != RANK_UUID_LENGTH; byte++) {
-        uuid = uuid << 8 | data[RANK_HEADER_LEN-1-byte] & 0xFF;
-    }
+    std::vector<uint8_t> marshalled_uuid{};
+    std::copy_n(data.begin()+1, RANK_UUID_LENGTH, std::back_inserter(marshalled_uuid));
+
+    auto uuid = unmarshall_from_vector(marshalled_uuid);
 
     return Header(version, type, uuid);
 }
@@ -43,10 +43,9 @@ std::array<uint8_t, RANK_HEADER_LEN> marshal_header(const Header& header) {
     uint8_t first_byte = ((header.version() & RANK_HEADER_VERSION_BITMASK) << 6) | ((static_cast<unsigned int>(header.type()) & RANK_HEADER_TYPE_BITMASK) << 2);
     bytes[0] = first_byte;
 
-    auto uuid = header.uuid();
+    auto marshalled_uuid = marshall_into_vector(header.uuid());
     for (int byte = 0; byte != RANK_UUID_LENGTH; byte++) {
-        bytes[RANK_HEADER_LEN-1-byte] = uuid & 0xFF;
-        uuid >>= 8;
+        bytes[1+byte] = marshalled_uuid.at(byte);
     }
 
     return bytes;

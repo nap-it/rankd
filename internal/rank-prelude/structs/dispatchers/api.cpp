@@ -132,7 +132,7 @@ EAR* API::build_message_from_admission_request(const AdmissionRequest &admission
 EAR *API::build_message_from_arguments(const std::string &json_admission_request, int priority,
                                        const std::vector<uint8_t> &target, const IdentifierType &type) {
     // Specify a header.
-    Header header = Header(RANK_HEADER_VERSION, MessageType::EAR, UUIDv4());
+    Header header = Header(RANK_HEADER_VERSION, MessageType::EAR, generate_new_uuid());
 
     // Specify the listener.
     uint8_t listener_length = static_cast<uint8_t>(type);
