@@ -13,14 +13,15 @@ class API;
 #include "structs/message.h"
 #include "structs/dispatchers/api.h"
 #include "structs/dispatchers/all.h"
+#include "store.h"
 
 class Dispatcher {
 public:
-    static Dispatcher *get_instance(const std::string &logger_name) {
+    static Dispatcher *get_instance(const std::function<void(const UUIDv4&, uint32_t)>& mark_origin, const std::string &logger_name) {
 #ifdef FROM_SIMUZILLA
-        return new Dispatcher(logger_name);
+        return new Dispatcher(mark_origin, logger_name);
 #else
-        static Dispatcher instance = Dispatcher(logger_name);
+        static Dispatcher instance = Dispatcher(mark_origin, logger_name);
         return &instance;
 #endif
     }
@@ -39,6 +40,8 @@ public:
 
     void enqueue_item(const std::tuple<Message*, std::vector<uint8_t>, IdentifierType>& item);
 
+    void mark_origin(const UUIDv4& uuid, uint32_t pid = 0);
+
 #ifdef FROM_SIMUZILLA
 
     void set_topology_and_current_address(std::function<const std::vector<int> *()> topology, unsigned int address);
@@ -54,12 +57,11 @@ public:
     ~Dispatcher();
 
 private:
-    Dispatcher();
-
-    explicit Dispatcher(const std::string &logger_name);
+    Dispatcher(const std::function<void(const UUIDv4&, uint32_t)>& mark_origin, const std::string &logger_name);
 
     Sender *_sender;
     API *_api;
+    std::function<void(const UUIDv4&, uint32_t)> _mark_origin;
 #ifdef FROM_SIMUZILLA
     ReceiverSimulation *_receiver_simulation = nullptr;
     RawReceiverSimulation *_raw_receiver_simulation = nullptr;

@@ -44,6 +44,9 @@ Handler* Process::create_handler(const UUIDv4& id) {
     auto* handler = new Handler(_resources, &_translation_table, &_translation_table_locker, _timeout_handler, &_store,
                                 &_store_locker, id, _logger->name());
 
+    // Register functions for API communication.
+    handler->register_api_methods([this](const UUIDv4& uuid) -> bool { return am_i_origin_for(uuid); }, [this](const UUIDv4& uuid) -> bool { return remove_as_origin(uuid); });
+
     // Associate the handler item in the store.
     {
         std::lock_guard<std::mutex> lock(_store_locker);
@@ -106,6 +109,26 @@ HandlerState Process::get_handler_state(const UUIDv4& id) {
 bool Process::is_uuid_in_store(const UUIDv4& id) {
     std::lock_guard<std::mutex> lock(_store_locker);
     return _store.contains(id);
+}
+
+bool Process::am_i_origin_for(const UUIDv4 &uuid) const {
+    return _origin_set.contains(uuid);
+}
+
+void Process::mark_origin(const UUIDv4 &uuid, uint32_t pid) {
+    std::lock_guard<std::mutex> guard(_origin_set_locker);
+    _origin_set.insert({uuid, pid});
+}
+
+bool Process::remove_as_origin(const UUIDv4 &uuid) {
+    std::lock_guard<std::mutex> guard(_origin_set_locker);
+    if (not am_i_origin_for(uuid)) {
+        return false;
+    }
+
+    _origin_set.erase(uuid);
+
+    return true;
 }
 
 Header Process::parse_as_message_header(const std::vector<uint8_t>& data) {
@@ -464,13 +487,13 @@ Process::Process(const std::string& logger_name) {
 
     // Initialize the dispatcher.
     _logger->info("Initializing the dispatcher...");
-    _dispatcher = Dispatcher::get_instance();
+    _dispatcher = Dispatcher::get_instance([this](const UUIDv4& uuid, uint32_t pid = 0) -> void { return mark_origin(uuid, pid); }, _logger->name());
 #else
     _logger = spdlog::get(logger_name);
     _logger->info("Preparing the Rank process from Simuzilla...");
 
     // Initialize the dispatcher.
     _logger->info("Initializing the dispatcher...");
-    _dispatcher = Dispatcher::get_instance(_logger->name());
+    _dispatcher = Dispatcher::get_instance([this](const UUIDv4& uuid, uint32_t pid = 0) -> void { return mark_origin(uuid, pid); }, _logger->name());
 #endif
 }

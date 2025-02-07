@@ -65,6 +65,9 @@ public:
     HandlerState state() const;
     Reservation* associated_reservation() const;
 
+    // Register API functions from Rank Process.
+    Handler* register_api_methods(const std::function<bool(const UUIDv4&)>& am_i_origin_for, const std::function<bool(const UUIDv4&)>& remove_as_origin);
+
     // Dispatcher configurations.
     Handler* borrow(Dispatcher* dispatcher);
 
@@ -116,6 +119,8 @@ private:
     Reservation* _reservation = nullptr;
     Store* _store = nullptr;
     std::mutex* _store_locker = nullptr;
+    std::function<bool(const UUIDv4&)> _am_i_origin_for;
+    std::function<bool(const UUIDv4&)> _remove_as_origin;
     TimeoutHandler* _timeout_handler = nullptr;
     TranslationTable* _translation_table = nullptr;
     std::mutex* _translation_table_locker = nullptr;

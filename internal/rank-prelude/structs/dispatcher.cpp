@@ -68,16 +68,24 @@ void Dispatcher::enqueue_item(const std::tuple<Message *, std::vector<uint8_t>, 
     _logger->debug("[Dispatcher] A message was dropped in this node received messages queue.");
 }
 
+void Dispatcher::mark_origin(const UUIDv4 &uuid, uint32_t pid) {
+    _mark_origin(uuid, pid);
+}
+
 #ifdef FROM_SIMUZILLA
 void Dispatcher::set_topology_and_current_address(std::function<const std::vector<int>*()> topology, unsigned int address) {
     _sender->set_topology_and_current_address(topology, address);
 }
 #endif
 
-Dispatcher::Dispatcher(const std::string& logger_name) {
+Dispatcher::Dispatcher(const std::function<void(const UUIDv4&, uint32_t)>& mark_origin, const std::string& logger_name) {
     // Configure logger.
     _logger = spdlog::get(logger_name);
     _logger->info("Preparing the dispatcher unit...");
+
+    // Register mark_origin function.
+    _mark_origin = mark_origin;
+    _logger->trace("[Dispatcher] Registered mark_origin function.");
 
     // Set sender.
     _sender = Sender::get_instance(_logger->name());
@@ -85,6 +93,7 @@ Dispatcher::Dispatcher(const std::string& logger_name) {
     // Set API.
     _api = API::get_instance(_logger->name());
     _api->set_dispatcher(this);
+    _api->execute();
 
 #ifdef FROM_SIMUZILLA
     // Set receiver simulation dispatchers.

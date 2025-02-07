@@ -15,9 +15,16 @@ void API::deliver_request(const std::string &json_admission_request, int priorit
     _logger->info("[API] Delivering a message from API to simulated Rank process, to {}, requesting {}.", target.front(), json_admission_request);
     EAR* ear_message = build_message_from_arguments(json_admission_request, priority, target, type);
     _dispatcher->enqueue_item(std::make_tuple(ear_message, own_id, type));
+    _dispatcher->mark_origin(ear_message->uuid(), 100+own_id.at(0));
 }
 
 #endif
+
+API *API::communicate_result(const ApiResult &code, const std::string &message, const UUIDv4 &uuid) {
+    // TODO Here is the place where the result should be written in the /tmp/rank._origin.at(_uuid).fifo FIFO IPC.
+
+    return this;
+}
 
 API *API::set_dispatcher(Dispatcher *dispatcher) {
     _dispatcher = dispatcher;
@@ -73,6 +80,7 @@ void API::operator()() {
         AdmissionRequest admission_request = deserialize(bytestream);
         EAR* ear_message = build_message_from_admission_request(admission_request);
         _dispatcher->enqueue_item(std::make_tuple(ear_message, ear_message->listener(), admission_request.target_type));
+        _dispatcher->mark_origin(ear_message->uuid(), admission_request.pid);
 #endif
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));

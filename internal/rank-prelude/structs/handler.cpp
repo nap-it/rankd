@@ -195,6 +195,14 @@ Reservation* Handler::associated_reservation() const {
     return _reservation;
 }
 
+Handler *Handler::register_api_methods(const std::function<bool(const UUIDv4 &)> &am_i_origin_for,
+                                       const std::function<bool(const UUIDv4 &)> &remove_as_origin) {
+    _am_i_origin_for = am_i_origin_for;
+    _remove_as_origin = remove_as_origin;
+
+    return this;
+}
+
 Handler *Handler::borrow(Dispatcher *dispatcher) {
     _dispatcher = dispatcher;
 
@@ -731,7 +739,7 @@ void Handler::operator()() {
 
                     // (E.2) Is UUID in the TranslationTable?
                     _logger->trace("[Handler] [{}] (E.2) Is UUID in the TranslationTable?", _uuid);
-                    if (!is_translation_table_empty_for(_uuid)) {
+                    if (not is_translation_table_empty_for(_uuid)) {
                         UUIDv4 original_uuid = locate_original_of(_uuid);
 
                         // (E.2.2.1) Create ACC message to the original UUID.
@@ -754,25 +762,44 @@ void Handler::operator()() {
                         stop();
                         break;
                     } else {
-                        // (E.2.1.1) Create ACC message to the UUID.
-                        _logger->trace("[Handler] [{}] (E.2.1.1) Create ACC message to the UUID.", _uuid);
-                        ACC* new_acc_message = new ACC(_uuid);
-                        _dispatcher->send_message(new_acc_message, _source_identifier.first, _source_identifier.second);
+                        // (E.2.1.1) Is UUID in Origin Set?
+                        _logger->trace("[Handler] [{}] (E.2.1.1) Is UUID in Origin Set?");
+                        if (_am_i_origin_for(_uuid)) {
+                            // (E.2.1.1.2.1) Return reservation result to API.
+                            _logger->trace("[Handler] [{}] (E.2.1.1.2.1) Return reservation result to the API");
+                            _dispatcher->api()->communicate_result(ApiResult::OK, "", _uuid);
 
-                        // Change state to RESERVED.
-                        old_state = _state;
-                        _state = HandlerState::RESERVED;
-                        _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
-                                       handler_state_to_string(_state));
+                            // Change state to RESERVED.
+                            old_state = _state;
+                            _state = HandlerState::RESERVED;
+                            _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
+                                           handler_state_to_string(_state));
 
-                        // (E.2.1.2) Add accepting node as next node of the reservation.
-                        _logger->trace("[Handler] [{}] (E.2.1.2) Add accepting node as next node of the reservation.", _uuid);
-                        _reservation->add_next_node(_accepting_nodes.back());
+                            // (E.2.1.1.2.2) Terminate the thread.
+                            _logger->trace("[Handler] [{}] (E.2.1.1.2.2) Terminate the thread.", _uuid);
+                            stop();
+                            break;
+                        } else {
+                            // (E.2.1.1.1.1) Create ACC message to the UUID.
+                            _logger->trace("[Handler] [{}] (E.2.1.1.1.1) Create ACC message to the UUID.", _uuid);
+                            ACC* new_acc_message = new ACC(_uuid);
+                            _dispatcher->send_message(new_acc_message, _source_identifier.first, _source_identifier.second);
 
-                        // (E.2.1.3) Terminate the thread.
-                        _logger->trace("[Handler] [{}] (E.2.1.3) Terminate the thread.", _uuid);
-                        stop();
-                        break;
+                            // Change state to RESERVED.
+                            old_state = _state;
+                            _state = HandlerState::RESERVED;
+                            _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
+                                           handler_state_to_string(_state));
+
+                            // (E.2.1.1.1.2) Add accepting node as next node of the reservation.
+                            _logger->trace("[Handler] [{}] (E.2.1.1.1.2) Add accepting node as next node of the reservation.", _uuid);
+                            _reservation->add_next_node(_accepting_nodes.back());
+
+                            // (E.2.1.1.1.3) Terminate the thread.
+                            _logger->trace("[Handler] [{}] (E.2.1.1.1.3) Terminate the thread.", _uuid);
+                            stop();
+                            break;
+                        }
                     }
                 } break;
                 case MessageType::REF: {
@@ -784,7 +811,7 @@ void Handler::operator()() {
 
                     // (F.2) Is UUID in the TranslationTable?
                     _logger->trace("[Handler] [{}] (F.2) Is UUID in the TranslationTable?", _uuid);
-                    if (!is_translation_table_empty_for(_uuid)) {
+                    if (not is_translation_table_empty_for(_uuid)) {
                         // (F.2.1.1) Delete UUID* in Store.
                         _logger->trace("[Handler] [{}] (F.2.1.1) Delete UUID* in Store.", _uuid);
                         // TODO
@@ -792,8 +819,8 @@ void Handler::operator()() {
                         // (F.2.1.2) Is TranslationTable empty?
                         _logger->trace("[Handler] [{}] (F.2.1.2) Is TranslationTable empty?", _uuid);
                         if (is_translation_table_empty()) {
-                            // (F.3) Create REF message and send it.
-                            _logger->trace("[Handler] [{}] (F.3) Create REF message and send it.", _uuid);
+                            // (F.2.2.1.1.1) Create REF message and send it.
+                            _logger->trace("[Handler] [{}] (F.2.2.1.1.1) Create REF message and send it.", _uuid);
                             REF* new_ref_message = new REF(_uuid);
                             _dispatcher->send_message(new_ref_message, _source_identifier.first, _source_identifier.second);
                         } else {
@@ -801,10 +828,23 @@ void Handler::operator()() {
                             break;
                         }
                     } else {
-                        // (F.3) Create REF message and send it.
-                        _logger->trace("[Handler] [{}] (F.3) Create REF message and send it.", _uuid);
-                        REF* new_ref_message = new REF(_uuid);
-                        _dispatcher->send_message(new_ref_message, _source_identifier.first, _source_identifier.second);
+                        // (F.2.2.1) Is UUID in Origin Set?
+                        _logger->trace("[Handler] [{}] (F.2.2.1) Is UUID in Origin Set?");
+                        if (_am_i_origin_for(_uuid)) {
+                            // (F.2.2.1.2.1) Return reservation result to API.
+                            _logger->trace("[Handler] [{}] (F.2.2.1.2.1) Return reservation result to API.");
+                            _dispatcher->api()->communicate_result(ApiResult::FAIL, "", _uuid);
+
+                            // (F.2.2.1.2.2) Remove UUID from Origin Set.
+                            _logger->trace("[Handler] [{}] (F.2.2.1.2.2) Remove UUID from Origin Set.");
+                            _remove_as_origin(_uuid);
+                        } else {
+                            // (F.2.2.1.1.1) Create REF message and send it.
+                            _logger->trace("[Handler] [{}] (F.2.2.1.1.1) Create REF message and send it.", _uuid);
+                            REF *new_ref_message = new REF(_uuid);
+                            _dispatcher->send_message(new_ref_message, _source_identifier.first,
+                                                      _source_identifier.second);
+                        }
                     }
 
                     // Change state to CLOSED.
@@ -813,8 +853,8 @@ void Handler::operator()() {
                     _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", _uuid, handler_state_to_string(old_state),
                                    handler_state_to_string(_state));
 
-                    // (F.4) Delete UUID from the Store.
-                    _logger->trace("[Handler] [{}] (F.4) Delete UUID from the Store.", _uuid);
+                    // (F.2.2.1.1.2) Delete UUID from the Store.
+                    _logger->trace("[Handler] [{}] (F.2.2.1.1.2) Delete UUID from the Store.", _uuid);
                     stop();
                     break;
                 } break;

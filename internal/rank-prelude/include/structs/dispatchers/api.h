@@ -6,10 +6,10 @@
 #include <thread>
 #include <vector>
 
-//#ifndef FROM_SIMUZILLA
+#ifndef FROM_SIMUZILLA
 #include <fcntl.h>
 #include <sys/stat.h>
-//#endif
+#endif
 
 #include "spdlog/spdlog.h"
 
@@ -29,6 +29,11 @@ static bool found_delimiter(const std::vector<uint8_t>& bytestream) {
 }
 #endif
 
+enum class ApiResult {
+    OK,
+    FAIL,
+};
+
 class API {
 public:
     static API* get_instance(const std::string& logger_name);
@@ -36,6 +41,7 @@ public:
 #ifdef FROM_SIMUZILLA
     void deliver_request(const std::string& json_admission_request, int priority, const std::vector<uint8_t>& target, const std::vector<uint8_t>& own_id, const IdentifierType& type);
 #endif
+    API* communicate_result(const ApiResult& code, const std::string& message, const UUIDv4& uuid);
     API* set_dispatcher(Dispatcher* dispatcher);
     API* execute();
     API* stop();

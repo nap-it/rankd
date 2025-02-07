@@ -60,6 +60,13 @@ public:
 
     bool is_uuid_in_store(const UUIDv4 &uuid);
 
+    // Origin set handling.
+    bool am_i_origin_for(const UUIDv4& uuid) const;
+
+    void mark_origin(const UUIDv4 &uuid, uint32_t pid = 0);
+
+    bool remove_as_origin(const UUIDv4& uuid);
+
     // Receiving data parsing.
     Header parse_as_message_header(const std::vector<uint8_t> &data);
 
@@ -105,6 +112,8 @@ private:
     TimeoutHandler *_timeout_handler;
     Store _store;
     std::mutex _store_locker;
+    OriginSet _origin_set;
+    std::mutex _origin_set_locker;
     TranslationTable _translation_table;
     std::mutex _translation_table_locker;
     unsigned int _waiting_time = 100;
