@@ -122,7 +122,7 @@ void Reservation::mark_pre_reserved() {
 
     _state = ReservationState::PRE_RESERVED;
 
-    _logger->debug("[Reservation] [{}] Reservation state changed from {} to {}.", _uuid, reservation_state_as_string(ReservationState::PRE_RESERVED),
+    _logger->debug("[Reservation] [{}] Reservation state changed from {} to {}.", _uuid, reservation_state_as_string(ReservationState::RESERVED),
                    reservation_state_as_string(_state));
 }
 
@@ -131,7 +131,7 @@ void Reservation::mark_reserved() {
 
     _state = ReservationState::RESERVED;
 
-    _logger->debug("[Reservation] [{}] Reservation state changed from {} to {}.", _uuid, reservation_state_as_string(ReservationState::RESERVED),
+    _logger->debug("[Reservation] [{}] Reservation state changed from {} to {}.", _uuid, reservation_state_as_string(ReservationState::PRE_RESERVED),
                    reservation_state_as_string(_state));
 }
 

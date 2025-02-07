@@ -349,7 +349,18 @@ void Handler::operator()() {
                             // (B.1.1.1.1.2) Create an ACC message and send it.
                             _logger->trace("[Handler] [{}] (B.1.1.1.1.2) Create an ACC message and send it back.", _uuid);
                             ACC* acc_message = new ACC(_uuid);
-                            _dispatcher->send_message(acc_message, _source_identifier.first, _source_identifier.second);
+#ifdef FROM_SIMUZILLA
+                            std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target =
+                                    get_connections_to(_source_identifier.first.at(0));
+                            _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:", _uuid, connections_to_target.size(), connections_to_target.size() == 1 ? "" : "s", _source_identifier.first.at(0));
+                            for (const auto& [connection, type]: connections_to_target) {
+                                _logger->trace("               -> {}", connection.at(0));
+                            }
+#else
+                            std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target =
+                                        get_connections_to(_source_identifier.first);
+#endif
+                            _dispatcher->send_message(acc_message, connections_to_target.front().first, _source_identifier.second);
 
                             // (B.1.1.1.1.3) Change state to RESERVED and terminate thread.
                             _logger->trace("[Handler] [{}] (B.1.1.1.1.3) Change state to RESERVED and terminate thread.", _uuid);
@@ -415,7 +426,7 @@ void Handler::operator()() {
 #ifdef FROM_SIMUZILLA
                                 std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target =
                                         get_connections_to(target.at(0));
-                                _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Items:", _uuid, target.at(0), connections_to_target.size() == 1 ? "" : "s", connections_to_target.size());
+                                _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:", _uuid, connections_to_target.size(), connections_to_target.size() == 1 ? "" : "s", target.at(0));
                                 for (const auto& [connection, type]: connections_to_target) {
                                     _logger->trace("               -> {}", connection.at(0));
                                 }
