@@ -210,7 +210,7 @@ Handler *Handler::borrow(Dispatcher *dispatcher) {
 }
 
 #ifdef FROM_SIMUZILLA
-Handler *Handler::borrow(std::function<std::set<uint8_t>(uint8_t)> function) {
+Handler *Handler::borrow(std::function<std::vector<std::pair<uint8_t, uint8_t>>(uint8_t)> function) {
     _get_connections_to = std::move(function);
 
     return this;
@@ -345,6 +345,9 @@ void Handler::operator()() {
                             throw std::exception();  // TODO
                     }
 
+                    // Mark reservation UUID.
+                    _reservation->set_uuid(_uuid);
+
                     if (i_am_listener) {
                         // (B.1.1.1) Can R be performed with priority p?
                         _logger->trace("[Handler] [{}] (B.1.1.1) Can R be performed with priority p?", display(_uuid));
@@ -358,12 +361,25 @@ void Handler::operator()() {
                             _logger->trace("[Handler] [{}] (B.1.1.1.1.2) Create an ACC message and send it back.", display(_uuid));
                             ACC* acc_message = new ACC(_uuid);
 #ifdef FROM_SIMUZILLA
-                            std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target =
+                            std::vector<std::pair<std::vector<std::pair<uint8_t, uint8_t>>, IdentifierType>> connections_to_target_raw =
                                     get_connections_to(_source_identifier.first.at(0));
-                            _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:", display(_uuid), connections_to_target.size(), connections_to_target.size() == 1 ? "" : "s", _source_identifier.first.at(0));
-                            for (const auto& [connection, type]: connections_to_target) {
-                                _logger->trace("               -> {}", connection.at(0));
+                            _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:", display(_uuid), connections_to_target_raw.size(), connections_to_target_raw.size() == 1 ? "" : "s", _source_identifier.first.at(0));
+                            for (const auto& [connection, type]: connections_to_target_raw) {
+                            _logger->trace("[Handler]                               |-> {} with depth {}", connection.at(0).second, connection.at(0).first);
                             }
+                            std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target{};
+                            uint8_t min_depth = UINT8_MAX;
+                            for (const auto& [locators, type] : connections_to_target_raw) {
+                                for (const auto& [depth, locator] : locators) {
+                                    if (depth < min_depth) {
+                                        min_depth = depth;
+                                    }
+                                    if (depth == min_depth) {
+                                        connections_to_target.push_back({{locator}, type});
+                                    }
+                                }
+                            }
+
 #else
                             std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target =
                                         get_connections_to(_source_identifier.first);
@@ -432,11 +448,23 @@ void Handler::operator()() {
                                         throw std::exception();  // TODO
                                 }
 #ifdef FROM_SIMUZILLA
-                                std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target =
+                                std::vector<std::pair<std::vector<std::pair<uint8_t, uint8_t>>, IdentifierType>> connections_to_target_raw =
                                         get_connections_to(target.at(0));
-                                _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:", display(_uuid), connections_to_target.size(), connections_to_target.size() == 1 ? "" : "s", target.at(0));
-                                for (const auto& [connection, type]: connections_to_target) {
-                                    _logger->trace("               -> {}", connection.at(0));
+                                _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:", display(_uuid), connections_to_target_raw.size(), connections_to_target_raw.size() == 1 ? "" : "s", target.at(0));
+                                for (const auto& [connection, type]: connections_to_target_raw) {
+                                    _logger->trace("               -> {} with depth {}", connection.at(0).second, connection.at(0).first);
+                                }
+                                std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target{};
+                                uint8_t min_depth = UINT8_MAX;
+                                for (const auto& [locators, type] : connections_to_target_raw) {
+                                    for (const auto& [depth, locator] : locators) {
+                                        if (depth < min_depth) {
+                                            min_depth = depth;
+                                        }
+                                        if (depth == min_depth) {
+                                            connections_to_target.push_back({{locator}, type});
+                                        }
+                                    }
                                 }
 #else
                                 std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target =
@@ -740,6 +768,8 @@ void Handler::operator()() {
                     // (E.2) Is UUID in the TranslationTable?
                     _logger->trace("[Handler] [{}] (E.2) Is UUID in the TranslationTable?", display(_uuid));
                     if (not is_translation_table_empty_for(_uuid)) {
+                        _logger->trace("[Handler] [{}]        |-> Yes.", display(_uuid));
+
                         UUIDv4 original_uuid = locate_original_of(_uuid);
 
                         // (E.2.2.1) Create ACC message to the original UUID.
@@ -762,11 +792,15 @@ void Handler::operator()() {
                         stop();
                         break;
                     } else {
+                        _logger->trace("[Handler] [{}]        |-> No.", display(_uuid));
+
                         // (E.2.1.1) Is UUID in Origin Set?
-                        _logger->trace("[Handler] [{}] (E.2.1.1) Is UUID in Origin Set?");
+                        _logger->trace("[Handler] [{}] (E.2.1.1) Is UUID in Origin Set?", display(_uuid));
                         if (_am_i_origin_for(_uuid)) {
+                            _logger->trace("[Handler] [{}]            |-> Yes.", display(_uuid));
+
                             // (E.2.1.1.2.1) Return reservation result to API.
-                            _logger->trace("[Handler] [{}] (E.2.1.1.2.1) Return reservation result to the API");
+                            _logger->trace("[Handler] [{}] (E.2.1.1.2.1) Return reservation result to the API", display(_uuid));
                             _dispatcher->api()->communicate_result(ApiResult::OK, "", _uuid);
 
                             // Change state to RESERVED.
@@ -780,10 +814,33 @@ void Handler::operator()() {
                             stop();
                             break;
                         } else {
+                            _logger->trace("[Handler] [{}]            |-> No.", display(_uuid));
+
+                            std::pair<std::vector<uint8_t>, IdentifierType> new_target;
+#ifndef FROM_SIMUZILLA
+                            new_target = _reservation->past_node();
+#else
+                            // Get connecting port to targeted entity.
+                            if (_reservation->past_node().second == IdentifierType::Simulation) {
+                                auto topology = _dispatcher->get_topology();
+                                auto found = std::find(topology.begin(), topology.end(),
+                                                       _reservation->past_node().first.at(0));
+                                if (found == topology.end()) {
+                                    _logger->error(
+                                            "[Handler] [{}] No direct connection was found relating the targeted node {} to a node port in Simuzilla.",
+                                            display(_uuid), _reservation->past_node().first.at(0));
+                                    stop();
+                                    break;
+                                }
+                                new_target.first = {static_cast<uint8_t>(std::distance(topology.begin(), found))};
+                                new_target.second = IdentifierType::Simulation;
+                            }
+#endif
+
                             // (E.2.1.1.1.1) Create ACC message to the UUID.
                             _logger->trace("[Handler] [{}] (E.2.1.1.1.1) Create ACC message to the UUID.", display(_uuid));
                             ACC* new_acc_message = new ACC(_uuid);
-                            _dispatcher->send_message(new_acc_message, _source_identifier.first, _source_identifier.second);
+                            _dispatcher->send_message(new_acc_message, new_target.first, new_target.second); //_source_identifier.first, _source_identifier.second);
 
                             // Change state to RESERVED.
                             old_state = _state;
@@ -793,7 +850,7 @@ void Handler::operator()() {
 
                             // (E.2.1.1.1.2) Add accepting node as next node of the reservation.
                             _logger->trace("[Handler] [{}] (E.2.1.1.1.2) Add accepting node as next node of the reservation.", display(_uuid));
-                            _reservation->add_next_node(_accepting_nodes.back());
+                            _reservation->add_next_node(_reservation->past_node()); //_accepting_nodes.back());
 
                             // (E.2.1.1.1.3) Terminate the thread.
                             _logger->trace("[Handler] [{}] (E.2.1.1.1.3) Terminate the thread.", display(_uuid));

@@ -9,7 +9,7 @@ Reservation::Reservation(const Reservation& reservation, const std::string& logg
     _listener_length = reservation.listener_length();
     _listener = reservation.listener();
 
-    _logger->debug("[Reservation] [{}] Reservation object created with state {}.", _uuid, reservation_state_as_string(_state));
+    _logger->debug("[Reservation] [{}] Reservation object created with state {}.", display(_uuid), reservation_state_as_string(_state));
 }
 
 Reservation::Reservation(const RequestingCapabilities& capabilities, uint8_t priority, const std::string& logger_name) {
@@ -22,13 +22,13 @@ Reservation::Reservation(const RequestingCapabilities& capabilities, uint8_t pri
 void Reservation::add_next_node(const std::pair<std::vector<uint8_t>, IdentifierType> &node) {
     _next_nodes.push_back(node);
 
-    _logger->debug("[Reservation] [{}] Updated a next node for this reservation: {} --> {}.", _uuid, (_past_node.first.empty() ? "{}" : past_node_as_string()), (_next_nodes.empty() ? "{}" : next_nodes_as_string()));
+    _logger->debug("[Reservation] [{}] Updated a next node for this reservation: {} --> {}.", display(_uuid), (_past_node.first.empty() ? "{}" : past_node_as_string()), (_next_nodes.empty() ? "{}" : next_nodes_as_string()));
 }
 
 void Reservation::set_past_node(const std::pair<std::vector<uint8_t>, IdentifierType> &node) {
     _past_node = node;
 
-    _logger->debug("[Reservation] [{}] Updated the past node for this reservation: {} --> {}.", _uuid, (_past_node.first.empty() ? "{}" : past_node_as_string()), (_next_nodes.empty() ? "{}" : next_nodes_as_string()));
+    _logger->debug("[Reservation] [{}] Updated the past node for this reservation: {} --> {}.", display(_uuid), (_past_node.first.empty() ? "{}" : past_node_as_string()), (_next_nodes.empty() ? "{}" : next_nodes_as_string()));
 }
 
 uint8_t Reservation::priority() const {
@@ -67,12 +67,18 @@ Reservation* Reservation::mark_listener(const std::vector<uint8_t>& listener) {
     return this;
 }
 
+Reservation *Reservation::set_uuid(const UUIDv4 &uuid) {
+    _uuid = uuid;
+
+    return this;
+}
+
 void Reservation::wait_for_sacrifice() {
     assert(_state == ReservationState::CREATED);
 
     _state = ReservationState::VIRTUALLY_PRE_RESERVED;
 
-    _logger->debug("[Reservation] [{}] Reservation state changed from {} to {}.", _uuid, reservation_state_as_string(ReservationState::CREATED),
+    _logger->debug("[Reservation] [{}] Reservation state changed from {} to {}.", display(_uuid), reservation_state_as_string(ReservationState::CREATED),
                    reservation_state_as_string(_state));
 }
 
@@ -83,7 +89,7 @@ void Reservation::reserve() {
 
     _state = ReservationState::RESERVED;
 
-    _logger->debug("[Reservation] [{}] Reservation state changed from {} to {}.", _uuid, reservation_state_as_string(old_state),
+    _logger->debug("[Reservation] [{}] Reservation state changed from {} to {}.", display(_uuid), reservation_state_as_string(old_state),
                    reservation_state_as_string(_state));
 }
 
@@ -92,7 +98,7 @@ void Reservation::pre_reserve() {
 
     _state = ReservationState::PRE_RESERVED;
 
-    _logger->debug("[Reservation] [{}] Reservation state changed from {} to {}.", _uuid, reservation_state_as_string(ReservationState::CREATED),
+    _logger->debug("[Reservation] [{}] Reservation state changed from {} to {}.", display(_uuid), reservation_state_as_string(ReservationState::CREATED),
                    reservation_state_as_string(_state));
 }
 
@@ -101,7 +107,7 @@ void Reservation::unconsider() {
 
     _state = ReservationState::CLEARED;
 
-    _logger->debug("[Reservation] [{}] Reservation state changed from {} to {}.", _uuid, reservation_state_as_string(ReservationState::CLEARED),
+    _logger->debug("[Reservation] [{}] Reservation state changed from {} to {}.", display(_uuid), reservation_state_as_string(ReservationState::CLEARED),
                    reservation_state_as_string(_state));
 }
 
@@ -113,7 +119,7 @@ void Reservation::replenish() {
 
     _state = ReservationState::CLEARED;
 
-    _logger->debug("[Reservation] [{}] Reservation state changed from {} to {}.", _uuid, reservation_state_as_string(old_state),
+    _logger->debug("[Reservation] [{}] Reservation state changed from {} to {}.", display(_uuid), reservation_state_as_string(old_state),
                    reservation_state_as_string(_state));
 }
 
@@ -122,7 +128,7 @@ void Reservation::mark_pre_reserved() {
 
     _state = ReservationState::PRE_RESERVED;
 
-    _logger->debug("[Reservation] [{}] Reservation state changed from {} to {}.", _uuid, reservation_state_as_string(ReservationState::RESERVED),
+    _logger->debug("[Reservation] [{}] Reservation state changed from {} to {}.", display(_uuid), reservation_state_as_string(ReservationState::RESERVED),
                    reservation_state_as_string(_state));
 }
 
@@ -131,7 +137,7 @@ void Reservation::mark_reserved() {
 
     _state = ReservationState::RESERVED;
 
-    _logger->debug("[Reservation] [{}] Reservation state changed from {} to {}.", _uuid, reservation_state_as_string(ReservationState::PRE_RESERVED),
+    _logger->debug("[Reservation] [{}] Reservation state changed from {} to {}.", display(_uuid), reservation_state_as_string(ReservationState::PRE_RESERVED),
                    reservation_state_as_string(_state));
 }
 
@@ -174,7 +180,7 @@ std::string Reservation::next_nodes_as_string() const {
             }
             to_return << ", ";
         } else if (type == IdentifierType::Simulation) {
-            to_return << ((node.at(1) << 8) | node.at(0)) << ", ";
+            to_return << (int)node.at(0) << ", ";
         }
     }
 

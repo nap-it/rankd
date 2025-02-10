@@ -91,7 +91,7 @@ public:
 
     Process *borrow_simulation_send_function(std::function<void(uint8_t, std::vector<uint8_t>)> function);
 
-    Process *borrow_simulation_connections_function(std::function<std::set<uint8_t>(uint8_t)> function);
+    Process *borrow_simulation_connections_function(std::function<std::vector<std::pair<uint8_t, uint8_t>>(uint8_t)> function);
 
     Process *borrow_simulation_identity_function(std::function<bool(uint8_t)> function);
 
@@ -122,7 +122,7 @@ private:
     bool _in_simulation = false;
 #ifdef FROM_SIMUZILLA
     std::shared_ptr<spdlog::logger> _logger;
-    std::function<std::set<uint8_t>(uint8_t)> _simulated_connections;
+    std::function<std::vector<std::pair<uint8_t, uint8_t>>(uint8_t)> _simulated_connections;
     std::function<bool(uint8_t)> _simulated_identity;
     uint8_t _simuzilla_identity;
     std::function<const std::vector<int>*()> _simulated_topology;

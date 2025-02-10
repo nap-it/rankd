@@ -13,7 +13,7 @@ Sender *Sender::set_queue(std::queue<std::tuple<Message*, std::vector<uint8_t>, 
 Sender *Sender::execute() {
     _logger->trace("[Sender] Executing a Sender...");
     if (_running) {
-        _logger->warn("[Sender] A sender was already running. Someone is calling for execution again.");
+        _logger->warn("[Sender] A sender was already running. Someone is calling for execution again but I am restoring running state...");
         return this;
     }
 
@@ -27,14 +27,23 @@ Sender *Sender::execute() {
 Sender *Sender::stop() {
     _logger->trace("[Sender] Stopping a Sender...");
     if (not _running) {
-        //_logger->warn("[Sender] A sender was already stopped. Someone is calling to stop again.");
+        _logger->warn("[Sender] A sender was already stopped. Someone is calling to stop again.");
         return this;
     }
 
     _logger->trace("[Sender] Stopping the main thread...");
     _running = false;
+    if (_thread.get_id() != std::this_thread::get_id()) {
+        _thread.join();
+    }
 
     _logger->info("The sender has been stopped.");
+
+    return this;
+}
+
+Sender *Sender::notify() {
+    _referee.notify_one();
 
     return this;
 }
@@ -47,12 +56,16 @@ void Sender::operator()() {
     _logger->info("The sender was awakened to send messages to outside Rank.");
 
     while (_running) {
-        if (not _queue->empty()) {
+        //if (not _queue->empty()) {
+            _logger->trace("[Sender] Waiting for an item to be placed on queue...");
+            std::unique_lock<std::mutex> guard(*_queue_mutex);
+            _referee.wait(guard, [this]() { return not _queue->empty(); });
+
             _logger->trace("[Sender] The queue still has an item to be handled (a total of {} items).", _queue->size());
 
             std::tuple<Message*, std::vector<uint8_t>, IdentifierType> queue_item{};
             {
-                std::lock_guard<std::mutex> guard(*_queue_mutex);
+                //std::lock_guard<std::mutex> guard(*_queue_mutex);
                 queue_item = _queue->front();
                 _queue->pop();
             }
@@ -82,25 +95,33 @@ void Sender::operator()() {
                 case IdentifierType::Simulation:
                     // The target is a simulated unit: Simuzilla, for instance.
                     _logger->trace("[Sender] The target is a simulation identifier, so delegate this to make and send bytes function.");
-                    _logger->debug("[Sender] Targeting node port {}.", std::get<1>(queue_item).at(0));
+                    _logger->debug("[Sender] Targeting node {}.", std::get<1>(queue_item).at(0));
                     if (std::get<0>(queue_item)->type() == MessageType::EAR or std::get<0>(queue_item)->type() == MessageType::MAR) {
                         _logger->debug("[Sender] The Rank message here is being sent with listener {}.", dynamic_cast<EAR*>(std::get<0>(queue_item))->listener().at(0));
                     }
                     make_and_send_bytes(std::get<0>(queue_item), std::get<1>(queue_item));
                     break;
             }
-        } else {
-            _logger->trace("[Sender] The sender does not have any item to handle in its queue. Stopping function.");
-            stop();
-            _logger->info("The sender has now ceased functions as there is no data waiting to be handled.");
-        }
+        //} else {
+        //    _logger->trace("[Sender] The sender does not have any item to handle in its queue. Stopping function.");
+        //    _running = false;
+        //    _logger->info("The sender has now ceased functions as there is no data waiting to be handled.");
+        //}
     }
+
+    _logger->warn("[Sender] The sender has reached is end-of-life.");
 }
 
 #ifdef FROM_SIMUZILLA
 void Sender::set_topology_and_current_address(std::function<const std::vector<int>*()> topology, unsigned int address) {
     _topology = std::move(topology);
     _own_address = address;
+}
+
+std::vector<int> Sender::get_own_topology() const {
+    auto topology = _topology();
+
+    return *topology;
 }
 #endif
 
@@ -226,8 +247,9 @@ void Sender::make_and_send_bytes(Message *message, const std::vector<uint8_t> &t
     _logger->trace("[Sender] [Make Bytes] Preparing a message in a variable as data bytes.");
 
     // Get target identifier as a proper simulation identifier.
-    _logger->trace("[Sender] [Make Bytes] Get target identifier as a proper simulation identifier.");
-    uint8_t target_identifier = target.at(0);
+    _logger->trace("[Sender] [Make Bytes] Get port to target in simulation.");
+    uint8_t port_to_target = target.at(0);
+    _logger->trace("[Sender] [Make Bytes]  |-> port to target: {}.", port_to_target);
 
     // Prepare message serialization.
     _logger->trace("[Sender] [Make Bytes] Prepare message serialization.");
@@ -255,12 +277,12 @@ void Sender::make_and_send_bytes(Message *message, const std::vector<uint8_t> &t
             // TODO Handle this case.
             break;
     }
-    _logger->debug("[Sender] [Make Bytes] Message in bytes: {} bytes.", serialized_message.size());
+    _logger->debug("[Sender] [Make Bytes]  |-> {} bytes.", serialized_message.size());
 
     // Send this message through simulated send function.
 #ifdef FROM_SIMUZILLA
     _logger->trace("[Sender] [Make Bytes] Send Rank bytes through Simuzilla.");
-    _simulated_send(target_identifier, serialized_message);
-    _logger->info("Data with {} bytes were successfully sent to \"Node {}\" via Simuzilla.", serialized_message.size(), target_identifier);
+    _simulated_send(port_to_target, serialized_message);
+    _logger->info("[Sender] [Make Bytes] Data with {} bytes were successfully sent to Node's port {} via Simuzilla.", serialized_message.size(), port_to_target);
 #endif
 }

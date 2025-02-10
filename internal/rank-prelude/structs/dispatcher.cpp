@@ -9,7 +9,7 @@ Dispatcher *Dispatcher::execute_dispatchers() {
     _receiver_l3->execute();
     _receiver_dds->execute();
 #endif
-    //_sender->execute();
+    _sender->execute();
 
     return this;
 }
@@ -23,7 +23,7 @@ Dispatcher *Dispatcher::stop_dispatchers() {
     _receiver_l3->stop();
     _receiver_dds->stop();
 #endif
-    //_sender->stop();
+    _sender->stop();
 
     return this;
 }
@@ -31,10 +31,13 @@ Dispatcher *Dispatcher::stop_dispatchers() {
 void Dispatcher::send_message(Message* message, const std::vector<uint8_t>& target, const IdentifierType& type) {
     {
         std::lock_guard<std::mutex> guard(_sending_messages_locker);
+        _logger->debug("[Dispatcher] Placing message onto queue: ( type: {}, first_target_byte: {} )",
+                       identifier_to_string(type), target.at(0));
         _sending_messages->emplace(message, target, type);
     }
 
-    _sender->execute();
+    //_sender->execute();
+    _sender->notify();
 }
 
 bool Dispatcher::receiving_queue_is_empty() const {
@@ -159,6 +162,10 @@ Dispatcher *Dispatcher::borrow_simulation_sender_function(std::function<void(uin
 API *Dispatcher::api() {
     return _api;
 }
+
+std::vector<int> Dispatcher::get_topology() const {
+    return _sender->get_own_topology();
+}
 #endif
 
 Dispatcher::~Dispatcher() {
@@ -170,5 +177,5 @@ Dispatcher::~Dispatcher() {
     _receiver_l3->stop();
     _receiver_dds->stop();
 #endif
-    _sender->stop();
+    //_sender->stop();
 }

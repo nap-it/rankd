@@ -360,7 +360,7 @@ Process::borrow_simulation_send_function(std::function<void(uint8_t, std::vector
     return this;
 }
 
-Process *Process::borrow_simulation_connections_function(std::function<std::set<uint8_t>(uint8_t)> function) {
+Process *Process::borrow_simulation_connections_function(std::function<std::vector<std::pair<uint8_t, uint8_t>>(uint8_t)> function) {
     _logger->trace("[Process] Registering connections function in process.");
     _simulated_connections = std::move(function);
 

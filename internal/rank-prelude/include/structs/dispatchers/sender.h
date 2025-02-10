@@ -36,10 +36,12 @@ public:
     Sender* set_queue(std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* queue, std::mutex* mutex);
     Sender* execute();
     Sender* stop();
+    Sender* notify();
     bool is_running();
     void operator()();
 #ifdef FROM_SIMUZILLA
     void set_topology_and_current_address(std::function<const std::vector<int>*()> topology, unsigned int address);
+    std::vector<int> get_own_topology() const;
     Sender* borrow_sender_function(std::function<void(uint8_t, std::vector<uint8_t>)> function);
 #endif
 private:
@@ -52,6 +54,7 @@ private:
     bool _running = false;
     std::thread _thread;
     std::queue<std::tuple<Message*, std::vector<uint8_t>, IdentifierType>>* _queue;
+    std::condition_variable _referee;
     std::mutex* _queue_mutex;
     std::shared_ptr<spdlog::logger> _logger;
 #ifdef FROM_SIMUZILLA

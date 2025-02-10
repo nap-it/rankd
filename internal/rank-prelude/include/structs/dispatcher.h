@@ -52,6 +52,8 @@ public:
 
     API *api();
 
+    std::vector<int> get_topology() const;
+
 #endif
 
     ~Dispatcher();

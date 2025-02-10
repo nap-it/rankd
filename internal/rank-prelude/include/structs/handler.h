@@ -72,7 +72,7 @@ public:
     Handler* borrow(Dispatcher* dispatcher);
 
 #ifdef FROM_SIMUZILLA
-    Handler* borrow(std::function<std::set<uint8_t>(uint8_t)> function);
+    Handler* borrow(std::function<std::vector<std::pair<uint8_t, uint8_t>>(uint8_t)> function);
     Handler* borrow(std::function<bool(uint8_t)> function);
 #endif
 
@@ -93,10 +93,10 @@ private:
     UUIDv4 _uuid;
     Dispatcher* _dispatcher = nullptr;
 #ifdef FROM_SIMUZILLA
-    std::function<std::set<uint8_t>(uint8_t)> _get_connections_to;
-    std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> get_connections_to(uint8_t target) {
-        std::set<uint8_t> connections = _get_connections_to(target);
-        std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> to_return;
+    std::function<std::vector<std::pair<uint8_t, uint8_t>>(uint8_t)> _get_connections_to;
+    std::vector<std::pair<std::vector<std::pair<uint8_t, uint8_t>>, IdentifierType>> get_connections_to(uint8_t target) {
+        std::vector<std::pair<uint8_t, uint8_t>> connections = _get_connections_to(target);
+        std::vector<std::pair<std::vector<std::pair<uint8_t, uint8_t>>, IdentifierType>> to_return;
 
         for (const auto& connection : connections) {
             to_return.push_back({ {connection}, IdentifierType::Simulation });

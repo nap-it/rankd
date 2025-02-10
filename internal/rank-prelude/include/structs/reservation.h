@@ -34,6 +34,7 @@ public:
 
     // Setters.
     Reservation* mark_listener(const std::vector<uint8_t>& listener);
+    Reservation* set_uuid(const UUIDv4& uuid);
 
     // State changers.
     void wait_for_sacrifice();
