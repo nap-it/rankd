@@ -97,7 +97,16 @@ void Sender::operator()() {
                     _logger->trace("[Sender] The target is a simulation identifier, so delegate this to make and send bytes function.");
                     _logger->debug("[Sender] Targeting node port {}.", std::get<1>(queue_item).at(0));
                     if (std::get<0>(queue_item)->type() == MessageType::EAR or std::get<0>(queue_item)->type() == MessageType::MAR) {
-                        _logger->debug("[Sender] The Rank message here is being sent with listener {}.", dynamic_cast<EAR*>(std::get<0>(queue_item))->listener().at(0));
+                        switch (std::get<0>(queue_item)->type()) {
+                            case MessageType::EAR:
+                                _logger->debug("[Sender] The Rank message here is being sent with listener {}.", dynamic_cast<EAR*>(std::get<0>(queue_item))->listener().at(0));
+                                break;
+                            case MessageType::MAR:
+                                _logger->debug("[Sender] The Rank message here is being sent with listener {}.", dynamic_cast<MAR*>(std::get<0>(queue_item))->listener().at(0));
+                                break;
+                            default:
+                                break;
+                        }
                     }
                     make_and_send_bytes(std::get<0>(queue_item), std::get<1>(queue_item));
                     break;

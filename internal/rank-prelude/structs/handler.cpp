@@ -525,9 +525,15 @@ void Handler::operator()() {
                                         // (B.1.2.2.1.1) For each connection create a MAR message and send it.
                                         _logger->trace("[Handler] [{}] (B.1.2.2.1.1) If more than one connection is found... for each connection create a MAR message and send it.", display(_uuid));
                                         for (const auto& intermediate : connections_to_target) {
+                                            std::array<uint8_t, 16> listener{};
+#ifdef FROM_SIMUZILLA
+                                            listener.at(0) = ear_message->listener().at(0);
+#else
+                                            std::copy_n(ear_message->listener().begin(), ear_message->listener_length(), listener.begin());
+#endif
                                             MAR* mar_message =
                                                     new MAR(_uuid, ear_message->priority(), ear_message->listener_length(),
-                                                        listener_message_format(intermediate.first),
+                                                        listener, //listener_message_format(intermediate.first),
                                                         ear_message->payload_length(), ear_message->payload());
                                             _dispatcher->send_message(mar_message, intermediate.first, intermediate.second);
                                         }
