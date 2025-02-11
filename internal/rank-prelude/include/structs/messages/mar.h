@@ -27,6 +27,60 @@ public:
         _payload_length {payload_length}, _payload {payload} {
     }
     MAR(const Header& header, const std::vector<uint8_t>& marshalled_data) : Message(header) {
+        _priority = marshalled_data.at(0) >> 5 & 0x07;
+        _listener_length = marshalled_data.at(0) >> 2 & 0x07;
+        _reserved = 0;
+
+        switch (_listener_length) {
+            case RANK_MAR_MESSAGE_LEN_LT_CODE_0:
+                _listener.at(0) = marshalled_data.at(1);
+                _payload_length = marshalled_data.at(1 + SIMUZILLA_ADDR_LEN) << 8 |
+                                  marshalled_data.at(1 + SIMUZILLA_ADDR_LEN + 1);
+                for (int i = 0; i != _payload_length; i++) {
+                    _payload.push_back(marshalled_data.at(1 + SIMUZILLA_ADDR_LEN + 2 + i));
+                }
+                break;
+            case RANK_MAR_MESSAGE_LEN_LT_IP4:
+                for (int i = 0; i != IPV4_ADDR_LEN; i++) {
+                    _listener.at(i) = marshalled_data.at(i + 1);
+                }
+                _payload_length =
+                        marshalled_data.at(1 + IPV4_ADDR_LEN) << 8 | marshalled_data.at(1 + IPV4_ADDR_LEN + 1);
+                for (int i = 0; i != _payload_length; i++) {
+                    _payload.push_back(marshalled_data.at(1 + IPV4_ADDR_LEN + 2 + i));
+                }
+                break;
+            case RANK_MAR_MESSAGE_LEN_LT_MAC:
+                for (int i = 0; i != MAC_ADDR_LEN; i++) {
+                    _listener.at(i) = marshalled_data.at(i + 1);
+                }
+                _payload_length = marshalled_data.at(1 + MAC_ADDR_LEN) << 8 | marshalled_data.at(1 + MAC_ADDR_LEN + 1);
+                for (int i = 0; i != _payload_length; i++) {
+                    _payload.push_back(marshalled_data.at(1 + MAC_ADDR_LEN + 2 + i));
+                }
+                break;
+            case RANK_MAR_MESSAGE_LEN_LT_IP6:
+                for (int i = 0; i != IPV6_ADDR_LEN; i++) {
+                    _listener.at(i) = marshalled_data.at(i + 1);
+                }
+                _payload_length =
+                        marshalled_data.at(1 + IPV6_ADDR_LEN) << 8 | marshalled_data.at(1 + IPV6_ADDR_LEN + 1);
+                for (int i = 0; i != _payload_length; i++) {
+                    _payload.push_back(marshalled_data.at(1 + IPV6_ADDR_LEN + 2 + i));
+                }
+                break;
+            case RANK_MAR_MESSAGE_LEN_LT_DDS:
+                for (int i = 0; i != DDS_ADDR_LEN; i++) {
+                    _listener.at(i) = marshalled_data.at(i + 1);
+                }
+                _payload_length = marshalled_data.at(1 + DDS_ADDR_LEN) << 8 | marshalled_data.at(1 + DDS_ADDR_LEN + 1);
+                for (int i = 0; i != _payload_length; i++) {
+                    _payload.push_back(marshalled_data.at(1 + DDS_ADDR_LEN + 2 + i));
+                }
+                break;
+            default:
+                throw std::exception(); // TODO Handle this case.
+        }
     }
 
     // Marshalling features.
@@ -52,7 +106,7 @@ public:
 private:
     uint8_t _priority;
     uint8_t _listener_length;
-    uint8_t _reserved;
+    uint8_t _reserved = 0;
     std::array<uint8_t, RANK_LISTENER_MAX_LEN> _listener;
     uint16_t _payload_length;
     std::vector<uint8_t> _payload;

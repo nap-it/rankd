@@ -540,7 +540,7 @@ void Handler::operator()() {
 
                                         // Change state to PRE_RESERVED.
                                         old_state = _state;
-                                        _state = HandlerState::PRE_RESERVED;
+                                        _state = HandlerState::AUCTION_WAITING;
                                         _logger->debug("[Handler] [{}] Handler state transitioned from {} to {}.", display(_uuid), handler_state_to_string(old_state),
                                                        handler_state_to_string(_state));
 
@@ -580,12 +580,32 @@ void Handler::operator()() {
 
                     auto listener_field = mar_message->listener();
                     auto listener_field_length = mar_message->listener_length();
+                    //bool i_am_listener = false;
                     switch (listener_field_length) {
+#ifdef FROM_SIMUZILLA
+                        case RANK_MAR_MESSAGE_LEN_LT_CODE_0: {
+                            uint8_t simuzilla_address = listener_field.at(0);
+                            _logger->trace("[Handler] [{}] Testing if I am id {}.", display(_uuid), simuzilla_address);
+                            //i_am_listener = simulated_is_me(simuzilla_address);
+
+                            // Update inner reservation with the requirements of the message.
+                            try {
+                                produce_reservation(mar_message->requirements(), mar_message->priority(), std::vector<uint8_t>({simuzilla_address}));
+                            } catch (const std::invalid_argument& ia) {
+                                _logger->error("[Handler] [{}] Received message has non-compliant list of requirements. Ignoring messages and deleting handler.", display(_uuid));
+                                old_state = _state;
+                                _state = HandlerState::CLOSED;
+                                stop();
+                                return;
+                            }
+                        } break;
+#endif
                         case RANK_MAR_MESSAGE_LEN_LT_IP4: {
                             std::array<uint8_t, 4> ip4_address {};
                             for (int byte = 0; byte != 4; byte++) {
                                 ip4_address[byte] = listener_field[byte];
                             }
+                            //i_am_listener = is_me(ip4_address);
 
                             // Update inner reservation with the requirements of the message.
                             produce_reservation(mar_message->requirements(), mar_message->priority(),
@@ -596,6 +616,7 @@ void Handler::operator()() {
                             for (int byte = 0; byte != 6; byte++) {
                                 mac_address[byte] = listener_field[byte];
                             }
+                            //i_am_listener = is_me(mac_address);
 
                             // Update inner reservation with the requirements of the message.
                             produce_reservation(mar_message->requirements(), mar_message->priority(),
@@ -606,6 +627,7 @@ void Handler::operator()() {
                             for (int byte = 0; byte != 16; byte++) {
                                 ip6_address[byte] = listener_field[byte];
                             }
+                            //i_am_listener = is_me(ip6_address);
 
                             // Update inner reservation with the requirements of the message.
                             produce_reservation(mar_message->requirements(), mar_message->priority(),
@@ -614,6 +636,9 @@ void Handler::operator()() {
                         default:
                             throw std::exception();  // TODO
                     }
+
+                    // Mark reservation UUID.
+                    _reservation->set_uuid(_uuid);
 
                     // (C.1) Can R be performed with priority p?
                     _logger->trace("[Handler] [{}] (C.1) Can R be performed with priority p?", display(_uuid));
@@ -626,7 +651,19 @@ void Handler::operator()() {
                         // (C.1.2.2) Create bid message and send it.
                         _logger->trace("[Handler] [{}] (C.1.2.2) Create bid message and send it.", display(_uuid));
                         BID* bid_message = new BID(_uuid, bid_value);
-                        _dispatcher->send_message(bid_message, _source_identifier.first, _source_identifier.second);
+                        std::vector<uint8_t> target;
+#ifdef FROM_SIMUZILLA
+                        std::vector<std::pair<std::vector<std::pair<uint8_t, uint8_t>>, IdentifierType>> connections_to_target_raw =
+                                get_connections_to(_source_identifier.first.at(0));
+                        _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:", display(_uuid), connections_to_target_raw.size(), connections_to_target_raw.size() == 1 ? "" : "s", _source_identifier.first.at(0));
+                        for (const auto& [connection, type]: connections_to_target_raw) {
+                            _logger->trace("[Handler]                               -> {} with depth {}", connection.at(0).second, connection.at(0).first);
+                        }
+                        target = {connections_to_target_raw.at(0).first.at(0).second};
+#else
+                        target = _source_identifier.first;
+#endif
+                        _dispatcher->send_message(bid_message, target, _source_identifier.second);
 
                         // Change state to PRE_RESERVED.
                         old_state = _state;
@@ -882,10 +919,29 @@ void Handler::operator()() {
                         // (F.2.1.2) Is TranslationTable empty?
                         _logger->trace("[Handler] [{}] (F.2.1.2) Is TranslationTable empty?", display(_uuid));
                         if (is_translation_table_empty()) {
+                            std::pair<std::vector<uint8_t>, IdentifierType> new_target;
+#ifndef FROM_SIMUZILLA
+                            new_target = _source_identifier;
+#else
+                            // Get connecting port to targeted entity.
+                            if (_source_identifier.second == IdentifierType::Simulation) {
+                                auto topology = _dispatcher->get_topology();
+                                auto found = std::find(topology.begin(), topology.end(), _source_identifier.first.at(0));
+                                if (found == topology.end()) {
+                                    _logger->error("[Handler] [{}] No direct connection was found relating the targeted node {} to a node port in Simuzilla",
+                                                   display(_uuid), _source_identifier.first.at(0));
+                                    stop();
+                                    break;
+                                }
+                                new_target.first = {static_cast<uint8_t>(std::distance(topology.begin(), found))};
+                                new_target.second = IdentifierType::Simulation;
+                            };
+#endif
+
                             // (F.2.2.1.1.1) Create REF message and send it.
                             _logger->trace("[Handler] [{}] (F.2.2.1.1.1) Create REF message and send it.", display(_uuid));
                             REF* new_ref_message = new REF(_uuid);
-                            _dispatcher->send_message(new_ref_message, _source_identifier.first, _source_identifier.second);
+                            _dispatcher->send_message(new_ref_message, new_target.first, new_target.second);
                         } else {
                             stop();
                             break;
@@ -902,11 +958,29 @@ void Handler::operator()() {
                             _logger->trace("[Handler] [{}] (F.2.2.1.2.2) Remove UUID from Origin Set.");
                             _remove_as_origin(_uuid);
                         } else {
+                            std::pair<std::vector<uint8_t>, IdentifierType> new_target;
+#ifndef FROM_SIMUZILLA
+                            new_target = _source_identifier;
+#else
+                            // Get connecting port to targeted entity.
+                            if (_source_identifier.second == IdentifierType::Simulation) {
+                                auto topology = _dispatcher->get_topology();
+                                auto found = std::find(topology.begin(), topology.end(), _source_identifier.first.at(0));
+                                if (found == topology.end()) {
+                                    _logger->error("[Handler] [{}] No direct connection was found relating the targeted node {} to a node port in Simuzilla",
+                                                   display(_uuid), _source_identifier.first.at(0));
+                                    stop();
+                                    break;
+                                }
+                                new_target.first = {static_cast<uint8_t>(std::distance(topology.begin(), found))};
+                                new_target.second = IdentifierType::Simulation;
+                            };
+#endif
+
                             // (F.2.2.1.1.1) Create REF message and send it.
                             _logger->trace("[Handler] [{}] (F.2.2.1.1.1) Create REF message and send it.", display(_uuid));
-                            REF *new_ref_message = new REF(_uuid);
-                            _dispatcher->send_message(new_ref_message, _source_identifier.first,
-                                                      _source_identifier.second);
+                            REF* new_ref_message = new REF(_uuid);
+                            _dispatcher->send_message(new_ref_message, new_target.first, new_target.second);
                         }
                     }
 
@@ -1002,7 +1076,7 @@ void Handler::operator()() {
                                 // TODO
                             }
 
-                            // (G.1.2.1.2.4) Create REF message with original UUID and send it.
+                            // (G.1.2.1.2.4) Create REF message with original UUID and send it. TODO
                             _logger->trace("[Handler] [{}] (G.1.2.1.2.4) Create REF message with original UUID and send it.", display(_uuid));
                             REF* new_ref_message = new REF(original_uuid);
                             _dispatcher->send_message(new_ref_message, _source_identifier.first, _source_identifier.second);

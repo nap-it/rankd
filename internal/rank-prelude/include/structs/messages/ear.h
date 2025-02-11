@@ -32,7 +32,7 @@ public:
         _reserved = 0;
 
         switch (_listener_length) {
-            case RANK_MAR_MESSAGE_LEN_LT_CODE_0:
+            case RANK_EAR_MESSAGE_LEN_LT_CODE_0:
                 _listener.at(0) = marshalled_data.at(1);
                 _payload_length = marshalled_data.at(1+SIMUZILLA_ADDR_LEN) << 8 | marshalled_data.at(1+SIMUZILLA_ADDR_LEN+1);
                 for (int i = 0; i != _payload_length; i++) {
