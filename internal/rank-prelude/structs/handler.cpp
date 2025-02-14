@@ -209,6 +209,54 @@ Handler *Handler::borrow(Dispatcher *dispatcher) {
     return this;
 }
 
+void Handler::on_auct_timeout() {
+    // Stop new bids from being received.
+
+    // Continue doing the D process.
+
+}
+
+void Handler::on_bid_timeout() {
+    // Delete bids from the Store with this handler's UUID.
+    _bids.clear();
+
+    // Delete pre-reservations with this handler's UUID.
+    _resources->replenish_reservation(_reservation);
+
+    // Mark this handler's state as CLOSED.
+    _state = HandlerState::CLOSED;
+}
+
+void Handler::on_ear_timeout() {
+    // Delete bids from the Store with this handler's UUID.
+    _bids.clear();
+
+    // Delete pre-reservations with this handler's UUID.
+    _resources->replenish_reservation(_reservation);
+
+    // Mark this handler's state as CLOSED.
+    _state = HandlerState::CLOSED;
+}
+
+void Handler::on_mar_timeout() {
+    // Delete bids from the Store with this handler's UUID.
+    _bids.clear();
+
+    // Delete pre-reservations with this handler's UUID.
+    _resources->replenish_reservation(_reservation);
+
+    // Mark this handler's state as CLOSED.
+    _state = HandlerState::CLOSED;
+}
+
+void Handler::on_rep_timeout() {
+    // Remove reservations with this handler's UUID.
+    _resources->replenish_reservation(_reservation);
+
+    // Mark this handler's state as CLOSED.
+    _state = HandlerState::CLOSED;
+}
+
 #ifdef FROM_SIMUZILLA
 Handler *Handler::borrow(std::function<std::vector<std::pair<uint8_t, uint8_t>>(uint8_t)> function) {
     _get_connections_to = std::move(function);
@@ -518,7 +566,8 @@ void Handler::operator()() {
 
                                         // (B.1.2.2.2.3) Begin timer for EAR timeout.
                                         _logger->trace("[Handler] [{}] (B.1.2.2.2.3) Begin timer for EAR timeout.", display(_uuid));
-                                        _timeout_handler->initiate_timeout(this, RANK_EAR_TO_EAR_TIMEOUT);
+                                        _timeout_handler->initiate_timeout(this, TimeoutType::EAR);
+                                        // TODO _timeout_handler->initiate_timeout(this, RANK_EAR_TO_EAR_TIMEOUT);
                                     } break;
                                     default: {
                                         // If more than one connection is found...
@@ -546,7 +595,8 @@ void Handler::operator()() {
 
                                         // (B.1.2.2.1.2) Begin timer for MAR timeout.
                                         _logger->trace("[Handler] [{}] (B.1.2.2.1.2) Begin timer for MAR timeout.", display(_uuid));
-                                        _timeout_handler->initiate_timeout(this, RANK_MAR_TO_MAR_TIMEOUT);
+                                        _timeout_handler->initiate_timeout(this, TimeoutType::MAR);
+                                        // TODO _timeout_handler->initiate_timeout(this, RANK_MAR_TO_MAR_TIMEOUT);
                                     } break;
                                 }
                             } else {
@@ -677,7 +727,8 @@ void Handler::operator()() {
 
                         // (C.1.2.4) Begin timer for BID timeout.
                         _logger->trace("[Handler] [{}] (C.1.2.4) Begin timer for BID timeout.", display(_uuid));
-                        _timeout_handler->initiate_timeout(this, RANK_BID_TO_BID_TIMEOUT);
+                        _timeout_handler->initiate_timeout(this, TimeoutType::BID);
+                        // TODO _timeout_handler->initiate_timeout(this, RANK_BID_TO_BID_TIMEOUT);
                     } else {
                         // (C.1.1.1) Create zeroed-bid message and send it.
                         _logger->trace("[Handler] [{}] (C.1.1.1) Create zeroed-bid message and send it.", display(_uuid));
@@ -757,7 +808,8 @@ void Handler::operator()() {
 
                             // (D.1.2.3.2.1.1.3) Begin timer for EAR timeout.
                             _logger->trace("[Handler] [{}] (D.1.2.3.2.1.1.3) Begin timer for EAR timeout.", display(_uuid));
-                            _timeout_handler->initiate_timeout(this, RANK_EAR_TO_EAR_TIMEOUT);
+                            _timeout_handler->initiate_timeout(this, TimeoutType::EAR);
+                            // TODO _timeout_handler->initiate_timeout(this, RANK_EAR_TO_EAR_TIMEOUT);
 
                             // (D.1.2.3.2.1.1.4) Delete UUID from the Store.
                             _logger->trace("[Handler] [{}] (D.1.2.3.2.1.1.4) Delete UUID from the Store.", display(_uuid));
@@ -791,7 +843,8 @@ void Handler::operator()() {
 
                                 // (D.1.2.3.2.1.2.5) Begin timer for EAR timeout.
                                 _logger->trace("[Handler] [{}] (D.1.2.3.2.1.2.5) Begin timer for EAR timeout.", display(_uuid));
-                                _timeout_handler->initiate_timeout(this, RANK_EAR_TO_EAR_TIMEOUT);
+                                _timeout_handler->initiate_timeout(this, TimeoutType::EAR);
+                                // TODO _timeout_handler->initiate_timeout(this, RANK_EAR_TO_EAR_TIMEOUT);
 
                                 // (D.1.2.3.2.1.2.6) Delete UUID from the Store.
                                 _logger->trace("[Handler] [{}] (D.1.2.3.2.1.2.6) Delete UUID from the Store.", display(_uuid));
@@ -1063,7 +1116,8 @@ void Handler::operator()() {
 
                             // (G.1.2.1.2.2) Begin timer for REP timeout.
                             _logger->trace("[Handler] [{}] (G.1.2.1.2.2) Begin timer for REP timeout.", display(_uuid));
-                            _timeout_handler->initiate_timeout(this, RANK_REP_TO_REP_TIMEOUT);
+                            _timeout_handler->initiate_timeout(this, TimeoutType::REP);
+                            // TODO _timeout_handler->initiate_timeout(this, RANK_REP_TO_REP_TIMEOUT);
 
                             // (G.1.2.1.2.3) Is UUID in the TranslationTable?
                             _logger->trace("[Handler] [{}] (G.1.2.1.2.3) Is UUID in the TranslationTable?", display(_uuid));

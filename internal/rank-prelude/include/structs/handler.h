@@ -71,6 +71,13 @@ public:
     // Dispatcher configurations.
     Handler* borrow(Dispatcher* dispatcher);
 
+    // Timeout-borrowable functions.
+    void on_auct_timeout();
+    void on_bid_timeout();
+    void on_ear_timeout();
+    void on_mar_timeout();
+    void on_rep_timeout();
+
 #ifdef FROM_SIMUZILLA
     Handler* borrow(std::function<std::vector<std::pair<uint8_t, uint8_t>>(uint8_t)> function);
     Handler* borrow(std::function<bool(uint8_t)> function);

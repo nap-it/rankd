@@ -41,8 +41,16 @@ if (FROM_SIMUZILLA)
             include/structs/reservation.h
             include/structs/reservation_state.h
             include/structs/resources.h
+            include/structs/timeout.h
             include/structs/timeout_handler.h
-            include/structs/timeout_handler_spec.h
+            include/structs/timeouts/all.h
+            include/structs/timeouts/auct_timeout.h
+            include/structs/timeouts/bid_timeout.h
+            include/structs/timeouts/ear_timeout.h
+            include/structs/timeouts/mar_timeout.h
+            include/structs/timeouts/prototype.h
+            include/structs/timeouts/rep_timeout.h
+            include/structs/timeouts/types.h
             include/utils/hashing.h
             include/utils/marshalling.h
             include/utils/marshalling/serialization.h
@@ -78,7 +86,12 @@ if (FROM_SIMUZILLA)
             structs/reservation.cpp
             structs/resources.cpp
             structs/timeout_handler.cpp
-            structs/timeout_handler_spec.cpp
+            structs/timeouts/auct_timeout.cpp
+            structs/timeouts/bid_timeout.cpp
+            structs/timeouts/ear_timeout.cpp
+            structs/timeouts/mar_timeout.cpp
+            structs/timeouts/prototype.cpp
+            structs/timeouts/rep_timeout.cpp
             utils/identity.cpp
             utils/identity/network.cpp
             utils/identity/session.cpp
@@ -121,8 +134,16 @@ else()
             include/structs/reservation.h
             include/structs/reservation_state.h
             include/structs/resources.h
+            include/structs/timeout.h
             include/structs/timeout_handler.h
-            include/structs/timeout_handler_spec.h
+            include/structs/timeouts/all.h
+            include/structs/timeouts/auct_timeout.h
+            include/structs/timeouts/bid_timeout.h
+            include/structs/timeouts/ear_timeout.h
+            include/structs/timeouts/mar_timeout.h
+            include/structs/timeouts/prototype.h
+            include/structs/timeouts/rep_timeout.h
+            include/structs/timeouts/types.h
             include/utils/hashing.h
             include/utils/marshalling.h
             include/utils/marshalling/serialization.h
@@ -161,7 +182,12 @@ else()
             structs/reservation.cpp
             structs/resources.cpp
             structs/timeout_handler.cpp
-            structs/timeout_handler_spec.cpp
+            structs/timeouts/auct_timeout.cpp
+            structs/timeouts/bid_timeout.cpp
+            structs/timeouts/ear_timeout.cpp
+            structs/timeouts/mar_timeout.cpp
+            structs/timeouts/prototype.cpp
+            structs/timeouts/rep_timeout.cpp
             utils/identity.cpp
             utils/identity/network.cpp
             utils/identity/session.cpp

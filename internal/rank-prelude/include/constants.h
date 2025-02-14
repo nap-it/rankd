@@ -1,6 +1,10 @@
 #ifndef RANK_PRELUDE_CONSTANTS_H
 #define RANK_PRELUDE_CONSTANTS_H
 
+#include <chrono>
+
+using namespace std::chrono_literals;
+
 #include "rankd-api.h"
 
 #define SIMUZILLA_ADDR_LEN 1
@@ -24,6 +28,12 @@
 #define RANK_BID_TO_BID_TIMEOUT 2
 #define RANK_BIDS_WAITING_TIMEOUT 3
 #define RANK_REP_TO_REP_TIMEOUT 4
+
+#define RANK_EAR_TIMEOUT_VALUE 1min
+#define RANK_MAR_TIMEOUT_VALUE 20s
+#define RANK_BID_TIMEOUT_VALUE 20s
+#define RANK_AUCT_TIMEOUT_VALUE 1min
+#define RANK_REP_TIMEOUT_VALUE 1min
 
 #define RANK_MAX_PRIORITY 8
 #define RANK_CURRENT_RESOURCES_EVAL_THRESHOLD (2/3)
