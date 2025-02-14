@@ -222,24 +222,85 @@ void Process::operator()() {
 
                 _logger->trace("[Process] [{}] This UUID is in store and its handler is in {} state.", display(message_uuid), handler_state_to_string(uuid_state));
 
-                switch (uuid_state) {
-                    // If state is ASSESSING, PRESENTING, AUCTION_BIDDING, REPLENISHING, or CLOSED,
-                    // then simply close the socket and ignore. (A.3.1.1)
-                    case HandlerState::ASSESSING:
-                    case HandlerState::PRESENTING:
-                    case HandlerState::AUCTION_BIDDING:
-                    case HandlerState::REPLENISHING:
-                    case HandlerState::CLOSED:
-                        // Ignore the message. (A.3.1.1.1.1)
-                        _logger->info("Ignoring message since its UUID {} reports being closed.", display(message_uuid));
+                // (A.3.1.1) Is UUID's handler running?
+                if (get_handler(message_uuid)->is_running()) {
+                    auto* handler = get_handler(message_uuid);
+
+                    // (A.3.1.1.2.1) Is UUID's handler in AUCTION_WAITING?
+                    if (handler->state() == HandlerState::AUCTION_WAITING) {
+                        // (A.3.1.1.2.1.2.1) Is message type BID?
+                        if (message->type() == MessageType::BID) {
+                            auto bid_message = dynamic_cast<BID*>(message);
+
+                            switch (source_address_type) {
+                                case IdentifierType::Simulation:
+                                    handler->new_bid(bid_message->value(), source_address.at(0));
+                                    break;
+                                case IdentifierType::MAC: {
+                                    std::array<uint8_t, MAC_ADDR_LEN> address{};
+                                    std::copy_n(source_address.begin(), MAC_ADDR_LEN, address.begin());
+                                    handler->new_bid(bid_message->value(), address);
+                                }
+                                    break;
+                                case IdentifierType::IPv4: {
+                                    std::array<uint8_t, IPV4_ADDR_LEN> address{};
+                                    std::copy_n(source_address.begin(), IPV4_ADDR_LEN, address.begin());
+                                    handler->new_bid(bid_message->value(), address);
+                                }
+                                    break;
+                                case IdentifierType::IPv6: {
+                                    std::array<uint8_t, IPV6_ADDR_LEN> address{};
+                                    std::copy_n(source_address.begin(), IPV6_ADDR_LEN, address.begin());
+                                    handler->new_bid(bid_message->value(), address);
+                                }
+                                    break;
+                                case IdentifierType::DDS: {
+                                    std::string address;
+                                    std::copy_n(source_address.begin(), DDS_ADDR_LEN, address.begin());
+                                    handler->new_bid(bid_message->value(), address);
+                                }
+                                    break;
+                            }
+
+                            // Discard the message. (A.3.1.1.1.1.1.1)
+                            _logger->info("Discarding message, after collecting a bid of {} for the UUID {}.",
+                                          bid_message->value(), display(message_uuid));
+                            continue;
+                        } else {
+                            // Ignore the message. (A.3.1.1.1.1.1.1)
+                            _logger->info("Ignoring message since its UUID {} reports being auction waiting, but message is not a BID message.",
+                                          display(message_uuid));
+                            continue;
+                        }
+                    } else {
+                        // Ignore the message. (A.3.1.1.1.1.1.1)
+                        _logger->info("Ignoring message since its UUID {} reports not being auction waiting.",
+                                      display(message_uuid));
                         continue;
-                    case HandlerState::PRE_RESERVED:
-                    case HandlerState::AUCTION_WAITING:
-                    case HandlerState::RESERVED:
-                    case HandlerState::READY:
-                        // Otherwise, resume handling the request. (A.3.1.1.2.1)
-                        _logger->trace("[Process] [{}] Resuming handler on this UUID.", display(message_uuid));
-                        handler = resume_handler(message_uuid); // (A.3.1.1.2.2)
+                    }
+                } else {
+                    // In this case, UUID's handler is not currently running.
+
+                    switch (uuid_state) {
+                        // If state is ASSESSING, PRESENTING, AUCTION_BIDDING, REPLENISHING, or CLOSED,
+                        // then simply close the socket and ignore. (A.3.1.1.1.1)
+                        case HandlerState::ASSESSING:
+                        case HandlerState::PRESENTING:
+                        case HandlerState::AUCTION_BIDDING:
+                        case HandlerState::REPLENISHING:
+                        case HandlerState::CLOSED:
+                            // Ignore the message. (A.3.1.1.1.1.1.1)
+                            _logger->info("Ignoring message since its UUID {} reports being closed.",
+                                          display(message_uuid));
+                            continue;
+                        case HandlerState::PRE_RESERVED:
+                        case HandlerState::AUCTION_WAITING:
+                        case HandlerState::RESERVED:
+                        case HandlerState::READY:
+                            // Otherwise, resume handling the request. (A.3.1.1.2.1.2.1)
+                            _logger->trace("[Process] [{}] Resuming handler on this UUID.", display(message_uuid));
+                            handler = resume_handler(message_uuid); // (A.3.1.1.2.1.2.2)
+                    }
                 }
             } else {
                 // If the UUID is not known in the Store, then create one and save it. (A.3.2.1)

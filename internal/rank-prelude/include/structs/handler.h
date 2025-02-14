@@ -45,6 +45,7 @@ public:
     UUIDv4 locate_original_of(const UUIDv4& translated);
     bool is_translation_table_empty_for(const UUIDv4& uuid);
     bool is_translation_table_empty();
+    void new_bid(float bid, uint8_t simuzilla_address);
     void new_bid(float bid, std::array<uint8_t, 4>& ipv4_address);
     void new_bid(float bid, std::array<uint8_t, 6>& mac_address);
     void new_bid(float bid, std::array<uint8_t, 16>& ipv6_address);
@@ -120,6 +121,8 @@ private:
     std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> _accepting_nodes{};
     Message* _message = nullptr;
     HandlerState _state;
+    std::condition_variable _auction_wait;
+    std::mutex _auction_mutex;
     BidSet _bids;
     std::mutex _bids_locker;
     Resources* _resources = nullptr;

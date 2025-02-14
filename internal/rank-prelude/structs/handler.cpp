@@ -94,6 +94,12 @@ bool Handler::is_translation_table_empty() {
     return _translation_table->empty();
 }
 
+void Handler::new_bid(float bid, uint8_t simuzilla_address) {
+    // Safely add the bid to the set of bids.
+    std::lock_guard<std::mutex> lock(_bids_locker);
+    _bids.insert(std::make_pair(bid, std::make_pair(std::vector<uint8_t>({ simuzilla_address }), IdentifierType::IPv4)));
+}
+
 void Handler::new_bid(float bid, std::array<uint8_t, 4>& ipv4_address) {
     // Safely add the bid to the set of bids.
     std::lock_guard<std::mutex> lock(_bids_locker);
@@ -211,50 +217,57 @@ Handler *Handler::borrow(Dispatcher *dispatcher) {
 
 void Handler::on_auct_timeout() {
     // Stop new bids from being received.
-
-    // Continue doing the D process.
-
+    _auction_mutex.unlock();
+    _auction_wait.notify_one();
 }
 
 void Handler::on_bid_timeout() {
-    // Delete bids from the Store with this handler's UUID.
-    _bids.clear();
+    if (_state != HandlerState::CLOSED and _state != HandlerState::RESERVED or (_message == nullptr and _state == HandlerState::PRE_RESERVED)) {
+        // Delete bids from the Store with this handler's UUID.
+        _bids.clear();
 
-    // Delete pre-reservations with this handler's UUID.
-    _resources->replenish_reservation(_reservation);
+        // Delete pre-reservations with this handler's UUID.
+        _resources->replenish_reservation(_reservation);
 
-    // Mark this handler's state as CLOSED.
-    _state = HandlerState::CLOSED;
+        // Mark this handler's state as CLOSED.
+        _state = HandlerState::CLOSED;
+    }
 }
 
 void Handler::on_ear_timeout() {
-    // Delete bids from the Store with this handler's UUID.
-    _bids.clear();
+    if (_state != HandlerState::CLOSED and _state != HandlerState::RESERVED or (_message == nullptr and _state == HandlerState::PRE_RESERVED)) {
+        // Delete bids from the Store with this handler's UUID.
+        _bids.clear();
 
-    // Delete pre-reservations with this handler's UUID.
-    _resources->replenish_reservation(_reservation);
+        // Delete pre-reservations with this handler's UUID.
+        _resources->replenish_reservation(_reservation);
 
-    // Mark this handler's state as CLOSED.
-    _state = HandlerState::CLOSED;
+        // Mark this handler's state as CLOSED.
+        _state = HandlerState::CLOSED;
+    }
 }
 
 void Handler::on_mar_timeout() {
-    // Delete bids from the Store with this handler's UUID.
-    _bids.clear();
+    if (_state != HandlerState::CLOSED and _state != HandlerState::RESERVED or (_message == nullptr and _state == HandlerState::PRE_RESERVED)) {
+        // Delete bids from the Store with this handler's UUID.
+        _bids.clear();
 
-    // Delete pre-reservations with this handler's UUID.
-    _resources->replenish_reservation(_reservation);
+        // Delete pre-reservations with this handler's UUID.
+        _resources->replenish_reservation(_reservation);
 
-    // Mark this handler's state as CLOSED.
-    _state = HandlerState::CLOSED;
+        // Mark this handler's state as CLOSED.
+        _state = HandlerState::CLOSED;
+    }
 }
 
 void Handler::on_rep_timeout() {
-    // Remove reservations with this handler's UUID.
-    _resources->replenish_reservation(_reservation);
+    if (_state != HandlerState::CLOSED or (_message == nullptr and _state == HandlerState::REPLENISHING)) {
+        // Remove reservations with this handler's UUID.
+        _resources->replenish_reservation(_reservation);
 
-    // Mark this handler's state as CLOSED.
-    _state = HandlerState::CLOSED;
+        // Mark this handler's state as CLOSED.
+        _state = HandlerState::CLOSED;
+    }
 }
 
 #ifdef FROM_SIMUZILLA
@@ -761,8 +774,16 @@ void Handler::operator()() {
 
                     auto bid_message = dynamic_cast<BID*>(_message);
 
+                    // Add bid in the BidSet.
+                    {
+                        std::lock_guard<std::mutex> guard(_bids_locker);
+                        _bids.insert({bid_message->value(), _source_identifier});
+                    }
+
                     // (D.1.2.1) Wait for all bids.
                     _logger->trace("[Handler] [{}] (D.1.2.1) Wait for all bids.", display(_uuid));
+                    std::unique_lock auction_locker(_auction_mutex);
+                    _auction_wait.wait(auction_locker);
                     // TODO Add bids until a timeout is reached (call new_bid methods according to the type).
 
                     // (D.1.2.3) Check the cardinal of bids.
