@@ -710,6 +710,7 @@ void Handler::operator()() {
                         // (C.1.2.1) Estimate bid.
                         _logger->trace("[Handler] [{}] (C.1.2.1) Estimate bid.", display(_uuid));
                         float bid_value = _resources->estimate_bid(*_reservation);
+                        _logger->debug("[Handler] [{}] The bid was estimated of {}.", display(_uuid), bid_value);
 
                         // (C.1.2.2) Create bid message and send it.
                         _logger->trace("[Handler] [{}] (C.1.2.2) Create bid message and send it.", display(_uuid));

@@ -13,7 +13,7 @@ class API;
 #include "structs/message.h"
 #include "structs/dispatchers/api.h"
 #include "structs/dispatchers/all.h"
-#include "store.h"
+#include "structs/store.h"
 
 class Dispatcher {
 public:

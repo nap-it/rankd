@@ -22,6 +22,7 @@
 class Handler;
 
 #include "constants.h"
+
 #include "structs/dispatcher.h"
 #include "structs/store.h"
 #include "structs/timeout_table.h"

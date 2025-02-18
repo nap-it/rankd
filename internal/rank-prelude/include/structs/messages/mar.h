@@ -6,9 +6,10 @@
 #include <vector>
 
 #include "structs/message.h"
-#include "constants.h"
 #include "structs/messages/header.h"
 #include "structs/requesting_capabilities.h"
+
+#include "constants.h"
 
 #include "utils/marshalling.h"
 #include "utils/messaging.h"

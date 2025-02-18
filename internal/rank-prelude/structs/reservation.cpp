@@ -8,6 +8,7 @@ Reservation::Reservation(const Reservation& reservation, const std::string& logg
     _uuid = reservation.uuid();
     _listener_length = reservation.listener_length();
     _listener = reservation.listener();
+    _estimated_bid = -1;
 
     _logger->debug("[Reservation] [{}] Reservation object created with state {}.", display(_uuid), reservation_state_as_string(_state));
 }
@@ -17,6 +18,7 @@ Reservation::Reservation(const RequestingCapabilities& capabilities, uint8_t pri
     _state = ReservationState::CREATED;
     _priority = priority;
     _capabilities = capabilities;
+    _estimated_bid = -1;
 }
 
 void Reservation::add_next_node(const std::pair<std::vector<uint8_t>, IdentifierType> &node) {
@@ -63,12 +65,28 @@ std::pair<std::vector<uint8_t>, IdentifierType> Reservation::past_node() const {
     return _past_node;
 }
 
+double Reservation::last_bid() const {
+    return _estimated_bid;
+}
+
 Reservation* Reservation::mark_listener(const std::vector<uint8_t>& listener) {
     return this;
 }
 
 Reservation *Reservation::set_uuid(const UUIDv4 &uuid) {
     _uuid = uuid;
+
+    return this;
+}
+
+Reservation *Reservation::set_priority(uint8_t priority) {
+    _priority = priority;
+
+    return this;
+}
+
+Reservation *Reservation::update_last_bid(double value) {
+    _estimated_bid = value;
 
     return this;
 }

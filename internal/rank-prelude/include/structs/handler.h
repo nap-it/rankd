@@ -15,6 +15,7 @@
 #include "structs/translation_table.h"
 
 #include "utils/messaging.h"
+#include "utils/identity.h"
 #include "utils/neighboring.h"
 
 class TimeoutHandler;
@@ -28,8 +29,6 @@ class TimeoutHandler;
 #include "structs/reservation.h"
 #include "structs/resources.h"
 #include "structs/timeout_handler.h"
-
-#include "utils/identity.h"
 
 class Handler {
 public:

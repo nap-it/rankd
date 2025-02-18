@@ -31,10 +31,13 @@ public:
     [[nodiscard]] UUIDv4 uuid() const;
     [[nodiscard]] std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> next_nodes() const;
     [[nodiscard]] std::pair<std::vector<uint8_t>, IdentifierType> past_node() const;
+    [[nodiscard]] double last_bid() const;
 
     // Setters.
     Reservation* mark_listener(const std::vector<uint8_t>& listener);
     Reservation* set_uuid(const UUIDv4& uuid);
+    Reservation* set_priority(uint8_t priority);
+    Reservation* update_last_bid(double value);
 
     // State changers.
     void wait_for_sacrifice();
@@ -61,6 +64,7 @@ private:
     RequestingCapabilities _capabilities;
     UUIDv4 _uuid{};
     uint8_t _listener_length{};
+    double _estimated_bid;
     std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> _next_nodes{};
     std::pair<std::vector<uint8_t>, IdentifierType> _past_node{};
     std::array<uint8_t, RANK_LISTENER_MAX_LEN> _listener{};
