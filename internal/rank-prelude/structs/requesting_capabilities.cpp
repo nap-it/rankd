@@ -2,6 +2,7 @@
 
 void RequestingCapabilities::add_item(const std::pair<CapabilityItemType, std::any>& item, uint8_t place) {
     _ordered_items.insert({place, item});
+    static_cast<Capabilities*>(this)->add_item(item);
 }
 
 void RequestingCapabilities::downgrade_item(uint8_t place, uint8_t to_place) {
@@ -21,7 +22,9 @@ const std::pair<CapabilityItemType, std::any>& RequestingCapabilities::get_item(
 }
 
 void RequestingCapabilities::remove_item(uint8_t place) {
+    auto item = _ordered_items.at(place);
     _ordered_items.erase(place);
+    static_cast<Capabilities*>(this)->remove_item(item);
 }
 
 bool RequestingCapabilities::operator<(const CurrentCapabilities &current) const {

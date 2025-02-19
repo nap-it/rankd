@@ -18,25 +18,42 @@ float Resources::estimate_bid(const RequestingCapabilities& capabilities) const 
 }
 
 double Resources::estimate_bid(const Reservation& reservation) {
+    _logger->debug("[Resources] [{}] Estimating a bid for an admission request.", display(reservation.uuid()));
+
     // Phase 1: Bare-metal criterium for reservation.
+    _logger->debug("[Resources] [{}] Assessing bare-metal resources...", display(reservation.uuid()));
     double node_resources = bare_metal_resource_assessment(reservation.requirements());
+    _logger->trace("[Resources]                               |-> Final evaluation of {}.", node_resources);
 
     // Phase 2: Current capability for performance of requirement list.
+    _logger->debug("[Resources] [{}] Assessing current resources...", display(reservation.uuid()));
     double current_resources = current_resource_assessment(reservation.requirements());
+    _logger->trace("[Resources]                               |-> Final evaluation of {}.", current_resources);
 
     // Phase 3: Fairness.
-    double fairness = reservation.priority() / RANK_MAX_PRIORITY;
+    _logger->debug("[Resources] [{}] Assessing fairness...", display(reservation.uuid()));
+    double fairness = reservation.priority() / (double)RANK_MAX_PRIORITY;
+    _logger->trace("[Resources]                              Fairness Assessment.");
+    _logger->trace("[Resources]                               |-> Priority level: {}.", reservation.priority());
+    _logger->trace("[Resources]                               |-> Final evaluation of {}.", fairness);
 
     // Phase 4: Proximity criterium.
+    _logger->debug("[Resources] [{}] Assessing proximity...", display(reservation.uuid()));
     double proximity = proximity_assessment(reservation.listener(), reservation.listener_length());
+    _logger->trace("[Resources]                               |-> Final evaluation of {}.", proximity);
 
     // Phase 5: Historical Performance criterium.
+    _logger->debug("[Resources] [{}] Assessing historical performance...", display(reservation.uuid()));
     double hysteresis = hysteresis_assessment(reservation);
+    _logger->trace("[Resources]                              Historical performance Assessment.");
+    _logger->trace("[Resources]                               |-> Final evaluation of {}.", hysteresis);
 
     return node_resources * (proximity + hysteresis) / 2 * current_resources * (fairness / RANK_MAX_PRIORITY);
 }
 
 double Resources::bare_metal_resource_assessment(const RequestingCapabilities &requirements) const {
+    _logger->trace("[Resources]                              Bare-metal Resources Assessment ({} requirement{}).", requirements.ordered_items().size(), requirements.ordered_items().size() == 1 ? "" : "s");
+
     // For each required item, check its bare-metal resource.
     for (const auto& [item_order, item]: requirements.ordered_items()) {
         const CapabilityItemType& item_key = item.first;
@@ -61,14 +78,20 @@ double Resources::bare_metal_resource_assessment(const RequestingCapabilities &r
                 break;
             case CapabilityItemType::COMP:
                 break;
-            case CapabilityItemType::COMP_CPU:
-                if (std::any_cast<uint>(item_value) >= _current_capabilities->bare_metal_cpu_cores()) {
-                    return 0.0;
+            case CapabilityItemType::COMP_CPU: {
+                    auto assessment = _current_capabilities->bare_metal_cpu_cores();
+                    _logger->trace("[Resources]                               |-> CPU Core evaluation: {}.", assessment);
+                    if (std::any_cast<uint>(item_value) >= assessment) {
+                        return 0.0;
+                    }
                 }
                 break;
-            case CapabilityItemType::COMP_MEMORY:
-                if (std::any_cast<uint>(item_value) >= _current_capabilities->bare_metal_memory()) {
-                    return 0.0;
+            case CapabilityItemType::COMP_MEMORY: {
+                    auto assessment = _current_capabilities->bare_metal_memory();
+                    _logger->trace("[Resources]                               |-> Memory evaluation: {}.", assessment);
+                    if (std::any_cast<uint>(item_value) >= assessment) {
+                        return 0.0;
+                    }
                 }
                 break;
             case CapabilityItemType::UNSPECIFIED:
@@ -80,6 +103,8 @@ double Resources::bare_metal_resource_assessment(const RequestingCapabilities &r
 }
 
 double Resources::current_resource_assessment(const RequestingCapabilities &requirements) const {
+    _logger->trace("[Resources]                              Current Resources Assessment ({} requirement{}).", requirements.ordered_items().size(), requirements.ordered_items().size() == 1 ? "" : "s");
+
     // For each requirement, individually-assess it and sum it at the end, by means of a function.
     std::vector<double> individual_assessments{};
 
@@ -108,6 +133,7 @@ double Resources::current_resource_assessment(const RequestingCapabilities &requ
                 break;
             case CapabilityItemType::COMP_CPU: {
                 const auto& value = _current_capabilities->current_cpu_cores();
+                _logger->trace("[Resources]                               |-> CPU Core evaluation: {}.", value);
                 if (value == 0) {
                     return 0.0;
                 }
@@ -116,6 +142,7 @@ double Resources::current_resource_assessment(const RequestingCapabilities &requ
                 break;
             case CapabilityItemType::COMP_MEMORY: {
                 const auto& value = _current_capabilities->current_memory();
+                _logger->trace("[Resources]                               |-> Memory evaluation: {}.", value);
                 if (value == 0) {
                     return 0.0;
                 }
@@ -137,10 +164,14 @@ double Resources::current_resource_assessment(const RequestingCapabilities &requ
         return RANK_CURRENT_RESOURCES_EVAL_THRESHOLD*requirements.front() + (1-RANK_CURRENT_RESOURCES_EVAL_THRESHOLD)*alpha(requirements_subvector);
     };
 
-    return alpha(individual_assessments);
+    auto final_evaluation = alpha(individual_assessments);
+
+    return final_evaluation;
 }
 
 double Resources::proximity_assessment(const std::array<uint8_t, 16> &target, uint8_t target_length) {
+    _logger->trace("[Resources]                              Proximity Assessment.");
+
     std::vector<uint8_t> cut_target;
     std::copy_n(target.begin(), target_length, std::back_inserter(cut_target));
 
@@ -173,7 +204,11 @@ double Resources::proximity_hops_assessment(const std::vector<uint8_t> &target, 
         return pow(2, -floor(metric));
     };
 
-    return phi_2(std::get<1>(_proximity_metrics[key]));
+    auto final_value = phi_2(std::get<1>(_proximity_metrics[key]));
+
+    _logger->trace("[Resources]                               |-> Number of Hops evaluation: {}", final_value);
+
+    return final_value;
 }
 
 double Resources::proximity_rtt_assessment(const std::vector<uint8_t> &target, bool update) {
@@ -195,7 +230,11 @@ double Resources::proximity_rtt_assessment(const std::vector<uint8_t> &target, b
         return pow(2, -((metric - RANK_PROXIMITY_EVAL_RTT_THRESHOLD) / RANK_PROXIMITY_EVAL_RTT_THRESHOLD));
     };
 
-    return phi_1(std::get<2>(_proximity_metrics[key]));
+    auto final_value = phi_1(std::get<2>(_proximity_metrics[key]));
+
+    _logger->trace("[Resources]                               |-> RTT evaluation: {}", final_value);
+
+    return final_value;
 }
 
 double Resources::proximity_pdv_assessment(const std::vector<uint8_t> &target, bool update) {
@@ -220,7 +259,11 @@ double Resources::proximity_pdv_assessment(const std::vector<uint8_t> &target, b
         }
     };
 
-    return phi_3(std::get<3>(_proximity_metrics[key]));
+    auto final_value = phi_3(std::get<3>(_proximity_metrics[key]));
+
+    _logger->trace("[Resources]                               |-> PDV evaluation: {}", final_value);
+
+    return final_value;
 }
 
 double Resources::proximity_pl_assessment(const std::vector<uint8_t> &target, bool update) {
@@ -249,7 +292,11 @@ double Resources::proximity_pl_assessment(const std::vector<uint8_t> &target, bo
 #endif
     };
 
-    return phi_4(std::get<4>(_proximity_metrics[key]));
+    auto final_value = phi_4(std::get<4>(_proximity_metrics[key]));
+
+    _logger->trace("[Resources]                               |-> Packet Loss evaluation: {}", final_value);
+
+    return final_value;
 }
 
 Reservation* Resources::available_for_performance(const Reservation& statement, uint8_t priority) { // TODO This is implemented disregarding the VIRTUALLY_PRE_RESERVED clause.
@@ -272,7 +319,8 @@ Reservation* Resources::available_for_performance(const Reservation& statement, 
             auto reservation_pointer = std::min_element(_reservations.begin(), _reservations.end());
 
             // Create a new reservation with the given statement where the minimum reservation was replenished.
-            *reservation_pointer = this_reservation;
+            _reservations.insert(reservation_pointer, this_reservation);
+            //*reservation_pointer = this_reservation;
 
             // Return the location of such a reservation.
             return &(*reservation_pointer);
@@ -333,7 +381,7 @@ Resources* Resources::mark_pre_reservation(Reservation* reservation) {
     _reservations.erase(found_reservation);
 
     // Mark reservation as pre-reserved.
-    reservation->mark_pre_reserved();
+    reservation->pre_reserve();
 
     // Add the modified reservation to the set of reservations.
     _reservations.push_back(*reservation);
@@ -380,7 +428,7 @@ void Resources::operator()() {
     while (_running) {
         // Update information on current capabilities.
         _current_capabilities->update();
-        _logger->debug("[Resources] {}", _current_capabilities->display());
+        _logger->trace("[Resources] {}", _current_capabilities->display());
 
         // Update known instances for proximity.
         std::vector<std::string> keys_to_remove;
@@ -394,7 +442,7 @@ void Resources::operator()() {
             auto now = std::chrono::system_clock::now().time_since_epoch().count();
             if (now - timestamp >= RANK_DURATION_OLD) {
                 keys_to_remove.push_back(target);
-                _logger->debug("[Resources] Removed target {} in proximity assessment due to entry not being updated in more than {} seconds.", target, RANK_DURATION_OLD);
+                _logger->trace("[Resources] Removed target {} in proximity assessment due to entry not being updated in more than {} seconds.", target, RANK_DURATION_OLD);
             } else {
                 auto vector_target = std::vector<uint8_t>(target.begin(), target.end());
                 hops = proximity_hops_assessment(vector_target);
@@ -402,7 +450,7 @@ void Resources::operator()() {
                 pdv = proximity_hops_assessment(vector_target);
                 pl = proximity_hops_assessment(vector_target);
 
-                _logger->debug("[Resources] Renew proximity assessment for {}: {} hops, RTT of {} ms, PDV of {} ms, and {}% of PL.", target, hops, rtt, pdv, pl);
+                _logger->trace("[Resources] Renew proximity assessment for {}: {} hops, RTT of {} ms, PDV of {} ms, and {}% of PL.", target, hops, rtt, pdv, pl);
             }
         }
 

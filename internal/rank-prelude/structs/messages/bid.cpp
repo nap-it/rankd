@@ -12,7 +12,7 @@ const std::vector<uint8_t> BID::raw_payload() const {
     marshalled_data.insert(marshalled_data.begin(), marshalled_array.begin(), marshalled_array.end());
 
     // Serialize bid value.
-    uint8_t const * pointer = reinterpret_cast<uint8_t const *>(&_value);
+    auto pointer = reinterpret_cast<const uint8_t*>(&_value);
     for (std::size_t i = 0; i != sizeof(float); i++) {
         marshalled_data.push_back(pointer[i]);
     }

@@ -23,7 +23,7 @@ public:
     bool operator<(const CurrentCapabilities& current) const;
 
     // Getters.
-    std::map<uint8_t, std::pair<CapabilityItemType, std::any>> ordered_items() const;
+    [[nodiscard]] std::map<uint8_t, std::pair<CapabilityItemType, std::any>> ordered_items() const;
 private:
     std::map<uint8_t, std::pair<CapabilityItemType, std::any>> _ordered_items;
 };

@@ -32,7 +32,7 @@ using namespace std::chrono_literals;
 #define RANK_EAR_TIMEOUT_VALUE 1min
 #define RANK_MAR_TIMEOUT_VALUE 20s
 #define RANK_BID_TIMEOUT_VALUE 20s
-#define RANK_AUCT_TIMEOUT_VALUE 1min
+#define RANK_AUCT_TIMEOUT_VALUE 20s
 #define RANK_REP_TIMEOUT_VALUE 1min
 
 #define RANK_MAX_PRIORITY 8
