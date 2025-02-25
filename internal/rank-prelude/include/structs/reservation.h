@@ -34,7 +34,7 @@ public:
     [[nodiscard]] double last_bid() const;
 
     // Setters.
-    Reservation* mark_listener(const std::vector<uint8_t>& listener);
+    Reservation* mark_listener(const std::vector<uint8_t>& listener, uint8_t length);
     Reservation* set_uuid(const UUIDv4& uuid);
     Reservation* set_priority(uint8_t priority);
     Reservation* update_last_bid(double value);

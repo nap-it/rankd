@@ -6,9 +6,10 @@
 #include <vector>
 
 #include "structs/message.h"
-#include "constants.h"
 #include "structs/messages/header.h"
 #include "structs/requesting_capabilities.h"
+
+#include "constants.h"
 
 #include "utils/marshalling.h"
 #include "utils/messaging.h"
@@ -25,6 +26,19 @@ public:
         const std::vector<uint8_t>& payload) :
         Message(header), _priority {priority}, _listener_length {listener_length}, _listener {listener},
         _payload_length {payload_length}, _payload {payload}, _reserved{0} {
+    }
+    EAR(const UUIDv4& uuid, uint8_t priority, uint8_t listener_length, const std::array<uint8_t, RANK_LISTENER_MAX_LEN>& listener, const RequestingCapabilities& requirements) :
+            Message(Header(RANK_HEADER_VERSION, MessageType::EAR, uuid)), _priority {priority}, _listener_length {listener_length}, _listener {listener},
+            _reserved{0} {
+        auto json_requirements = transform_to_json(requirements);
+        _payload = serialize_json_as_vector(json_requirements);
+        _payload_length = _payload.size();
+    }
+    EAR(const Header& header, uint8_t priority, uint8_t listener_length, const std::array<uint8_t, RANK_LISTENER_MAX_LEN>& listener, const RequestingCapabilities& requirements) :
+            Message(header), _priority {priority}, _listener_length {listener_length}, _listener {listener}, _reserved{0} {
+        auto json_requirements = transform_to_json(requirements);
+        _payload = serialize_json_as_vector(json_requirements);
+        _payload_length = _payload.size();
     }
     EAR(const Header& header, const std::vector<uint8_t>& marshalled_data) : Message(header) {
         _priority = marshalled_data.at(0) >> 5 & 0x07;
@@ -98,6 +112,7 @@ public:
 
     // Derived member methods.
     const std::vector<uint8_t> raw_payload() const override;
+    std::string display() override;
 
     // Destructor.
     ~EAR();

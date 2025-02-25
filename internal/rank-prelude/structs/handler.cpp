@@ -97,42 +97,49 @@ bool Handler::is_translation_table_empty() {
 void Handler::new_bid(float bid, uint8_t simuzilla_address) {
     // Safely add the bid to the set of bids.
     std::lock_guard<std::mutex> lock(_bids_locker);
-    _bids.insert(std::make_pair(bid, std::make_pair(std::vector<uint8_t>({ simuzilla_address }), IdentifierType::IPv4)));
+    _bids.insert(std::make_pair(bid, std::make_pair(std::vector<uint8_t>({ simuzilla_address }), IdentifierType::Simulation)));
+    _arriving_bids += 1;
 }
 
 void Handler::new_bid(float bid, std::array<uint8_t, 4>& ipv4_address) {
     // Safely add the bid to the set of bids.
     std::lock_guard<std::mutex> lock(_bids_locker);
     _bids.insert(std::make_pair(bid, std::make_pair(std::vector<uint8_t>(ipv4_address.begin(), ipv4_address.end()), IdentifierType::IPv4)));
+    _arriving_bids += 1;
 }
 
 void Handler::new_bid(float bid, std::array<uint8_t, 6>& mac_address) {
     // Safely add the bid to the set of bids.
     std::lock_guard<std::mutex> lock(_bids_locker);
     _bids.insert(std::make_pair(bid, std::make_pair(std::vector<uint8_t>(mac_address.begin(), mac_address.end()), IdentifierType::MAC)));
+    _arriving_bids += 1;
 }
 
 void Handler::new_bid(float bid, std::array<uint8_t, 16>& ipv6_address) {
     // Safely add the bid to the set of bids.
     std::lock_guard<std::mutex> lock(_bids_locker);
     _bids.insert(std::make_pair(bid, std::make_pair(std::vector<uint8_t>(ipv6_address.begin(), ipv6_address.end()), IdentifierType::IPv6)));
+    _arriving_bids += 1;
 }
 
 void Handler::new_bid(float bid, std::string& dds_address) {
     // Safely add the bid to the set of bids.
     std::lock_guard<std::mutex> lock(_bids_locker);
     _bids.insert(std::make_pair(bid, std::make_pair(std::vector<uint8_t>(dds_address.begin(), dds_address.end()), IdentifierType::DDS)));
+    _arriving_bids += 1;
 }
 
 void Handler::clear_bids() {
     _bids.clear();
+    _arriving_bids = 0;
+    _waiting_bids = 0;
 }
 
 size_t Handler::cardinal_bids() {
     return _bids.size();
 }
 
-std::set<std::pair<std::vector<uint8_t>, IdentifierType>> Handler::min_bids() {
+std::set<std::pair<std::vector<uint8_t>, IdentifierType>> Handler::max_bids() {
     // Copy the bids set to a safe-to-modify variable.
     BidSet bids_copy {};
     {
@@ -140,30 +147,27 @@ std::set<std::pair<std::vector<uint8_t>, IdentifierType>> Handler::min_bids() {
         bids_copy = _bids;
     }
 
-    // Assume the first item in bids is the minimum one.
-    auto minimum_bid_item = bids_copy.begin();
-    bids_copy.erase(minimum_bid_item);
-    auto minimum_bid = minimum_bid_item->first;
+    // Assume the first item in reverse bids is the maximum one.
+    float maximum_bid = bids_copy.rbegin()->first;
+
+    _logger->trace("[Handler] [{}] The maximum bid obtained was of {}.", display(_uuid), maximum_bid);
 
     // Create the set to be returned.
-    std::set<std::pair<std::vector<uint8_t>, IdentifierType>> minimum_bids {};
+    std::vector<std::pair<float, std::pair<std::vector<uint8_t>, IdentifierType>>> bids_copy_subset;
+    std::set<std::pair<std::vector<uint8_t>, IdentifierType>> maximum_bids {};
 
     // Iterate over all the given bids and attempt to find smaller than current minimum and all equal bids.
-    for (const auto& bid : bids_copy) {
-        if (bid.first < minimum_bid) {
-            minimum_bid = bid.first;
-            minimum_bids.clear();
-            minimum_bids.insert(std::make_pair(bid.second.first, bid.second.second));
-        } else if (bid.first == minimum_bid) {
-            minimum_bids.insert(std::make_pair(bid.second.first, bid.second.second));
+    for (const auto& bid_item: bids_copy) {
+        if (maximum_bid == bid_item.first) {
+            maximum_bids.insert(bid_item.second);
         }
     }
 
     // Return the minimum bids new targets set.
-    return minimum_bids;
+    return maximum_bids;
 }
 
-bool Handler::is_min_bid_unique(const std::set<std::pair<std::vector<uint8_t>, IdentifierType>>& targets) const {
+bool Handler::is_max_bid_unique(const std::set<std::pair<std::vector<uint8_t>, IdentifierType>>& targets) const {
     return targets.size() == 1;
 }
 
@@ -186,7 +190,7 @@ void Handler::produce_reservation(const RequestingCapabilities& capabilities, ui
     _reservation = new Reservation(capabilities, priority, _logger->name());
 
     // Mark listener as the listener of this reservation.
-    _reservation->mark_listener(listener);
+    _reservation->mark_listener(listener, listener.size());
 }
 
 UUIDv4 Handler::id() const {
@@ -199,6 +203,12 @@ HandlerState Handler::state() const {
 
 Reservation* Handler::associated_reservation() const {
     return _reservation;
+}
+
+Handler *Handler::new_id(const UUIDv4 &id) {
+    _uuid = id;
+
+    return this;
 }
 
 Handler *Handler::register_api_methods(const std::function<bool(const UUIDv4 &)> &am_i_origin_for,
@@ -215,15 +225,39 @@ Handler *Handler::borrow(Dispatcher *dispatcher) {
     return this;
 }
 
+bool Handler::all_bids_arrived() {
+    std::lock_guard<std::mutex> guard(_bids_locker);
+
+    _logger->trace("[TimeoutHandler] [Handler] [{}] Checking if all bids already arrived. {}", display(_uuid), (_waiting_bids == _arriving_bids) ? "Yes." : "No.");
+
+    if (_waiting_bids == _arriving_bids) {
+        _auction_mutex.unlock();
+        _auction_wait.notify_one();
+
+        return true;
+    } else {
+        return false;
+    }
+}
+
 void Handler::on_auct_timeout() {
-    _logger->trace("[TimeoutHandler] [Handler] [{}] Timeout for AUCT was reached.");
+    _logger->trace("[TimeoutHandler] [Handler] [{}] Timeout for AUCT was reached.", display(_uuid));
+
+    // Check if timeout is needed.
+    if (all_bids_arrived()) {
+        _logger->trace("[TimeoutHandler] [Handler] [{}] Timeout for AUCT was not needed, since all bids arrived on time.", display(_uuid));
+
+        return ;
+    }
+
     // Stop new bids from being considered.
     _auction_mutex.unlock();
     _auction_wait.notify_one();
-    _logger->trace("[TimeoutHandler] [Handler] [{}] The auction was stopped.");
+    _logger->trace("[TimeoutHandler] [Handler] [{}] The auction was stopped.", display(_uuid));
 }
 
 void Handler::on_bid_timeout() {
+    _logger->trace("[TimeoutHandler] [Handler] [{}] Timeout for BID was reached.", display(_uuid));
     if (_state != HandlerState::CLOSED and _state != HandlerState::RESERVED or (_message == nullptr and _state == HandlerState::PRE_RESERVED)) {
         // Delete bids from the Store with this handler's UUID.
         _bids.clear();
@@ -237,6 +271,7 @@ void Handler::on_bid_timeout() {
 }
 
 void Handler::on_ear_timeout() {
+    _logger->trace("[TimeoutHandler] [Handler] [{}] Timeout for EAR was reached.", display(_uuid));
     if (_state != HandlerState::CLOSED and _state != HandlerState::RESERVED or (_message == nullptr and _state == HandlerState::PRE_RESERVED)) {
         // Delete bids from the Store with this handler's UUID.
         _bids.clear();
@@ -250,6 +285,7 @@ void Handler::on_ear_timeout() {
 }
 
 void Handler::on_mar_timeout() {
+    _logger->trace("[TimeoutHandler] [Handler] [{}] Timeout for MAR was reached.", display(_uuid));
     if (_state != HandlerState::CLOSED and _state != HandlerState::RESERVED or (_message == nullptr and _state == HandlerState::PRE_RESERVED)) {
         // Delete bids from the Store with this handler's UUID.
         _bids.clear();
@@ -263,6 +299,7 @@ void Handler::on_mar_timeout() {
 }
 
 void Handler::on_rep_timeout() {
+    _logger->trace("[TimeoutHandler] [Handler] [{}] Timeout for REP was reached.", display(_uuid));
     if (_state != HandlerState::CLOSED or (_message == nullptr and _state == HandlerState::REPLENISHING)) {
         // Remove reservations with this handler's UUID.
         _resources->replenish_reservation(_reservation);
@@ -345,10 +382,13 @@ void Handler::operator()() {
                     auto ear_message = dynamic_cast<EAR*>(_message);
 
                     // As this node is receiving a new EAR message, then change state to ASSESSING.
-                    old_state = _state;
-                    _state = HandlerState::ASSESSING;
-                    _logger->trace("[Handler] [{}] Handler state transitioned from {} to {}.", display(_uuid), handler_state_to_string(old_state),
-                                   handler_state_to_string(_state));
+                    if (_state != HandlerState::PRE_RESERVED) {
+                        old_state = _state;
+                        _state = HandlerState::ASSESSING;
+                        _logger->trace("[Handler] [{}] Handler state transitioned from {} to {}.", display(_uuid),
+                                       handler_state_to_string(old_state),
+                                       handler_state_to_string(_state));
+                    }
 
                     // (B.1) Check if the current node is the message's listener.
                     auto listener_field = ear_message->listener();
@@ -363,8 +403,10 @@ void Handler::operator()() {
 
                             // Update inner reservation with the requirements of the message.
                             try {
-                                produce_reservation(ear_message->requirements(), ear_message->priority(),
-                                                    std::vector<uint8_t>({simuzilla_address}));
+                                if (_state != HandlerState::PRE_RESERVED) {
+                                    produce_reservation(ear_message->requirements(), ear_message->priority(),
+                                                        std::vector<uint8_t>({simuzilla_address}));
+                                }
                             } catch (const std::invalid_argument& ia) {
                                 _logger->error("[Handler] [{}] Received message has non-compliant list of requirements. Ignoring messages and deleting handler.", display(_uuid));
                                 old_state = _state;
@@ -382,8 +424,10 @@ void Handler::operator()() {
                             i_am_listener = is_me(ip4_address);
 
                             // Update inner reservation with the requirements of the message.
-                            produce_reservation(ear_message->requirements(), ear_message->priority(),
-                                                std::vector<uint8_t>(ip4_address.begin(), ip4_address.end()));
+                            if (_state != HandlerState::PRE_RESERVED) {
+                                produce_reservation(ear_message->requirements(), ear_message->priority(),
+                                                    std::vector<uint8_t>(ip4_address.begin(), ip4_address.end()));
+                            }
                         } break;
                         case RANK_EAR_MESSAGE_LEN_LT_MAC: {
                             std::array<uint8_t, 6> mac_address {};
@@ -393,8 +437,10 @@ void Handler::operator()() {
                             i_am_listener = is_me(mac_address);
 
                             // Update inner reservation with the requirements of the message.
-                            produce_reservation(ear_message->requirements(), ear_message->priority(),
-                                                std::vector<uint8_t>(mac_address.begin(), mac_address.end()));
+                            if (_state != HandlerState::PRE_RESERVED) {
+                                produce_reservation(ear_message->requirements(), ear_message->priority(),
+                                                    std::vector<uint8_t>(mac_address.begin(), mac_address.end()));
+                            }
                         } break;
                         case RANK_EAR_MESSAGE_LEN_LT_IP6: {
                             std::array<uint8_t, 16> ip6_address {};
@@ -404,8 +450,10 @@ void Handler::operator()() {
                             i_am_listener = is_me(ip6_address);
 
                             // Update inner reservation with the requirements of the message.
-                            produce_reservation(ear_message->requirements(), ear_message->priority(),
-                                                std::vector<uint8_t>(ip6_address.begin(), ip6_address.end()));
+                            if (_state != HandlerState::PRE_RESERVED) {
+                                produce_reservation(ear_message->requirements(), ear_message->priority(),
+                                                    std::vector<uint8_t>(ip6_address.begin(), ip6_address.end()));
+                            }
                         } break;
                         default:
                             throw std::exception();  // TODO
@@ -453,6 +501,7 @@ void Handler::operator()() {
                             std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target =
                                         get_connections_to(_source_identifier.first);
 #endif
+                            _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid), acc_message->display());
                             _dispatcher->send_message(acc_message, connections_to_target.front().first, _source_identifier.second);
 
                             old_state = _state;
@@ -470,6 +519,7 @@ void Handler::operator()() {
                             // (B.1.1.2) Create a REF message and send it.
                             _logger->debug("[Handler] [{}] (B.1.1.2) Create a REF message and send it back.", display(_uuid));
                             REF* ref_message = new REF(_uuid);
+                            _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid), ref_message->display());
                             _dispatcher->send_message(ref_message, _source_identifier.first, _source_identifier.second);
 
                             old_state = _state;
@@ -492,7 +542,26 @@ void Handler::operator()() {
                             // (B.1.2.1.2.1) Can R be performed with priority p?
                             auto* position =
                                     _resources->available_for_performance(*_reservation, ear_message->priority());
-                            if (position != nullptr) {
+                            if (position == nullptr) {
+                                _logger->debug("[Handler] [{}] (B.1.2.1.2.1) Can R be performed with priority p? No.", display(_uuid));
+
+                                _logger->warn("[Handler] [{}] The request admission cannot be performed here.", display(_uuid));
+
+                                // (B.1.1.2) Create a REF message and send it.
+                                _logger->debug("[Handler] [{}] (B.1.1.2) Create a REF message and send it back.", display(_uuid));
+                                REF* ref_message = new REF(_uuid);
+                                _dispatcher->send_message(ref_message, _source_identifier.first, _source_identifier.second);
+
+                                old_state = _state;
+                                _state = HandlerState::CLOSED;
+                                _logger->trace("[Handler] [{}] Handler state transitioned from {} to {}.", display(_uuid), handler_state_to_string(old_state),
+                                               handler_state_to_string(_state));
+
+                                // (B.1.1.3) Terminate thread.
+                                _logger->debug("[Handler] [{}] (B.1.1.3) Terminate thread.", display(_uuid));
+                                stop();
+                                return;
+                            } else {
                                 _logger->debug("[Handler] [{}] (B.1.2.1.2.1) Can R be performed with priority p? Yes.", display(_uuid));
 
                                 // (B.1.2.1.2.2) Pre-reserve R with UUID in Store.
@@ -557,12 +626,13 @@ void Handler::operator()() {
                                         // (B.1.2.2.3.1) Create REF message and send it.
                                         _logger->debug("[Handler] [{}] (B.1.2.2.3.1) If no connection is found... create REF message and send it back.", display(_uuid));
                                         REF* ref_message = new REF(_uuid);
+                                        _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid), ref_message->display());
                                         _dispatcher->send_message(ref_message, _source_identifier.first, _source_identifier.second);
 
                                         old_state = _state;
                                         _state = HandlerState::CLOSED;
                                         _logger->trace("[Handler] [{}] Handler state transitioned from {} to {}.", display(_uuid), handler_state_to_string(old_state),
-                                                                                     handler_state_to_string(_state));
+                                                       handler_state_to_string(_state));
 
                                         // (B.1.2.2.3.2) Terminate thread.
                                         _logger->debug("[Handler] [{}] (B.1.2.2.3.2) Terminate thread.", display(_uuid));
@@ -583,8 +653,8 @@ void Handler::operator()() {
 #endif
                                         EAR* new_ear_message =
                                                 new EAR(_uuid, ear_message->priority(), ear_message->listener_length(),
-                                                    listener, ear_message->payload_length(),
-                                                    ear_message->payload());
+                                                        listener, _reservation->requirements());
+                                        _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid), new_ear_message->display());
                                         _dispatcher->send_message(new_ear_message, connections_to_target.front().first, connections_to_target.front().second);
 
                                         // Change state to PRE_RESERVED.
@@ -608,6 +678,10 @@ void Handler::operator()() {
                                     default: {
                                         _logger->trace("[Handler] [{}] (B.1.2.2) What is the cardinal of N? More than one.", display(_uuid));
 
+                                        // Save the cardinal of connections in the handler's attribute of waiting bids and reset arriving counter.
+                                        _waiting_bids = connections_to_target.size();
+                                        _arriving_bids = 0;
+
                                         // If more than one connection is found...
                                         // (B.1.2.2.1.1) For each connection create a MAR message and send it.
                                         _logger->debug("[Handler] [{}] (B.1.2.2.1.1) Create a MAR message and send it.", display(_uuid));
@@ -620,8 +694,9 @@ void Handler::operator()() {
 #endif
                                             MAR* mar_message =
                                                     new MAR(_uuid, ear_message->priority(), ear_message->listener_length(),
-                                                        listener, //listener_message_format(intermediate.first),
-                                                        ear_message->payload_length(), ear_message->payload());
+                                                            listener,
+                                                            _reservation->requirements());
+                                            _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid), mar_message->display());
                                             _dispatcher->send_message(mar_message, intermediate.first, intermediate.second);
                                         }
 
@@ -640,30 +715,158 @@ void Handler::operator()() {
                                         stop();
                                     } break;
                                 }
-                            } else {
-                                _logger->debug("[Handler] [{}] (B.1.2.1.2.1) Can R be performed with priority p? No.", display(_uuid));
-
-                                _logger->warn("[Handler] [{}] The request admission cannot be performed here.", display(_uuid));
-
-                                // (B.1.1.2) Create a REF message and send it.
-                                _logger->debug("[Handler] [{}] (B.1.1.2) Create a REF message and send it back.", display(_uuid));
-                                REF* ref_message = new REF(_uuid);
-                                _dispatcher->send_message(ref_message, _source_identifier.first, _source_identifier.second);
-
-                                old_state = _state;
-                                _state = HandlerState::CLOSED;
-                                _logger->trace("[Handler] [{}] Handler state transitioned from {} to {}.", display(_uuid), handler_state_to_string(old_state),
-                                               handler_state_to_string(_state));
-
-                                // (B.1.1.3) Terminate thread.
-                                _logger->debug("[Handler] [{}] (B.1.1.3) Terminate thread.", display(_uuid));
-                                stop();
-                                return;
                             }
                         } else {
                             _logger->debug("[Handler] [{}] (B.1.2.1) Is there a bid in Store for the UUID? Yes", display(_uuid));
 
-                            // TODO
+                            //* Snip of code copied from above. Look for (*//) to end the copied block.
+                            // (B.1.2.1.1.1) Get connections towards listener(s).
+                            std::vector<uint8_t> target {};
+                            switch (listener_field_length) {
+                                case RANK_EAR_MESSAGE_LEN_LT_CODE_0:
+                                    target.push_back(listener_field[0]);
+                                    break;
+                                case RANK_EAR_MESSAGE_LEN_LT_IP4: {
+                                    for (int byte = 0; byte != 4; byte++) {
+                                        target.push_back(listener_field[byte]);
+                                    }
+                                } break;
+                                case RANK_EAR_MESSAGE_LEN_LT_MAC: {
+                                    for (int byte = 0; byte != 6; byte++) {
+                                        target.push_back(listener_field[byte]);
+                                    }
+                                } break;
+                                case RANK_EAR_MESSAGE_LEN_LT_IP6: {
+                                    for (int byte = 0; byte != 16; byte++) {
+                                        target.push_back(listener_field[byte]);
+                                    }
+                                } break;
+                                default:
+                                    throw std::exception();  // TODO
+                            }
+#ifdef FROM_SIMUZILLA
+                            std::vector<std::pair<std::vector<std::pair<uint8_t, uint8_t>>, IdentifierType>> connections_to_target_raw =
+                                    get_connections_to(target.at(0));
+                            _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:", display(_uuid), connections_to_target_raw.size(), connections_to_target_raw.size() == 1 ? "" : "s", target.at(0));
+                            for (const auto& [connection, type]: connections_to_target_raw) {
+                                _logger->trace("               -> {} with depth {}", connection.at(0).second, connection.at(0).first);
+                            }
+                            std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target{};
+                            uint8_t min_depth = UINT8_MAX;
+                            for (const auto& [locators, type] : connections_to_target_raw) {
+                                for (const auto& [depth, locator] : locators) {
+                                    if (depth < min_depth) {
+                                        min_depth = depth;
+                                    }
+                                    if (depth == min_depth) {
+                                        connections_to_target.push_back({{locator}, type});
+                                    }
+                                }
+                            }
+#else
+                            std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target =
+                                        get_connections_to(target);
+#endif
+                            _logger->debug("[Handler] [{}] (B.1.2.1.1.1) Get connections towards listener (N). Found {} connection{}.", display(_uuid), connections_to_target.size(), connections_to_target.size() == 1 ? "" : "s");
+
+                            // (B.1.2.2) Depending on the cardinal of connections...
+                            switch (connections_cardinal(connections_to_target)) {
+                                case 0: {
+                                    _logger->debug("[Handler] [{}] (B.1.2.2) What is the cardinal of N? Zero.", display(_uuid));
+
+                                    // If no connection is found...
+                                    // (B.1.2.2.3.1) Create REF message and send it.
+                                    _logger->debug("[Handler] [{}] (B.1.2.2.3.1) If no connection is found... create REF message and send it back.", display(_uuid));
+                                    REF* ref_message = new REF(_uuid);
+                                    _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid), ref_message->display());
+                                    _dispatcher->send_message(ref_message, _source_identifier.first, _source_identifier.second);
+
+                                    old_state = _state;
+                                    _state = HandlerState::CLOSED;
+                                    _logger->trace("[Handler] [{}] Handler state transitioned from {} to {}.", display(_uuid), handler_state_to_string(old_state),
+                                                   handler_state_to_string(_state));
+
+                                    // (B.1.2.2.3.2) Terminate thread.
+                                    _logger->debug("[Handler] [{}] (B.1.2.2.3.2) Terminate thread.", display(_uuid));
+                                    stop();
+                                    return;
+                                } break;
+                                case 1: {
+                                    _logger->debug("[Handler] [{}] (B.1.2.2) What is the cardinal of N? One.", display(_uuid));
+
+                                    // If only one connection is found...
+                                    // (B.1.2.2.2.1) Create EAR message and send it.
+                                    _logger->debug("[Handler] [{}] (B.1.2.2.2.1) Create EAR message and send it.", display(_uuid));
+                                    std::array<uint8_t, 16> listener{};
+#ifdef FROM_SIMUZILLA
+                                    listener.at(0) = ear_message->listener().at(0);
+#else
+                                    std::copy_n(ear_message->listener().begin(), ear_message->listener_length(), listener.begin());
+#endif
+                                    EAR* new_ear_message =
+                                            new EAR(_uuid, ear_message->priority(), ear_message->listener_length(),
+                                                    listener, _reservation->requirements());
+                                    _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid), new_ear_message->display());
+                                    _dispatcher->send_message(new_ear_message, connections_to_target.front().first, connections_to_target.front().second);
+
+                                    // Change state to PRE_RESERVED.
+                                    old_state = _state;
+                                    _state = HandlerState::PRE_RESERVED;
+                                    _logger->trace("[Handler] [{}] Handler state transitioned from {} to {}.", display(_uuid), handler_state_to_string(old_state),
+                                                   handler_state_to_string(_state));
+
+                                    // (B.1.2.2.2.2) Add message source address as reservation past node.
+                                    _logger->debug("[Handler] [{}] (B.1.2.2.2.2) Add message source address as reservation past node.", display(_uuid));
+                                    _reservation->set_past_node(_source_identifier);
+
+                                    // (B.1.2.2.2.3(bis)) Begin timer for EAR timeout.
+                                    _logger->debug("[Handler] [{}] (B.1.2.2.2.3(bis)) Begin timer for EAR timeout.", display(_uuid));
+                                    _timeout_handler->initiate_timeout(this, TimeoutType::EAR);
+
+                                    // (B.1.2.2.2.3) Terminate thread.
+                                    _logger->debug("[Handler] [{}] (B.1.2.2.2.3) Terminate thread.", display(_uuid));
+                                    stop();
+                                } break;
+                                default: {
+                                    _logger->trace("[Handler] [{}] (B.1.2.2) What is the cardinal of N? More than one.", display(_uuid));
+
+                                    // Save the cardinal of connections in the handler's attribute of waiting bids and reset arriving counter.
+                                    _waiting_bids = connections_to_target.size();
+                                    _arriving_bids = 0;
+
+                                    // If more than one connection is found...
+                                    // (B.1.2.2.1.1) For each connection create a MAR message and send it.
+                                    _logger->debug("[Handler] [{}] (B.1.2.2.1.1) Create a MAR message and send it.", display(_uuid));
+                                    for (const auto& intermediate : connections_to_target) {
+                                        std::array<uint8_t, 16> listener{};
+#ifdef FROM_SIMUZILLA
+                                        listener.at(0) = ear_message->listener().at(0);
+#else
+                                        std::copy_n(ear_message->listener().begin(), ear_message->listener_length(), listener.begin());
+#endif
+                                        MAR* mar_message =
+                                                new MAR(_uuid, ear_message->priority(), ear_message->listener_length(),
+                                                        listener,
+                                                        _reservation->requirements());
+                                        _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid), mar_message->display());
+                                        _dispatcher->send_message(mar_message, intermediate.first, intermediate.second);
+                                    }
+
+                                    // Change state to PRE_RESERVED.
+                                    old_state = _state;
+                                    _state = HandlerState::AUCTION_WAITING;
+                                    _logger->trace("[Handler] [{}] Handler state transitioned from {} to {}.", display(_uuid), handler_state_to_string(old_state),
+                                                   handler_state_to_string(_state));
+
+                                    // (B.1.2.2.1.2(bis)) Begin timer for MAR timeout.
+                                    _logger->trace("[Handler] [{}] (B.1.2.2.1.2(bis)) Begin timer for MAR timeout.", display(_uuid));
+                                    _timeout_handler->initiate_timeout(this, TimeoutType::MAR);
+
+                                    // (B.1.2.2.1.2) Terminate thread.
+                                    _logger->debug("[Handler] [{}] (B.1.2.2.1.2) Terminate thread.", display(_uuid));
+                                    stop();
+                                } break;
+                            } // *// End of the copied block.
                         }
                     }
                 } break;
@@ -763,6 +966,7 @@ void Handler::operator()() {
 #else
                         target = _source_identifier.first;
 #endif
+                        _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid), bid_message->display());
                         _dispatcher->send_message(bid_message, target, _source_identifier.second);
 
                         // Change state to PRE_RESERVED.
@@ -788,6 +992,7 @@ void Handler::operator()() {
                         // (C.1.1.1) Create zeroed-bid message and send it.
                         _logger->debug("[Handler] [{}] (C.1.1.1) Create zeroed-bid message and send it.", display(_uuid));
                         BID* bid_message = new BID(_uuid, 0);
+                        _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid), bid_message->display());
                         _dispatcher->send_message(bid_message, _source_identifier.first, _source_identifier.second);
 
                         // Change handler's state to CLOSED.
@@ -826,6 +1031,7 @@ void Handler::operator()() {
                     {
                         std::lock_guard<std::mutex> guard(_bids_locker);
                         _bids.insert({bid_message->value(), _source_identifier});
+                        _arriving_bids += 1;
                     }
 
                     // (D.1.1.2) Wait for all bids.
@@ -839,8 +1045,9 @@ void Handler::operator()() {
                         _logger->debug("[Handler] [{}] (D.1.1.3) Check the cardinal of bids. Zero", display(_uuid));
 
                         // (D.1.1.3.2.1) Create REF message and send it.
-                        _logger->debug("[Handler] [{}] (D.1.2.3.2.1) Create REF message and send it.", display(_uuid));
+                        _logger->debug("[Handler] [{}] (D.1.1.3.2.1) Create REF message and send it.", display(_uuid));
                         REF* ref_message = new REF(_uuid);
+                        _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid), ref_message->display());
                         _dispatcher->send_message(ref_message, _source_identifier.first, _source_identifier.second);
 
                         // Change the state to CLOSED.
@@ -856,18 +1063,37 @@ void Handler::operator()() {
                     } else {
                         _logger->debug("[Handler] [{}] (D.1.1.3) Check the cardinal of bids. More than zero.", display(_uuid));
 
-                        // (D.1.1.3.1.1) Is the minimum bid unique?
-                        auto minimum_bids = min_bids();
-                        if (is_min_bid_unique(minimum_bids)) {
-                            _logger->debug("[Handler] [{}] (D.1.1.3.1.1) Is the minimum bid unique? Yes.", display(_uuid));
+                        // (D.1.1.3.1.1) Is the maximum bid unique?
+                        auto maximum_bid = max_bids();
+                        if (is_max_bid_unique(maximum_bid)) {
+                            _logger->debug("[Handler] [{}] (D.1.1.3.1.1) Is the maximum bid unique? Yes.", display(_uuid));
 
                             // (D.1.1.3.1.1.1.1) As it is unique, send an EAR message to it.
                             _logger->debug("[Handler] [{}] (D.1.1.3.1.1.1.1) As it is unique, send an EAR message to it.", display(_uuid));
+                            std::array<uint8_t, 16> listener{};
+#ifdef FROM_SIMUZILLA
+                            listener.at(0) = _reservation->listener().at(0);
+#else
+                            std::copy_n(_reservation->listener().begin(), _reservation->listener_length(), listener.begin());
+#endif
                             EAR* ear_message = new EAR(_uuid, _reservation->priority(), _reservation->listener_length(),
-                                                  _reservation->listener(),
+                                                  listener,
                                                   make_payload_length(_reservation->requirements()),
                                                   make_payload(_reservation->requirements()));
-                            _dispatcher->send_message(ear_message, minimum_bids.begin()->first, minimum_bids.begin()->second);
+                            _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid), ear_message->display());
+                            std::vector<uint8_t> target;
+#ifdef FROM_SIMUZILLA
+                            std::vector<std::pair<std::vector<std::pair<uint8_t, uint8_t>>, IdentifierType>> connections_to_target_raw =
+                                    get_connections_to(maximum_bid.begin()->first.at(0));
+                            _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:", display(_uuid), connections_to_target_raw.size(), connections_to_target_raw.size() == 1 ? "" : "s", _source_identifier.first.at(0));
+                            for (const auto& [connection, type]: connections_to_target_raw) {
+                                _logger->trace("[Handler]                               -> {} with depth {}", connection.at(0).second, connection.at(0).first);
+                            }
+                            target = {connections_to_target_raw.at(0).first.at(0).second};
+#else
+                            target = minimum_bids.begin()->first;
+#endif
+                            _dispatcher->send_message(ear_message, target, maximum_bid.begin()->second);
 
                             // Change the state to PRE_RESERVED.
                             old_state = _state;
@@ -890,9 +1116,9 @@ void Handler::operator()() {
                         } else {
                             _logger->debug("[Handler] [{}] (D.1.1.3.1.1) Is the minimum bid unique? No.", display(_uuid));
 
-                            // (D.1.1.3.1.1.2.1) Create a new UUID for each min(B) node and (D.1.1.3.1.1.2.2) Save
+                            // (D.1.1.3.1.1.2.1) Create a new UUID for each max(B) node and (D.1.1.3.1.1.2.2) Save
                             // translations UUID to UUID* in TranslationTable.
-                            _logger->debug("[Handler] [{}] (D.1.1.3.1.1.2.1) Create new UUID* for each min(B) node.",
+                            _logger->debug("[Handler] [{}] (D.1.1.3.1.1.2.1) Create new UUID* for each max(B) node.",
                                            display(_uuid));
                             for (const auto& bid_target : _bids) {
                                 auto new_uuid = create_translation(_uuid);
@@ -902,10 +1128,17 @@ void Handler::operator()() {
 
                                 // (D.1.1.3.1.1.2.3) Create EAR message and send it to each min(B) node, with UUID*.
                                 _logger->debug("[Handler] [{}] (D.1.1.3.1.1.2.3) Create EAR message and send it to each min(B) node, with UUID*.", display(_uuid));
+                                std::array<uint8_t, 16> listener{};
+#ifdef FROM_SIMUZILLA
+                                listener.at(0) = _reservation->listener().at(0);
+#else
+                                std::copy_n(ear_message->listener().begin(), ear_message->listener_length(), listener.begin());
+#endif
                                 EAR* ear_message = new EAR(new_uuid, _reservation->priority(),
-                                                      _reservation->listener_length(), _reservation->listener(),
+                                                      _reservation->listener_length(), listener,
                                                       make_payload_length(_reservation->requirements()),
                                                       make_payload(_reservation->requirements()));
+                                _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid), ear_message->display());
                                 _dispatcher->send_message(ear_message, bid_target.second.first, bid_target.second.second);
 
                                 // Change the state to PRE_RESERVED.
@@ -930,6 +1163,10 @@ void Handler::operator()() {
                             }
                         }
                     }
+
+                    // Clear all the bids from this handler.
+                    _logger->trace("[Handler] [{}] Clearing all the bids from this handler.", display(_uuid));
+                    clear_bids();
                 } break;
                 case MessageType::ACC: {
                     auto acc_message = dynamic_cast<ACC*>(_message);
@@ -947,6 +1184,7 @@ void Handler::operator()() {
                         // (E.2.1.1) Create ACC message to the original UUID.
                         _logger->debug("[Handler] [{}] (E.2.1.1) Create ACC message to the original UUID.", display(_uuid));
                         ACC* new_acc_message = new ACC(original_uuid);
+                        _logger->trace("[Handler] [{}] Sending message {}.", display(_uuid), new_acc_message->display());
                         _dispatcher->send_message(new_acc_message, _source_identifier.first, _source_identifier.second);
 
                         // Change state to RESERVED.
@@ -1011,6 +1249,7 @@ void Handler::operator()() {
                             // (E.2.2.1.2.1) Create ACC message to the UUID.
                             _logger->debug("[Handler] [{}] (E.2.2.1.2.1) Create ACC message to the UUID.", display(_uuid));
                             ACC* new_acc_message = new ACC(_uuid);
+                            _logger->trace("[Handler] [{}] Sending message {}.", display(_uuid), new_acc_message->display());
                             _dispatcher->send_message(new_acc_message, new_target.first, new_target.second); //_source_identifier.first, _source_identifier.second);
 
                             // Change state to RESERVED.
@@ -1071,6 +1310,7 @@ void Handler::operator()() {
                             // (F.2.2.1.2.1) Create REF message and send it.
                             _logger->debug("[Handler] [{}] (F.2.2.1.2.1) Create REF message and send it.", display(_uuid));
                             REF* new_ref_message = new REF(_uuid);
+                            _logger->trace("[Handler] [{}] Sending message {}.", display(_uuid), new_ref_message->display());
                             _dispatcher->send_message(new_ref_message, new_target.first, new_target.second);
 
                             // Change state to CLOSED.
@@ -1148,6 +1388,7 @@ void Handler::operator()() {
                             // (F.2.2.1.2.1) Create REF message and send it.
                             _logger->debug("[Handler] [{}] (F.2.2.1.2.1) Create REF message and send it.", display(_uuid));
                             REF* new_ref_message = new REF(_uuid);
+                            _logger->trace("[Handler] [{}] Sending message {}.", display(_uuid), new_ref_message->display());
                             _dispatcher->send_message(new_ref_message, new_target.first, new_target.second);
 
                             // Change state to CLOSED.
@@ -1207,6 +1448,7 @@ void Handler::operator()() {
                         // (G.1.1.1) Create REF message and send it.
                         _logger->debug("[Handler] [{}] (G.1.1.1) Create REF message and send it.", display(_uuid));
                         REF* ref_message = new REF(_uuid);
+                        _logger->trace("[Handler] [{}] Sending message {}.", display(_uuid), ref_message->display());
                         _dispatcher->send_message(ref_message, _source_identifier.first, _source_identifier.second);
 
                         // Change state to CLOSED.
@@ -1230,6 +1472,7 @@ void Handler::operator()() {
                             _logger->debug("[Handler] [{}] (G.1.2.1.1.1) Create REP message towards L and send it.", display(_uuid));
                             REP* new_rep_message = new REP(_uuid, rep_message->listener_length(), rep_message->listener());
                             for (const auto& direction : _reservation->next_nodes()) {
+                                _logger->trace("[Handler] [{}] Sending message {}.", display(_uuid), new_rep_message->display());
                                 _dispatcher->send_message(new_rep_message, direction.first, direction.second);
                             }
 

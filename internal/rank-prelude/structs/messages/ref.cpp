@@ -10,4 +10,14 @@ const std::vector<uint8_t> REF::raw_payload() const {
     return marshalled_data;
 }
 
+std::string REF::display() {
+    std::stringstream message;
+
+    message << "{ VER: " << (int) static_cast<Message *>(this)->version() << ", TYPE: "
+            << message_type_to_string(static_cast<Message *>(this)->type()) << ", RSV: " << 0 << ", UUID: "
+            << ::display(static_cast<Message *>(this)->uuid()) << " }";
+
+    return message.str();
+}
+
 REF::~REF() {}

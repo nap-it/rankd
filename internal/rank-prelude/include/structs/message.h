@@ -26,6 +26,9 @@ public:
     void header(const Header& header);
     void header(const std::array<uint8_t, RANK_HEADER_LEN>& marshalled_data);
 
+    // Display.
+    virtual std::string display() = 0;
+
     // Destructor.
     virtual ~Message();
 protected:

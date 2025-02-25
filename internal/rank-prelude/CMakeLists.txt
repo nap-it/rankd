@@ -79,6 +79,7 @@ if (FROM_SIMUZILLA)
             structs/messages/ear.cpp
             structs/messages/header.cpp
             structs/messages/mar.cpp
+            structs/messages/message_type.cpp
             structs/messages/ref.cpp
             structs/messages/rep.cpp
             structs/process.cpp
@@ -175,6 +176,7 @@ else()
             structs/messages/ear.cpp
             structs/messages/header.cpp
             structs/messages/mar.cpp
+            structs/messages/message_type.cpp
             structs/messages/ref.cpp
             structs/messages/rep.cpp
             structs/process.cpp

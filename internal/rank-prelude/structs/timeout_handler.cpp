@@ -1,6 +1,6 @@
 #include "structs/timeout_handler.h"
 
-TimeoutHandler* TimeoutHandler::get_instance(const std::string& logger_name) {
+TimeoutHandler *TimeoutHandler::get_instance(const std::string &logger_name) {
 #ifdef FROM_SIMUZILLA
     return new TimeoutHandler(logger_name);
 #else
@@ -9,9 +9,9 @@ TimeoutHandler* TimeoutHandler::get_instance(const std::string& logger_name) {
 #endif
 }
 
-void TimeoutHandler::initiate_timeout(Handler* handler, const TimeoutType& timeout) {
+void TimeoutHandler::initiate_timeout(Handler *handler, const TimeoutType &timeout) {
     // Get the type of the requested timeout.
-    Timeout* event;
+    Timeout *event;
     switch (timeout) {
         case TimeoutType::EAR:
             event = static_cast<Timeout *>(EARTimeout::initiate([handler]() {
@@ -36,8 +36,11 @@ void TimeoutHandler::initiate_timeout(Handler* handler, const TimeoutType& timeo
             break;
         case TimeoutType::AUCT:
             event = static_cast<Timeout *>(AUCTTimeout::initiate([handler]() {
-                handler->on_auct_timeout();
-            }))->execute();
+                                                                     handler->on_auct_timeout();
+                                                                 },
+                                                                 [handler]() {
+                                                                     return handler->all_bids_arrived();
+                                                                 }))->execute();
             _timeouts.at(timeout).push_back(event);
             break;
         case TimeoutType::REP:
@@ -49,7 +52,7 @@ void TimeoutHandler::initiate_timeout(Handler* handler, const TimeoutType& timeo
     }
 }
 
-TimeoutHandler* TimeoutHandler::execute() {
+TimeoutHandler *TimeoutHandler::execute() {
     if (_running) {
         return this;
     }
@@ -60,7 +63,7 @@ TimeoutHandler* TimeoutHandler::execute() {
     return this;
 }
 
-TimeoutHandler* TimeoutHandler::stop() {
+TimeoutHandler *TimeoutHandler::stop() {
     if (not _running) {
         return this;
     }
@@ -85,7 +88,7 @@ TimeoutHandler::~TimeoutHandler() {
 
 }
 
-TimeoutHandler::TimeoutHandler(const std::string& logger_name) {
+TimeoutHandler::TimeoutHandler(const std::string &logger_name) {
     // Configure logging.
     _logger = spdlog::get(logger_name);
 }

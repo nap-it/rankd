@@ -56,19 +56,19 @@ const std::vector<uint8_t> MAR::raw_payload() const {
     // Copy listener ID to marshalled_data.
     switch (_listener_length) {
         case RANK_MAR_MESSAGE_LEN_LT_CODE_0:
-            marshalled_data.insert(marshalled_data.end(), _listener.begin(), _listener.begin()+SIMUZILLA_ADDR_LEN);
+            marshalled_data.insert(marshalled_data.end(), _listener.begin(), _listener.begin() + SIMUZILLA_ADDR_LEN);
             break;
         case RANK_MAR_MESSAGE_LEN_LT_IP4:
-            marshalled_data.insert(marshalled_data.end(), _listener.begin(), _listener.begin()+IPV4_ADDR_LEN);
+            marshalled_data.insert(marshalled_data.end(), _listener.begin(), _listener.begin() + IPV4_ADDR_LEN);
             break;
         case RANK_MAR_MESSAGE_LEN_LT_MAC:
-            marshalled_data.insert(marshalled_data.end(), _listener.begin(), _listener.begin()+MAC_ADDR_LEN);
+            marshalled_data.insert(marshalled_data.end(), _listener.begin(), _listener.begin() + MAC_ADDR_LEN);
             break;
         case RANK_MAR_MESSAGE_LEN_LT_IP6:
-            marshalled_data.insert(marshalled_data.end(), _listener.begin(), _listener.begin()+IPV6_ADDR_LEN);
+            marshalled_data.insert(marshalled_data.end(), _listener.begin(), _listener.begin() + IPV6_ADDR_LEN);
             break;
         case RANK_MAR_MESSAGE_LEN_LT_DDS:
-            marshalled_data.insert(marshalled_data.end(), _listener.begin(), _listener.begin()+DDS_ADDR_LEN);
+            marshalled_data.insert(marshalled_data.end(), _listener.begin(), _listener.begin() + DDS_ADDR_LEN);
             break;
         default:
             return {};
@@ -88,6 +88,58 @@ const std::vector<uint8_t> MAR::raw_payload() const {
     marshalled_data.insert(marshalled_data.end(), _payload.begin(), _payload.end());
 
     return marshalled_data;
+}
+
+std::string MAR::display() {
+    std::stringstream message;
+
+    message << "{ VER: " << (int)(static_cast<Message *>(this)->version()) << ", TYPE: "
+            << message_type_to_string(static_cast<Message *>(this)->type()) << ", RSV: " << 0 << ", UUID: "
+            << ::display(static_cast<Message *>(this)->uuid()) << ", PRIO: " << (int)(priority()) << ", LEN_LT: "
+            << (int)(listener_length()) << ", RSV: " << 0 << ", LISTENER_ID: ";
+
+    switch (_listener_length) {
+        case RANK_MAR_MESSAGE_LEN_LT_CODE_0:
+            message << (int) _listener.at(0);
+            break;
+        case RANK_MAR_MESSAGE_LEN_LT_IP4:
+            for (int i = 0; i != IPV4_ADDR_LEN; i++) {
+                message << (int) _listener.at(i);
+                if (i != IPV4_ADDR_LEN - 1) {
+                    message << ".";
+                }
+            }
+            break;
+        case RANK_MAR_MESSAGE_LEN_LT_MAC:
+            for (int i = 0; i != MAC_ADDR_LEN; i++) {
+                message << std::setfill('0') << std::setw(2) << std::right << std::hex << (int) _listener.at(i);
+                if (i != MAC_ADDR_LEN - 1) {
+                    message << ":";
+                }
+            }
+            break;
+        case RANK_MAR_MESSAGE_LEN_LT_IP6:
+            for (int i = 0; i != IPV6_ADDR_LEN; i++) {
+                message << std::setfill('0') << std::setw(2) << std::right << std::hex << (int) _listener.at(i);
+                if (i != IPV6_ADDR_LEN - 1 and i % 4 == 0) {
+                    message << ":";
+                }
+            }
+            break;
+        case RANK_MAR_MESSAGE_LEN_LT_DDS:
+            for (int i = 0; i != DDS_ADDR_LEN; i++) {
+                message << std::setfill('0') << std::setw(2) << std::right << std::hex << (int) _listener.at(i);
+            }
+            break;
+        default:
+            return {};
+    }
+
+    message << ", PAYLOAD_LENGTH : " << (int) _payload_length << ", PAYLOAD: ";
+
+    message << transform_to_string(deserialize_json(_payload.data(), _payload_length)) << " }";
+
+    return message.str();
 }
 
 MAR::~MAR() {}

@@ -69,7 +69,9 @@ double Reservation::last_bid() const {
     return _estimated_bid;
 }
 
-Reservation* Reservation::mark_listener(const std::vector<uint8_t>& listener) {
+Reservation* Reservation::mark_listener(const std::vector<uint8_t>& listener, uint8_t length) {
+    std::copy_n(listener.begin(), length, _listener.begin());
+
     return this;
 }
 

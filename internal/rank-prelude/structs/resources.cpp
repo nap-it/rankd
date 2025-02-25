@@ -357,7 +357,11 @@ Resources* Resources::mark_reservation(Reservation* reservation) {
         _reservations.erase(found_reservation);
 
         // Mark reservation as reserved.
-        reservation->mark_reserved();
+        if (reservation->state() != ReservationState::CREATED) {
+            reservation->mark_reserved();
+        } else {
+            reservation->reserve();
+        }
     }
 
     // Add the modified reservation to the set of reservations.

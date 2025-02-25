@@ -1,6 +1,7 @@
 #ifndef RANK_PRELUDE_PROCESS_H
 #define RANK_PRELUDE_PROCESS_H
 
+#include <algorithm>
 #include <chrono>
 #include <functional>
 #include <set>

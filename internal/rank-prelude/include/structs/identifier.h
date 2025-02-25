@@ -14,6 +14,8 @@ UUIDv4 generate_new_uuid();
 
 std::string display(const UUIDv4& uuid);
 
+bool is_same_randomness(const UUIDv4& left, const UUIDv4& right);
+
 std::vector<uint8_t> marshall_into_vector(const UUIDv4& uuid);
 
 UUIDv4 unmarshall_from_vector(const std::vector<uint8_t>& marshalled);

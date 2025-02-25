@@ -10,4 +10,6 @@ rapidjson::Document transform_to_json(const RequestingCapabilities& capabilities
 
 RequestingCapabilities transform_to_requirements(const rapidjson::Document& json);
 
+std::string transform_to_string(const rapidjson::Document& json);
+
 #endif // RANK_PRELUDE_MARSHALLING_TRANSFORMATION_H

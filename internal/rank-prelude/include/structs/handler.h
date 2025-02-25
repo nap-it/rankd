@@ -52,8 +52,8 @@ public:
     // TODO Define new bid for simulation.
     void clear_bids();
     size_t cardinal_bids();
-    std::set<std::pair<std::vector<uint8_t>, IdentifierType>> min_bids();
-    bool is_min_bid_unique(const std::set<std::pair<std::vector<uint8_t>, IdentifierType>>& targets) const;
+    std::set<std::pair<std::vector<uint8_t>, IdentifierType>> max_bids();
+    bool is_max_bid_unique(const std::set<std::pair<std::vector<uint8_t>, IdentifierType>>& targets) const;
     bool is_bid_in_store(const UUIDv4& id) const;   // From process to handler.
     bool is_uuid_in_store(const UUIDv4& id) const;  // From process to handler.
 
@@ -65,6 +65,9 @@ public:
     HandlerState state() const;
     Reservation* associated_reservation() const;
 
+    // Setter for UUID.
+    Handler* new_id(const UUIDv4& id);
+
     // Register API functions from Rank Process.
     Handler* register_api_methods(const std::function<bool(const UUIDv4&)>& am_i_origin_for, const std::function<bool(const UUIDv4&)>& remove_as_origin);
 
@@ -72,6 +75,7 @@ public:
     Handler* borrow(Dispatcher* dispatcher);
 
     // Timeout-borrowable functions.
+    bool all_bids_arrived();
     void on_auct_timeout();
     void on_bid_timeout();
     void on_ear_timeout();
@@ -120,6 +124,8 @@ private:
     std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> _accepting_nodes{};
     Message* _message = nullptr;
     HandlerState _state;
+    uint8_t _waiting_bids = 0;
+    uint8_t _arriving_bids = 0;
     std::condition_variable _auction_wait;
     std::mutex _auction_mutex;
     BidSet _bids;

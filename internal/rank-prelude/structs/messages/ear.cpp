@@ -89,4 +89,60 @@ const std::vector<uint8_t> EAR::raw_payload() const {
     return marshalled_data;
 }
 
+std::string EAR::display() {
+    std::stringstream message;
+
+    message << "{ VER: " << (int) static_cast<Message *>(this)->version() << ", TYPE: "
+            << message_type_to_string(static_cast<Message *>(this)->type()) << ", RSV: " << 0 << ", UUID: "
+            << ::display(static_cast<Message *>(this)->uuid()) << ", PRIO: " << (int) priority() << ", LEN_LT: "
+            << (int) listener_length() << ", RSV: " << 0 << ", LISTENER_ID: ";
+
+    switch (_listener_length) {
+        case RANK_MAR_MESSAGE_LEN_LT_CODE_0:
+            message << (int) _listener.at(0);
+            break;
+        case RANK_MAR_MESSAGE_LEN_LT_IP4:
+            for (int i = 0; i != IPV4_ADDR_LEN; i++) {
+                message << (int) _listener.at(i);
+                if (i != IPV4_ADDR_LEN - 1) {
+                    message << ".";
+                }
+            }
+            break;
+        case RANK_MAR_MESSAGE_LEN_LT_MAC:
+            for (int i = 0; i != MAC_ADDR_LEN; i++) {
+                message << std::setfill('0') << std::setw(2) << std::right << std::hex << (int) _listener.at(i);
+                if (i != MAC_ADDR_LEN - 1) {
+                    message << ":";
+                }
+            }
+            break;
+        case RANK_MAR_MESSAGE_LEN_LT_IP6:
+            for (int i = 0; i != IPV6_ADDR_LEN; i++) {
+                message << std::setfill('0') << std::setw(2) << std::right << std::hex << (int) _listener.at(i);
+                if (i != IPV6_ADDR_LEN - 1 and i % 4 == 0) {
+                    message << ":";
+                }
+            }
+            break;
+        case RANK_MAR_MESSAGE_LEN_LT_DDS:
+            for (int i = 0; i != DDS_ADDR_LEN; i++) {
+                message << std::setfill('0') << std::setw(2) << std::right << std::hex << (int) _listener.at(i);
+            }
+            break;
+        default:
+            return {};
+    }
+
+    message << ", PAYLOAD_LENGTH : " << (int) _payload_length << ", PAYLOAD: ";
+
+    if (_payload.empty()) {
+        message << "<EMPTY>" << " }";
+    } else {
+        message << transform_to_string(deserialize_json(_payload.data(), _payload_length)) << " }";
+    }
+
+    return message.str();
+}
+
 EAR::~EAR() {}

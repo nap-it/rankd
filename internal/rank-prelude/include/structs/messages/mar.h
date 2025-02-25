@@ -27,6 +27,20 @@ public:
         Message(header), _priority {priority}, _listener_length {listener_length}, _listener {listener},
         _payload_length {payload_length}, _payload {payload} {
     }
+
+    MAR(const UUIDv4& uuid, uint8_t priority, uint8_t listener_length, const std::array<uint8_t, RANK_LISTENER_MAX_LEN>& listener, const RequestingCapabilities& requirements) :
+            Message(Header(RANK_HEADER_VERSION, MessageType::MAR, uuid)), _priority {priority}, _listener_length {listener_length}, _listener {listener} {
+        auto json_requirements = transform_to_json(requirements);
+        _payload = serialize_json_as_vector(json_requirements);
+        _payload_length = _payload.size();
+    }
+    MAR(const Header& header, uint8_t priority, uint8_t listener_length, const std::array<uint8_t, RANK_LISTENER_MAX_LEN>& listener, const RequestingCapabilities& requirements) :
+            Message(header), _priority {priority}, _listener_length {listener_length}, _listener {listener} {
+        auto json_requirements = transform_to_json(requirements);
+        _payload = serialize_json_as_vector(json_requirements);
+        _payload_length = _payload.size();
+    }
+
     MAR(const Header& header, const std::vector<uint8_t>& marshalled_data) : Message(header) {
         _priority = marshalled_data.at(0) >> 5 & 0x07;
         _listener_length = marshalled_data.at(0) >> 2 & 0x07;
@@ -100,6 +114,7 @@ public:
 
     // Derived member methods.
     const std::vector<uint8_t> raw_payload() const override;
+    std::string display() override;
 
     // Destructor.
     ~MAR();

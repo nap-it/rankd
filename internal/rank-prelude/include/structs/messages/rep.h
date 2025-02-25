@@ -30,6 +30,7 @@ public:
 
     // Derived member methods.
     const std::vector<uint8_t> raw_payload() const override;
+    std::string display() override;
 
     // Destructor.
     ~REP();
