@@ -19,7 +19,7 @@
 class CurrentCapabilities : public Capabilities {
 public:
 #ifdef FROM_SIMUZILLA
-    CurrentCapabilities(const std::function<const std::vector<int>*()>& topology, unsigned int own_address) {
+    CurrentCapabilities(const std::function<const std::vector<std::pair<uint8_t, uint8_t>>*()>& topology, unsigned int own_address) {
         _cpu = new CPU();
         _memory = new Memory();
         _os = new OperativeSystem();

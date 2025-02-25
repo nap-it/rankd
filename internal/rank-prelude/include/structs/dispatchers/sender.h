@@ -40,8 +40,8 @@ public:
     bool is_running();
     void operator()();
 #ifdef FROM_SIMUZILLA
-    void set_topology_and_current_address(std::function<const std::vector<int>*()> topology, unsigned int address);
-    std::vector<int> get_own_topology() const;
+    void set_topology_and_current_address(std::function<const std::vector<std::pair<uint8_t, uint8_t>>*()> topology, unsigned int address);
+    std::vector<std::pair<uint8_t, uint8_t>> get_own_topology() const;
     Sender* borrow_sender_function(std::function<void(uint8_t, std::vector<uint8_t>)> function);
 #endif
 private:
@@ -58,7 +58,7 @@ private:
     std::mutex* _queue_mutex;
     std::shared_ptr<spdlog::logger> _logger;
 #ifdef FROM_SIMUZILLA
-    std::function<const std::vector<int>*()> _topology;
+    std::function<const std::vector<std::pair<uint8_t, uint8_t>>*()> _topology;
     unsigned int _own_address;
     NetworkNeighbors _neighbors_data_source = NetworkNeighbors(_topology, _own_address);
 #else

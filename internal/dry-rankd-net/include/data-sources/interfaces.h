@@ -52,11 +52,11 @@ struct NetworkDevice {
 
 class NetworkDevices {
 public:
-    NetworkDevices(std::function<const std::vector<int>*()> topology, unsigned int own_address);
+    NetworkDevices(std::function<const std::vector<std::pair<uint8_t, uint8_t>>*()> topology, unsigned int own_address);
     void snap();
 private:
     std::map<int, NetworkDevice> _devices;
-    std::function<const std::vector<int>*()> _topology;
+    std::function<const std::vector<std::pair<uint8_t, uint8_t>>*()> _topology;
     unsigned int _own_address;
 };
 

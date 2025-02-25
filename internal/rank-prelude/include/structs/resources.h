@@ -22,7 +22,7 @@ class Resources {
 public:
     // Instance handling.
 #ifdef FROM_SIMUZILLA
-    static Resources* get_instance(const std::function<const std::vector<int>*()>& topology, unsigned int own_address, const std::string& logger_name);
+    static Resources* get_instance(const std::function<const std::vector<std::pair<uint8_t, uint8_t>>*()>& topology, unsigned int own_address, const std::string& logger_name);
 #else
     static Resources* get_instance(const std::string& logger_name);
 #endif
@@ -50,7 +50,7 @@ public:
 
 private:
 #ifdef FROM_SIMUZILLA
-    Resources(const std::function<const std::vector<int>*()>& topology, unsigned int own_address, const std::string& logger_name);
+    Resources(const std::function<const std::vector<std::pair<uint8_t, uint8_t>>*()>& topology, unsigned int own_address, const std::string& logger_name);
 #else
     explicit Resources(const std::string& logger_name);
 #endif

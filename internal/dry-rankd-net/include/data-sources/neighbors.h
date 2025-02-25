@@ -19,12 +19,12 @@ struct NetworkNeighbor {
 
 class NetworkNeighbors {
 public:
-    NetworkNeighbors(std::function<const std::vector<int>*()> topology, unsigned int own_address);
+    NetworkNeighbors(std::function<const std::vector<std::pair<uint8_t, uint8_t>>*()> topology, unsigned int own_address);
     void snap();
     std::vector<NetworkNeighbor> neighbors();
 private:
     std::vector<NetworkNeighbor> _neighbors;
-    std::function<const std::vector<int>*()> _topology;
+    std::function<const std::vector<std::pair<uint8_t, uint8_t>>*()> _topology;
     unsigned int _own_address;
 };
 

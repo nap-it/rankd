@@ -451,7 +451,7 @@ void Process::operator()() {
 #ifdef FROM_SIMUZILLA
 
 Process *
-Process::set_topology_and_current_address(std::function<const std::vector<int> *()> topology, unsigned int address) {
+Process::set_topology_and_current_address(std::function<const std::vector<std::pair<uint8_t, uint8_t>>*()> topology, unsigned int address) {
     _simulated_topology = topology;
     _simuzilla_identity = address;
 

@@ -122,12 +122,12 @@ void Sender::operator()() {
 }
 
 #ifdef FROM_SIMUZILLA
-void Sender::set_topology_and_current_address(std::function<const std::vector<int>*()> topology, unsigned int address) {
+void Sender::set_topology_and_current_address(std::function<const std::vector<std::pair<uint8_t, uint8_t>>*()> topology, unsigned int address) {
     _topology = std::move(topology);
     _own_address = address;
 }
 
-std::vector<int> Sender::get_own_topology() const {
+std::vector<std::pair<uint8_t, uint8_t>> Sender::get_own_topology() const {
     auto topology = _topology();
 
     return *topology;

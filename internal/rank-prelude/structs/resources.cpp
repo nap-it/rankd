@@ -1,7 +1,7 @@
 #include "structs/resources.h"
 
 #ifdef FROM_SIMUZILLA
-Resources* Resources::get_instance(const std::function<const std::vector<int>*()>& topology, unsigned int own_address, const std::string& logger_name) {
+Resources* Resources::get_instance(const std::function<const std::vector<std::pair<uint8_t, uint8_t>>*()>& topology, unsigned int own_address, const std::string& logger_name) {
     return new Resources(topology, own_address, logger_name);
 }
 #else
@@ -471,7 +471,7 @@ Resources::~Resources() {
 }
 
 #ifdef FROM_SIMUZILLA
-Resources::Resources(const std::function<const std::vector<int> *()> &topology, unsigned int own_address,
+Resources::Resources(const std::function<const std::vector<std::pair<uint8_t, uint8_t>>*()> &topology, unsigned int own_address,
                      const std::string &logger_name) {
     // Configure logging.
     _logger = spdlog::get(logger_name);

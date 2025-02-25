@@ -44,7 +44,7 @@ public:
 
 #ifdef FROM_SIMUZILLA
 
-    void set_topology_and_current_address(std::function<const std::vector<int> *()> topology, unsigned int address);
+    void set_topology_and_current_address(std::function<const std::vector<std::pair<uint8_t, uint8_t>>*()> topology, unsigned int address);
 
     Dispatcher *borrow_simulation_receiver_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>()> function);
 
@@ -52,7 +52,7 @@ public:
 
     API *api();
 
-    std::vector<int> get_topology() const;
+    std::vector<uint8_t> get_topology() const;
 
 #endif
 

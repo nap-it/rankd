@@ -87,7 +87,7 @@ public:
 
     // Simulation set parameters.
 #ifdef FROM_SIMUZILLA
-    Process* set_topology_and_current_address(std::function<const std::vector<int>*()> topology, unsigned int address);
+    Process* set_topology_and_current_address(std::function<const std::vector<std::pair<uint8_t, uint8_t>>*()> topology, unsigned int address);
 
     Process *borrow_simulation_recv_function(std::function<std::pair<uint8_t, std::vector<uint8_t>>(void)> function);
 
@@ -127,7 +127,7 @@ private:
     std::function<std::vector<std::pair<uint8_t, uint8_t>>(uint8_t)> _simulated_connections;
     std::function<bool(uint8_t)> _simulated_identity;
     uint8_t _simuzilla_identity;
-    std::function<const std::vector<int>*()> _simulated_topology;
+    std::function<const std::vector<std::pair<uint8_t, uint8_t>>*()> _simulated_topology;
 #else
     std::shared_ptr<spdlog::logger> _logger;
 #endif

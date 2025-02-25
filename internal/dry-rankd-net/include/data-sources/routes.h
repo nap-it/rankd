@@ -29,11 +29,11 @@ struct NetworkRoute {
 
 class NetworkRoutes {
 public:
-    NetworkRoutes(std::function<const std::vector<int>*()> topology, unsigned int own_address);
+    NetworkRoutes(std::function<const std::vector<std::pair<uint8_t, uint8_t>>*()> topology, unsigned int own_address);
     void snap();
 private:
     std::vector<NetworkRoute> _routes;
-    std::function<const std::vector<int>*()> _topology;
+    std::function<const std::vector<std::pair<uint8_t, uint8_t>>*()> _topology;
     unsigned int _own_address;
 };
 

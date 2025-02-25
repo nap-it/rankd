@@ -76,7 +76,7 @@ void Dispatcher::mark_origin(const UUIDv4 &uuid, uint32_t pid) {
 }
 
 #ifdef FROM_SIMUZILLA
-void Dispatcher::set_topology_and_current_address(std::function<const std::vector<int>*()> topology, unsigned int address) {
+void Dispatcher::set_topology_and_current_address(std::function<const std::vector<std::pair<uint8_t, uint8_t>>*()> topology, unsigned int address) {
     _sender->set_topology_and_current_address(topology, address);
 }
 #endif
@@ -154,7 +154,7 @@ Dispatcher *Dispatcher::borrow_simulation_receiver_function(std::function<std::p
 
 Dispatcher *Dispatcher::borrow_simulation_sender_function(std::function<void(uint8_t, std::vector<uint8_t>)> function) {
     _logger->trace("[Dispatcher] Registering Tx function in sender.");
-    _sender->borrow_sender_function(function);
+    _sender->borrow_sender_function(std::move(function));
 
     return this;
 }
@@ -163,8 +163,14 @@ API *Dispatcher::api() {
     return _api;
 }
 
-std::vector<int> Dispatcher::get_topology() const {
-    return _sender->get_own_topology();
+std::vector<uint8_t> Dispatcher::get_topology() const {
+    auto entire_topology = _sender->get_own_topology();
+
+    std::vector<uint8_t> to_return = std::vector<uint8_t>(UINT8_MAX, entire_topology.size());
+
+    std::transform(entire_topology.begin(), entire_topology.end(), to_return.begin(), [](const std::pair<uint8_t, uint8_t>& pair) { return pair.first; });
+
+    return to_return;
 }
 #endif
 
