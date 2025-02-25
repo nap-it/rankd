@@ -69,6 +69,8 @@ public:
 
     bool remove_as_origin(const UUIDv4& uuid);
 
+    int get_pid_on_origin(const UUIDv4& uuid);
+
     // Receiving data parsing.
     Header parse_as_message_header(const std::vector<uint8_t> &data);
 

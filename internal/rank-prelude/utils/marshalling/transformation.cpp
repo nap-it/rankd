@@ -40,7 +40,7 @@ rapidjson::Document transform_to_json(const RequestingCapabilities& capabilities
                 break;
             case CapabilityItemType::COMP_CPU: {
                     rapidjson::Value sub_object(rapidjson::kObjectType);
-                    sub_object.AddMember("cpu_cores", 0, allocator); // TODO std::any_cast<uint8_t>(type_and_requirement.second), allocator);
+                    sub_object.AddMember("cpu_cores", std::any_cast<uint>(type_and_requirement.second), allocator);
                     object.AddMember("requirement", sub_object, allocator);
                 }
                 break;

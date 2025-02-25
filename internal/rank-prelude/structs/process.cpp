@@ -159,6 +159,12 @@ bool Process::remove_as_origin(const UUIDv4 &uuid) {
     return true;
 }
 
+int Process::get_pid_on_origin(const UUIDv4 &uuid) {
+    std::lock_guard<std::mutex> guard(_origin_set_locker);
+
+    return _origin_set.find(uuid)->second;
+}
+
 Header Process::parse_as_message_header(const std::vector<uint8_t> &data) {
     assert(data.size() >= RANK_HEADER_LEN);
 
@@ -617,6 +623,8 @@ Process::Process(const std::string &logger_name) {
     // Initialize the dispatcher.
     _logger->info("Initializing the dispatcher...");
     _dispatcher = Dispatcher::get_instance(
-            [this](const UUIDv4 &uuid, uint32_t pid = 0) -> void { return mark_origin(uuid, pid); }, _logger->name());
+            [this](const UUIDv4 &uuid, uint32_t pid = 0) -> void { return mark_origin(uuid, pid); },
+            [this](const UUIDv4& uuid) -> int { return get_pid_on_origin(uuid); },
+            _logger->name());
 #endif
 }

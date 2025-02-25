@@ -34,12 +34,14 @@ enum class ApiResult {
     FAIL,
 };
 
+std::string api_result_to_string(const ApiResult& result);
+
 class API {
 public:
     static API* get_instance(const std::string& logger_name);
 
 #ifdef FROM_SIMUZILLA
-    void deliver_request(const std::string& json_admission_request, int priority, const std::vector<uint8_t>& target, const std::vector<uint8_t>& own_id, const IdentifierType& type);
+    UUIDv4 deliver_request(const std::string& json_admission_request, int priority, const std::vector<uint8_t>& target, const std::vector<uint8_t>& own_id, const IdentifierType& type);
 #endif
     API* communicate_result(const ApiResult& code, const std::string& message, const UUIDv4& uuid);
     API* set_dispatcher(Dispatcher* dispatcher);

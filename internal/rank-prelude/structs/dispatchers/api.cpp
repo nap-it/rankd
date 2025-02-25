@@ -1,5 +1,14 @@
 #include "structs/dispatchers/api.h"
 
+std::string api_result_to_string(const ApiResult& result) {
+    switch (result) {
+        case ApiResult::OK:
+            return "Ok";
+        case ApiResult::FAIL:
+            return "Fail";
+    }
+}
+
 API *API::get_instance(const std::string& logger_name) {
 #ifdef FROM_SIMUZILLA
     return new API(logger_name);
@@ -11,17 +20,72 @@ API *API::get_instance(const std::string& logger_name) {
 
 #ifdef FROM_SIMUZILLA
 
-void API::deliver_request(const std::string &json_admission_request, int priority, const std::vector<uint8_t> &target, const std::vector<uint8_t>& own_id, const IdentifierType& type) {
+UUIDv4 API::deliver_request(const std::string &json_admission_request, int priority, const std::vector<uint8_t> &target, const std::vector<uint8_t>& own_id, const IdentifierType& type) {
     _logger->info("[API] Delivering a message from API to simulated Rank process, to {}, requesting {}.", target.front(), json_admission_request);
     EAR* ear_message = build_message_from_arguments(json_admission_request, priority, target, type);
     _dispatcher->enqueue_item(std::make_tuple(ear_message, own_id, type));
     _dispatcher->mark_origin(ear_message->uuid(), 100+own_id.at(0));
+
+    return ear_message->uuid();
 }
 
 #endif
 
 API *API::communicate_result(const ApiResult &code, const std::string &message, const UUIDv4 &uuid) {
-    // TODO Here is the place where the result should be written in the /tmp/rank._origin.at(_uuid).fifo FIFO IPC.
+    // TODO Build this option to run also in Simuzilla.
+#ifdef FROM_SIMUZILLA
+
+#else
+    rapidjson::Document json;
+    rapidjson::Value value;
+    auto allocator = json.GetAllocator();
+
+    // Add error code integer value as "code".
+    value.SetInt(static_cast<int>(code));
+    json.AddMember("code", value, allocator);
+
+    // Add error code value as "error".
+    value.SetString(api_result_to_string(code).c_str(), api_result_to_string(code).size());
+    json.AddMember("error", value, allocator);
+
+    // Add message as "message".
+    value.SetString(message.c_str(), message.size());
+    json.AddMember("message", value, allocator);
+
+    // Add UUID as "uuid".
+    value.SetString(display(uuid).c_str(), display(uuid).size());
+    json.AddMember("uuid", value, allocator);
+
+    // Write JSON output as string.
+    rapidjson::StringBuffer string_buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(string_buffer);
+    json.Accept(writer);
+    std::string line(string_buffer.GetString(), string_buffer.GetSize());
+
+    // Get PID for this UUID.
+    int pid = _dispatcher->get_pid_from(uuid);
+
+    // Open client FIFO, in /tmp/rank._origin.at(_uuid).fifo, previously created.
+    char client[RANK_CLIENT_API_FIFO_LENGTH];
+    snprintf(client, RANK_CLIENT_API_FIFO_LENGTH, RANK_CLIENT_API_FIFO_TEMPLATE, (long) pid);
+    int client_fd = open(client, O_WRONLY);
+    if (client_fd == -1) {
+        // TODO Handle this error.
+        return this;
+    }
+
+    // Write to the FIFO.
+    if (write(client_fd, line.c_str(), line.size()) != line.size()) {
+        // TODO Handle this error.
+        return this;
+    }
+
+    // Close the FIFO.
+    if (close(client_fd) == -1) {
+        // TODO Handle this error.
+        return this;
+    }
+#endif
 
     return this;
 }

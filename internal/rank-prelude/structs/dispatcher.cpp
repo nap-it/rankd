@@ -75,13 +75,17 @@ void Dispatcher::mark_origin(const UUIDv4 &uuid, uint32_t pid) {
     _mark_origin(uuid, pid);
 }
 
+int Dispatcher::get_pid_from(const UUIDv4 &uuid) {
+    return _get_pid_on_origin(uuid);
+}
+
 #ifdef FROM_SIMUZILLA
 void Dispatcher::set_topology_and_current_address(std::function<const std::vector<std::pair<uint8_t, uint8_t>>*()> topology, unsigned int address) {
     _sender->set_topology_and_current_address(topology, address);
 }
 #endif
 
-Dispatcher::Dispatcher(const std::function<void(const UUIDv4&, uint32_t)>& mark_origin, const std::string& logger_name) {
+Dispatcher::Dispatcher(const std::function<void(const UUIDv4&, uint32_t)>& mark_origin, const std::function<int(const UUIDv4&)> get_pid_on_origin, const std::string& logger_name) {
     // Configure logger.
     _logger = spdlog::get(logger_name);
     _logger->info("Preparing the dispatcher unit...");
@@ -89,6 +93,10 @@ Dispatcher::Dispatcher(const std::function<void(const UUIDv4&, uint32_t)>& mark_
     // Register mark_origin function.
     _mark_origin = mark_origin;
     _logger->trace("[Dispatcher] Registered mark_origin function.");
+
+    // Register get_pid_on_origin function.
+    _get_pid_on_origin = get_pid_on_origin;
+    _logger->trace("[Dispatcher] Registered get_pid_on_origin function.");
 
     // Set sender.
     _sender = Sender::get_instance(_logger->name());

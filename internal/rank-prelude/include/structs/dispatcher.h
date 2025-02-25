@@ -17,11 +17,11 @@ class API;
 
 class Dispatcher {
 public:
-    static Dispatcher *get_instance(const std::function<void(const UUIDv4&, uint32_t)>& mark_origin, const std::string &logger_name) {
+    static Dispatcher *get_instance(const std::function<void(const UUIDv4&, uint32_t)>& mark_origin, const std::function<int(const UUIDv4&)> get_pid_on_origin, const std::string &logger_name) {
 #ifdef FROM_SIMUZILLA
-        return new Dispatcher(mark_origin, logger_name);
+        return new Dispatcher(mark_origin, get_pid_on_origin, logger_name);
 #else
-        static Dispatcher instance = Dispatcher(mark_origin, logger_name);
+        static Dispatcher instance = Dispatcher(mark_origin, get_pid_on_origin, logger_name);
         return &instance;
 #endif
     }
@@ -42,6 +42,8 @@ public:
 
     void mark_origin(const UUIDv4& uuid, uint32_t pid = 0);
 
+    int get_pid_from(const UUIDv4& uuid);
+
 #ifdef FROM_SIMUZILLA
 
     void set_topology_and_current_address(std::function<const std::vector<std::pair<uint8_t, uint8_t>>*()> topology, unsigned int address);
@@ -59,11 +61,12 @@ public:
     ~Dispatcher();
 
 private:
-    Dispatcher(const std::function<void(const UUIDv4&, uint32_t)>& mark_origin, const std::string &logger_name);
+    Dispatcher(const std::function<void(const UUIDv4&, uint32_t)>& mark_origin, const std::function<int(const UUIDv4&)> get_pid_on_origin, const std::string &logger_name);
 
     Sender *_sender;
     API *_api;
     std::function<void(const UUIDv4&, uint32_t)> _mark_origin;
+    std::function<int(const UUIDv4&)> _get_pid_on_origin;
 #ifdef FROM_SIMUZILLA
     ReceiverSimulation *_receiver_simulation = nullptr;
     RawReceiverSimulation *_raw_receiver_simulation = nullptr;
