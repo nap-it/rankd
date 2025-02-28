@@ -1213,7 +1213,7 @@ void Handler::operator()() {
                             _dispatcher->api()->communicate_result(ApiResult::OK, "", _uuid); // TODO
 
                             // (E.2.2.1.1.2) Add accepting node as next node of the reservation.
-                            _logger->critical("[Handler] [{}] (E.2.2.1.1.2) Add accepting node as next node of the reservation.", display(_uuid));
+                            _logger->debug("[Handler] [{}] (E.2.2.1.1.2) Add accepting node as next node of the reservation.", display(_uuid));
                             _reservation->add_next_node(_source_identifier);
 
                             // Change state to RESERVED.
@@ -1263,11 +1263,11 @@ void Handler::operator()() {
                                            handler_state_to_string(_state));
 
                             // (E.2.2.1.2.2) Add accepting node as next node of the reservation.
-                            _logger->trace("[Handler] [{}] (E.2.2.1.2.2) Add accepting node as next node of the reservation.", display(_uuid));
+                            _logger->debug("[Handler] [{}] (E.2.2.1.2.2) Add accepting node as next node of the reservation.", display(_uuid));
                             _reservation->add_next_node(_source_identifier);
 
                             // (E.2.2.1.2.3) Terminate the thread.
-                            _logger->trace("[Handler] [{}] (E.2.2.1.2.3) Terminate the thread.", display(_uuid));
+                            _logger->debug("[Handler] [{}] (E.2.2.1.2.3) Terminate the thread.", display(_uuid));
                             stop();
                             break;
                         }
