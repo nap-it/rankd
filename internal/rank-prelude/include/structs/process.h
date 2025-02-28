@@ -62,6 +62,8 @@ public:
 
     bool is_uuid_in_store(const UUIDv4 &uuid);
 
+    std::map<UUIDv4, HandlerState> get_store_summary();
+
     // Origin set handling.
     bool am_i_origin_for(const UUIDv4& uuid) const;
 

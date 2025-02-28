@@ -139,6 +139,16 @@ bool Process::is_uuid_in_store(const UUIDv4 &id) {
     return true;
 }
 
+std::map<UUIDv4, HandlerState> Process::get_store_summary() {
+    std::map<UUIDv4, HandlerState> summary;
+
+    for (const auto& [uuid, handler]: _store) {
+        summary[uuid] = handler->state();
+    }
+
+    return summary;
+}
+
 bool Process::am_i_origin_for(const UUIDv4 &uuid) const {
     return _origin_set.contains(uuid);
 }
@@ -335,7 +345,6 @@ void Process::operator()() {
                         case HandlerState::ASSESSING:
                         case HandlerState::PRESENTING:
                         case HandlerState::AUCTION_BIDDING:
-                        case HandlerState::REPLENISHING:
                         case HandlerState::CLOSED:
                             _logger->debug("[Process] (A.3.1.1.2.1) What is the found handler state? {}",
                                            handler_state_to_string(uuid_state));
@@ -343,6 +352,7 @@ void Process::operator()() {
                             // (A.3.1.1.2.1.1.1) Discard message
                             _logger->info("Discarding message for UUID {}.", display(message_uuid));
                             continue;
+                        case HandlerState::REPLENISHING:
                         case HandlerState::PRE_RESERVED:
                         case HandlerState::AUCTION_WAITING:
                         case HandlerState::RESERVED:
@@ -422,6 +432,7 @@ void Process::operator()() {
                     _logger->trace("[Process] [{}] Marking the handler's accepting node address.",
                                    display(message_uuid));
                     handler->mark_accepting_node(std::make_pair(source_address, source_address_type));
+                    handler->mark_source(std::make_pair(source_address, source_address_type));
 
                     _logger->trace("[Process] [{}] Passing message to the handler.", display(message_uuid));
                     handler->handle(dynamic_cast<ACC *>(message));
@@ -430,6 +441,7 @@ void Process::operator()() {
                     _logger->debug("[Process] (A.4) What is this message type? REF.");
 
                     _logger->trace("[Process] [{}] Passing message to the handler.", display(message_uuid));
+                    //handler->mark_source(std::make_pair(source_address, source_address_type));
                     handler->handle(dynamic_cast<REF *>(message));
                     break;
                 case MessageType::REP:

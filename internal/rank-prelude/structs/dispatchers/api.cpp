@@ -29,6 +29,19 @@ UUIDv4 API::deliver_request(const std::string &json_admission_request, int prior
     return ear_message->uuid();
 }
 
+UUIDv4
+API::replenish_request(const UUIDv4 &uuid, const std::vector<uint8_t> &target, const std::vector<uint8_t> &own_id,
+                       const IdentifierType &type) {
+    _logger->info("[API] Delivering a replenishing message from API to simulated Rank process, to {}, requesting to remove UUID {}.", target.front(),
+                  display(uuid));
+    REP* rep_message = build_message_from_arguments(uuid, target, type);
+
+    _dispatcher->enqueue_item(std::make_tuple(rep_message, own_id, type));
+    _dispatcher->mark_origin(rep_message->uuid(), 100+own_id.at(0));
+
+    return rep_message->uuid();
+}
+
 #endif
 
 API *API::communicate_result(const ApiResult &code, const std::string &message, const UUIDv4 &uuid) {
@@ -212,4 +225,21 @@ EAR *API::build_message_from_arguments(const std::string &json_admission_request
 
     return ear_message;
 }
+
+REP *API::build_message_from_arguments(const UUIDv4& uuid,
+                                       const std::vector<uint8_t> &target, const IdentifierType &type) {
+    // Specify a header.
+    Header header = Header(RANK_HEADER_VERSION, MessageType::REP, uuid);
+
+    // Specify the listener.
+    uint8_t listener_length = static_cast<uint8_t>(type);
+    std::array<uint8_t, RANK_LISTENER_MAX_LEN> listener{};
+    std::copy(target.begin(), target.end(), listener.begin());
+
+    // Create EAR message.
+    REP* rep_message = new REP(header, listener_length, listener);
+
+    return rep_message;
+}
+
 #endif

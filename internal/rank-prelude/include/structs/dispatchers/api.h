@@ -42,6 +42,7 @@ public:
 
 #ifdef FROM_SIMUZILLA
     UUIDv4 deliver_request(const std::string& json_admission_request, int priority, const std::vector<uint8_t>& target, const std::vector<uint8_t>& own_id, const IdentifierType& type);
+    UUIDv4 replenish_request(const UUIDv4& uuid, const std::vector<uint8_t>& target, const std::vector<uint8_t>& own_id, const IdentifierType& type);
 #endif
     API* communicate_result(const ApiResult& code, const std::string& message, const UUIDv4& uuid);
     API* set_dispatcher(Dispatcher* dispatcher);
@@ -57,6 +58,7 @@ private:
     int _server_fifo_fd;
 #else
     static EAR* build_message_from_arguments(const std::string& json_admission_request, int priority, const std::vector<uint8_t>& target, const IdentifierType& type);
+    static REP* build_message_from_arguments(const UUIDv4& uuid, const std::vector<uint8_t>& target, const IdentifierType& type);
 #endif
     Dispatcher* _dispatcher;
     std::shared_ptr<spdlog::logger> _logger;

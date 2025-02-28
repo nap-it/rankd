@@ -1195,7 +1195,7 @@ void Handler::operator()() {
 
                         // (E.2.1.2) Add accepting node as next node of the reservation.
                         _logger->debug("[Handler] [{}] (E.2.1.2) Add accepting node as next node of the reservation.", display(_uuid));
-                        _reservation->add_next_node(_accepting_nodes.back());
+                        _reservation->add_next_node(_source_identifier);
 
                         // (E.2.1.3) Terminate the thread.
                         _logger->debug("[Handler] [{}] (E.2.2.3) Terminate the thread.", display(_uuid));
@@ -1212,14 +1212,18 @@ void Handler::operator()() {
                             _logger->trace("[Handler] [{}] (E.2.2.1.1.1) Return reservation result to the API", display(_uuid));
                             _dispatcher->api()->communicate_result(ApiResult::OK, "", _uuid); // TODO
 
+                            // (E.2.2.1.1.2) Add accepting node as next node of the reservation.
+                            _logger->critical("[Handler] [{}] (E.2.2.1.1.2) Add accepting node as next node of the reservation.", display(_uuid));
+                            _reservation->add_next_node(_source_identifier);
+
                             // Change state to RESERVED.
                             old_state = _state;
                             _state = HandlerState::RESERVED;
                             _logger->trace("[Handler] [{}] Handler state transitioned from {} to {}.", display(_uuid), handler_state_to_string(old_state),
                                            handler_state_to_string(_state));
 
-                            // (E.2.2.1.1.2) Terminate the thread.
-                            _logger->debug("[Handler] [{}] (E.2.2.1.1.2) Terminate the thread.", display(_uuid));
+                            // (E.2.2.1.1.3) Terminate the thread.
+                            _logger->debug("[Handler] [{}] (E.2.2.1.1.3) Terminate the thread.", display(_uuid));
                             stop();
                             break;
                         } else {
@@ -1260,7 +1264,7 @@ void Handler::operator()() {
 
                             // (E.2.2.1.2.2) Add accepting node as next node of the reservation.
                             _logger->trace("[Handler] [{}] (E.2.2.1.2.2) Add accepting node as next node of the reservation.", display(_uuid));
-                            _reservation->add_next_node(_reservation->past_node()); //_accepting_nodes.back());
+                            _reservation->add_next_node(_source_identifier);
 
                             // (E.2.2.1.2.3) Terminate the thread.
                             _logger->trace("[Handler] [{}] (E.2.2.1.2.3) Terminate the thread.", display(_uuid));
@@ -1418,6 +1422,13 @@ void Handler::operator()() {
                     auto listener_field_length = rep_message->listener_length();
                     bool i_am_listener = false;
                     switch (listener_field_length) {
+#ifdef FROM_SIMUZILLA
+                        case RANK_MAR_MESSAGE_LEN_LT_CODE_0: {
+                            uint8_t simuzilla_address = listener_field.at(0);
+                            _logger->trace("[Handler] [{}] Testing if I am id {}.", display(_uuid), simuzilla_address);
+                            i_am_listener = simulated_is_me(simuzilla_address);
+                        } break;
+#endif
                         case RANK_EAR_MESSAGE_LEN_LT_IP4: {
                             std::array<uint8_t, 4> ip4_address {};
                             for (int byte = 0; byte != 4; byte++) {
@@ -1448,8 +1459,20 @@ void Handler::operator()() {
                         // (G.1.1.1) Create REF message and send it.
                         _logger->debug("[Handler] [{}] (G.1.1.1) Create REF message and send it.", display(_uuid));
                         REF* ref_message = new REF(_uuid);
+                        std::vector<uint8_t> target;
+#ifdef FROM_SIMUZILLA
+                        std::vector<std::pair<std::vector<std::pair<uint8_t, uint8_t>>, IdentifierType>> connections_to_target_raw =
+                                get_connections_to(_source_identifier.first.at(0));
+                        _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:", display(_uuid), connections_to_target_raw.size(), connections_to_target_raw.size() == 1 ? "" : "s", _source_identifier.first.at(0));
+                        for (const auto& [connection, type]: connections_to_target_raw) {
+                            _logger->trace("[Handler]                               -> {} with depth {}", connection.at(0).second, connection.at(0).first);
+                        }
+                        target = {connections_to_target_raw.at(0).first.at(0).second};
+#else
+                        target = _source_identifier.first;
+#endif
                         _logger->trace("[Handler] [{}] Sending message {}.", display(_uuid), ref_message->display());
-                        _dispatcher->send_message(ref_message, _source_identifier.first, _source_identifier.second);
+                        _dispatcher->send_message(ref_message, target, _source_identifier.second);
 
                         // Change state to CLOSED.
                         old_state = _state;
@@ -1470,10 +1493,22 @@ void Handler::operator()() {
 
                             // (G.1.2.1.1.1) Create REP message towards L and send it.
                             _logger->debug("[Handler] [{}] (G.1.2.1.1.1) Create REP message towards L and send it.", display(_uuid));
-                            REP* new_rep_message = new REP(_uuid, rep_message->listener_length(), rep_message->listener());
+                            REP* new_rep_message = new REP(_uuid, _reservation->listener_length(), _reservation->listener());
                             for (const auto& direction : _reservation->next_nodes()) {
+                                std::vector<uint8_t> target;
+#ifdef FROM_SIMUZILLA
+                                std::vector<std::pair<std::vector<std::pair<uint8_t, uint8_t>>, IdentifierType>> connections_to_target_raw =
+                                        get_connections_to(direction.first.at(0));
+                                _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:", display(_uuid), connections_to_target_raw.size(), connections_to_target_raw.size() == 1 ? "" : "s", _source_identifier.first.at(0));
+                                for (const auto& [connection, type]: connections_to_target_raw) {
+                                    _logger->trace("[Handler]                               -> {} with depth {}", connection.at(0).second, connection.at(0).first);
+                                }
+                                target = {connections_to_target_raw.at(0).first.at(0).second};
+#else
+                                target = _source_identifier.first;
+#endif
                                 _logger->trace("[Handler] [{}] Sending message {}.", display(_uuid), new_rep_message->display());
-                                _dispatcher->send_message(new_rep_message, direction.first, direction.second);
+                                _dispatcher->send_message(new_rep_message, target, direction.second);
                             }
 
                             // (G.1.2.1.1.2(bis)) Begin timer for REP timeout.
@@ -1482,10 +1517,10 @@ void Handler::operator()() {
                             // TODO _timeout_handler->initiate_timeout(this, RANK_REP_TO_REP_TIMEOUT);
 
                             // Change state to CLOSED.
-                            old_state = _state;
-                            _state = HandlerState::CLOSED;
-                            _logger->trace("[Handler] [{}] Handler state transitioned from {} to {}.", display(_uuid), handler_state_to_string(old_state),
-                                           handler_state_to_string(_state));
+                            //old_state = _state;
+                            //_state = HandlerState::CLOSED;
+                            //_logger->trace("[Handler] [{}] Handler state transitioned from {} to {}.", display(_uuid), handler_state_to_string(old_state),
+                            //               handler_state_to_string(_state));
 
                             // (G.1.2.1.1.2) Terminate thread.
                             _logger->debug("[Handler] [{}] (G.1.2.1.1.2) Terminate thread.");

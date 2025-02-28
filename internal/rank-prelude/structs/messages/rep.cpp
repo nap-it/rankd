@@ -13,7 +13,17 @@ uint8_t REP::reserved() const {
 }
 
 std::vector<uint8_t> REP::listener() const {
-    return _listener;
+    std::vector<uint8_t> listener;
+
+    if (_listener_length == RANK_EAR_MESSAGE_LEN_LT_CODE_0) {
+        listener.push_back(_listener.at(0));
+    } else {
+        for (int i = 0; i != _listener_length; ++i) {
+            listener.push_back(_listener.at(i));
+        }
+    }
+
+    return listener;
 }
 
 const std::vector<uint8_t> REP::raw_payload() const {
@@ -24,11 +34,14 @@ const std::vector<uint8_t> REP::raw_payload() const {
     marshalled_data.insert(marshalled_data.begin(), marshalled_array.begin(), marshalled_array.end());
 
     // Serialize first byte of message.
-    uint8_t first_byte = ((_listener_length & 0x111) << 5) | (_reserved & 0x11111);
+    uint8_t first_byte = ((_listener_length & 0x7) << 5) | (_reserved & 0x3);
     marshalled_data.push_back(first_byte);
 
     // Copy listener ID to marshalled_data.
     switch (_listener_length) {
+        case RANK_EAR_MESSAGE_LEN_LT_CODE_0:
+            marshalled_data.insert(marshalled_data.end(), _listener.begin(), _listener.begin() + SIMUZILLA_ADDR_LEN);
+            break;
         case RANK_EAR_MESSAGE_LEN_LT_IP4:
             marshalled_data.insert(marshalled_data.end(), _listener.begin(), _listener.begin() + IPV4_ADDR_LEN);
             break;
