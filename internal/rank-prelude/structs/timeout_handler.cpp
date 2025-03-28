@@ -80,7 +80,7 @@ bool TimeoutHandler::is_running() const {
 
 void TimeoutHandler::operator()() {
     while (_running) {
-        std::this_thread::sleep_for(1s);
+        std::this_thread::sleep_for(10ms);
     }
 }
 

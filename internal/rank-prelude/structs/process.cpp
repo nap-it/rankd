@@ -240,7 +240,7 @@ void Process::operator()() {
                   _waiting_time);
 
     while (_running) {
-        _logger->debug("[Process] (A.2) Wait for Packet.");
+        //_logger->debug("[Process] (A.2) Wait for Packet.");
         // Check depositing queue of the dispatcher and retrieve a message, if there is one. (A.2)
         if (_dispatcher->receiving_queue_has_message()) {
             _logger->info("The process watched a message being dropped in the dispatcher's receiving queue.");

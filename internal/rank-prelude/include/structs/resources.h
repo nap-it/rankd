@@ -65,7 +65,7 @@ private:
     std::map<std::string, std::tuple<long, double, double, double, double>> _proximity_metrics{};
     std::list<Reservation> _reservations;
     CurrentCapabilities* _current_capabilities;
-    unsigned int _waiting_time = 1000;
+    unsigned int _waiting_time = 10;
     bool _running = false;
     std::thread _thread;
     std::mutex _reservations_mutex;

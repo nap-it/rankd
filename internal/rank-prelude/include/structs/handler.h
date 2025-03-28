@@ -140,7 +140,7 @@ private:
     TranslationTable* _translation_table = nullptr;
     std::mutex* _translation_table_locker = nullptr;
     bool _running = false;
-    unsigned int _waiting_time = 1000;
+    unsigned int _waiting_time = 10;
     std::thread _thread;
     std::shared_ptr<spdlog::logger> _logger;
 };

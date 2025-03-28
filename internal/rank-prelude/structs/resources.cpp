@@ -432,7 +432,7 @@ void Resources::operator()() {
     while (_running) {
         // Update information on current capabilities.
         _current_capabilities->update();
-        _logger->trace("[Resources] {}", _current_capabilities->display());
+        //_logger->trace("[Resources] {}", _current_capabilities->display());
 
         // Update known instances for proximity.
         std::vector<std::string> keys_to_remove;
@@ -446,7 +446,7 @@ void Resources::operator()() {
             auto now = std::chrono::system_clock::now().time_since_epoch().count();
             if (now - timestamp >= RANK_DURATION_OLD) {
                 keys_to_remove.push_back(target);
-                _logger->trace("[Resources] Removed target {} in proximity assessment due to entry not being updated in more than {} seconds.", target, RANK_DURATION_OLD);
+                //_logger->trace("[Resources] Removed target {} in proximity assessment due to entry not being updated in more than {} seconds.", target, RANK_DURATION_OLD);
             } else {
                 auto vector_target = std::vector<uint8_t>(target.begin(), target.end());
                 hops = proximity_hops_assessment(vector_target);
@@ -454,7 +454,7 @@ void Resources::operator()() {
                 pdv = proximity_hops_assessment(vector_target);
                 pl = proximity_hops_assessment(vector_target);
 
-                _logger->trace("[Resources] Renew proximity assessment for {}: {} hops, RTT of {} ms, PDV of {} ms, and {}% of PL.", target, hops, rtt, pdv, pl);
+                //_logger->trace("[Resources] Renew proximity assessment for {}: {} hops, RTT of {} ms, PDV of {} ms, and {}% of PL.", target, hops, rtt, pdv, pl);
             }
         }
 

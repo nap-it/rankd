@@ -122,7 +122,7 @@ private:
     std::mutex _origin_set_locker;
     TranslationTable _translation_table;
     std::mutex _translation_table_locker;
-    unsigned int _waiting_time = 100;
+    unsigned int _waiting_time = 10;
     bool _running = false;
     std::thread _thread;
     bool _in_simulation = false;

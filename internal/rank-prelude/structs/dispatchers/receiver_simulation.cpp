@@ -78,7 +78,7 @@ void RawReceiverSimulation::operator()() {
         // If the data response is empty, ignore it.
         if (data.first == UINT8_MAX) {
             //_logger->error("[RawReceiverSimulation] The received message came without any data at all. We will ignore this message.");
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
             continue;
         }
 
@@ -94,7 +94,7 @@ void RawReceiverSimulation::operator()() {
         // Execute the Receiver to handle such messages.
         _logger->trace("[RawReceiverSimulation] Awakening the receiver for simulation to handle these data.");
 
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
 }
 
