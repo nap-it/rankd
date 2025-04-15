@@ -676,7 +676,7 @@ void Handler::operator()() {
                                         stop();
                                     } break;
                                     default: {
-                                        _logger->trace("[Handler] [{}] (B.1.2.2) What is the cardinal of N? More than one.", display(_uuid));
+                                        _logger->debug("[Handler] [{}] (B.1.2.2) What is the cardinal of N? More than one.", display(_uuid));
 
                                         // Save the cardinal of connections in the handler's attribute of waiting bids and reset arriving counter.
                                         _waiting_bids = connections_to_target.size();
@@ -707,7 +707,7 @@ void Handler::operator()() {
                                                        handler_state_to_string(_state));
 
                                         // (B.1.2.2.1.2(bis)) Begin timer for MAR timeout.
-                                        _logger->trace("[Handler] [{}] (B.1.2.2.1.2(bis)) Begin timer for MAR timeout.", display(_uuid));
+                                        _logger->debug("[Handler] [{}] (B.1.2.2.1.2(bis)) Begin timer for MAR timeout.", display(_uuid));
                                         _timeout_handler->initiate_timeout(this, TimeoutType::MAR);
 
                                         // (B.1.2.2.1.2) Terminate thread.
@@ -717,7 +717,7 @@ void Handler::operator()() {
                                 }
                             }
                         } else {
-                            _logger->debug("[Handler] [{}] (B.1.2.1) Is there a bid in Store for the UUID? Yes", display(_uuid));
+                            _logger->debug("[Handler] [{}] (B.1.2.1) Is there a bid in Store for the UUID? Yes.", display(_uuid));
 
                             //* Snip of code copied from above. Look for (*//) to end the copied block.
                             // (B.1.2.1.1.1) Get connections towards listener(s).
@@ -828,7 +828,7 @@ void Handler::operator()() {
                                     stop();
                                 } break;
                                 default: {
-                                    _logger->trace("[Handler] [{}] (B.1.2.2) What is the cardinal of N? More than one.", display(_uuid));
+                                    _logger->debug("[Handler] [{}] (B.1.2.2) What is the cardinal of N? More than one.", display(_uuid));
 
                                     // Save the cardinal of connections in the handler's attribute of waiting bids and reset arriving counter.
                                     _waiting_bids = connections_to_target.size();
@@ -859,7 +859,7 @@ void Handler::operator()() {
                                                    handler_state_to_string(_state));
 
                                     // (B.1.2.2.1.2(bis)) Begin timer for MAR timeout.
-                                    _logger->trace("[Handler] [{}] (B.1.2.2.1.2(bis)) Begin timer for MAR timeout.", display(_uuid));
+                                    _logger->debug("[Handler] [{}] (B.1.2.2.1.2(bis)) Begin timer for MAR timeout.", display(_uuid));
                                     _timeout_handler->initiate_timeout(this, TimeoutType::MAR);
 
                                     // (B.1.2.2.1.2) Terminate thread.
@@ -984,7 +984,7 @@ void Handler::operator()() {
                         _timeout_handler->initiate_timeout(this, TimeoutType::BID);
 
                         // (C.1.2.4) Terminate thread.
-                        _logger->debug("[Handler] [{}] (C.1.2.4) Terminate thread.");
+                        _logger->debug("[Handler] [{}] (C.1.2.4) Terminate thread.", display(_uuid));
                         stop();
                     } else {
                         _logger->debug("[Handler] [{}] (C.1) Can R be performed with priority p? No.", display(_uuid));
@@ -1002,7 +1002,7 @@ void Handler::operator()() {
                                        handler_state_to_string(_state));
 
                         // (C.1.1.2) Terminate thread.
-                        _logger->trace("[Handler] [{}] (C.1.1.2) Terminate thread.", display(_uuid));
+                        _logger->debug("[Handler] [{}] (C.1.1.2) Terminate thread.", display(_uuid));
                         stop();
                         break;
                     }
@@ -1057,7 +1057,7 @@ void Handler::operator()() {
                                        handler_state_to_string(_state));
 
                         // (D.1.1.3.2.2) Terminate thread.
-                        _logger->trace("[Handler] [{}] (D.1.1.3.2.2) Terminate thread.", display(_uuid));
+                        _logger->debug("[Handler] [{}] (D.1.1.3.2.2) Terminate thread.", display(_uuid));
                         stop();
                         break;
                     } else {
@@ -1103,14 +1103,14 @@ void Handler::operator()() {
 
                             // (D.1.1.3.1.1.1.2) Add message source address as reservation past node.
                             _logger->debug("[Handler] [{}] (D.1.1.3.1.1.1.2) Add message source address as reservation past node.", display(_uuid));
-                            _reservation->set_past_node(_source_identifier);
+                            //_reservation->set_past_node(_source_identifier);
 
                             // (D.1.1.3.1.1.1.3(bis)) Begin timer for EAR timeout.
                             _logger->debug("[Handler] [{}] (D.1.1.3.1.1.1.3(bis)) Begin timer for EAR timeout.", display(_uuid));
                             _timeout_handler->initiate_timeout(this, TimeoutType::EAR);
 
                             // (D.1.1.3.1.1.1.3) Terminate thread.
-                            _logger->debug("[Handler] [{}] (D.1.2.3.2.1.1.3) Terminate thread.", display(_uuid));
+                            _logger->debug("[Handler] [{}] (D.1.1.3.1.1.1.3) Terminate thread.", display(_uuid));
                             stop();
                             break;
                         } else {
@@ -1122,7 +1122,7 @@ void Handler::operator()() {
                                            display(_uuid));
                             for (const auto& bid_target : _bids) {
                                 auto new_uuid = create_translation(_uuid);
-                                _logger->trace("[Handler] [{}] (D.1.1.3.1.1.2.1) Created {} as a new UUID*.", display(_uuid), display(new_uuid));
+                                _logger->debug("[Handler] [{}] (D.1.1.3.1.1.2.1) Created {} as a new UUID*.", display(_uuid), display(new_uuid));
 
                                 _logger->debug("[Handler] [{}] (D.1.1.3.1.1.2.2) Save [UUID, UUID*] in Translation Table", display(_uuid));
 
@@ -1157,7 +1157,7 @@ void Handler::operator()() {
                                 // TODO _timeout_handler->initiate_timeout(this, RANK_EAR_TO_EAR_TIMEOUT);
 
                                 // (D.1.1.3.1.1.2.5) Terminate thread.
-                                _logger->trace("[Handler] [{}] (D.1.1.3.1.1.2.5) Terminate thread.", display(_uuid));
+                                _logger->debug("[Handler] [{}] (D.1.1.3.1.1.2.5) Terminate thread.", display(_uuid));
                                 stop();
                                 break;
                             }
@@ -1198,7 +1198,7 @@ void Handler::operator()() {
                         _reservation->add_next_node(_source_identifier);
 
                         // (E.2.1.3) Terminate the thread.
-                        _logger->debug("[Handler] [{}] (E.2.2.3) Terminate the thread.", display(_uuid));
+                        _logger->debug("[Handler] [{}] (E.2.1.3) Terminate the thread.", display(_uuid));
                         stop();
                         break;
                     } else {
@@ -1209,7 +1209,7 @@ void Handler::operator()() {
                             _logger->debug("[Handler] [{}] (E.2.2.1) Is UUID in Origin Set? Yes.", display(_uuid));
 
                             // (E.2.2.1.1.1) Return reservation result to API.
-                            _logger->trace("[Handler] [{}] (E.2.2.1.1.1) Return reservation result to the API", display(_uuid));
+                            _logger->debug("[Handler] [{}] (E.2.2.1.1.1) Return reservation result to the API", display(_uuid));
                             _dispatcher->api()->communicate_result(ApiResult::OK, "", _uuid); // TODO
 
                             // (E.2.2.1.1.2) Add accepting node as next node of the reservation.
@@ -1454,7 +1454,7 @@ void Handler::operator()() {
                             throw std::exception();  // TODO
                     }
                     if (i_am_listener) {
-                        _logger->debug("[Handler] [{}] (G.1) Check if the current node is the message's listener. Yes.", display(_uuid));
+                        _logger->debug("[Handler] [{}] (G.1) Check if the current node is the message's listener? Yes.", display(_uuid));
 
                         // (G.1.1.1) Create REF message and send it.
                         _logger->debug("[Handler] [{}] (G.1.1.1) Create REF message and send it.", display(_uuid));
@@ -1512,7 +1512,7 @@ void Handler::operator()() {
                             }
 
                             // (G.1.2.1.1.2(bis)) Begin timer for REP timeout.
-                            _logger->trace("[Handler] [{}] (G.1.2.1.1.2(bis)) Begin timer for REP timeout.", display(_uuid));
+                            _logger->debug("[Handler] [{}] (G.1.2.1.1.2(bis)) Begin timer for REP timeout.", display(_uuid));
                             _timeout_handler->initiate_timeout(this, TimeoutType::REP);
                             // TODO _timeout_handler->initiate_timeout(this, RANK_REP_TO_REP_TIMEOUT);
 
@@ -1523,7 +1523,7 @@ void Handler::operator()() {
                             //               handler_state_to_string(_state));
 
                             // (G.1.2.1.1.2) Terminate thread.
-                            _logger->debug("[Handler] [{}] (G.1.2.1.1.2) Terminate thread.");
+                            _logger->debug("[Handler] [{}] (G.1.2.1.1.2) Terminate thread.", display(_uuid));
                             stop();
                             break;
 

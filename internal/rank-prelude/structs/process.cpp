@@ -272,21 +272,21 @@ void Process::operator()() {
 
                 // (A.3.1.1) Is UUID's handler running?
                 if (get_handler(message_uuid)->is_running()) {
-                    _logger->debug("[Process] (A.3.1.1) Is UUID's handler running? Yes.");
+                    _logger->debug("[Process] [{}] (A.3.1.1) Is UUID's handler running? Yes.", display(message_uuid));
                     auto *handler = get_handler(message_uuid);
 
                     // (A.3.1.1.1.1) Is UUID's handler in AUCTION_WAITING?
                     if (handler->state() == HandlerState::AUCTION_WAITING) {
-                        _logger->debug("[Process] (A.3.1.1.1.1) Is UUID's handler in AUCTION_WAITING? Yes.");
+                        _logger->debug("[Process] [{}] (A.3.1.1.1.1) Is UUID's handler in AUCTION_WAITING? Yes.", display(message_uuid));
 
                         // (A.3.1.1.1.1.1.1) Is message type BID?
                         if (message->type() == MessageType::BID) {
-                            _logger->debug("[Process] (A.3.1.1.1.1.1.1) Is message type BID? Yes.");
+                            _logger->debug("[Process] [{}] (A.3.1.1.1.1.1.1) Is message type BID? Yes.", display(message_uuid));
 
                             auto bid_message = dynamic_cast<BID *>(message);
 
                             // (A.3.1.1.1.1.1.2) Leave bid value in Store bid set.
-                            _logger->debug("[Process] (A.3.1.1.1.1.1.2) Leave bid value of in Store bid set.");
+                            _logger->debug("[Process] [{}] (A.3.1.1.1.1.1.2) Leave bid value of in Store bid set.", display(message_uuid));
                             _logger->trace("[Process] Bid value of {}.", bid_message->value());
 
                             switch (source_address_type) {
@@ -320,24 +320,26 @@ void Process::operator()() {
                             }
 
                             // (A.3.1.1.2.1.1.1) Discard message
+                            _logger->debug("[Process] [{}] (A.3.1.1.2.1.1.1) Discard message.", display(message_uuid));
                             _logger->info("Discarding message for UUID {}.", display(message_uuid));
                             continue;
                         } else {
-                            _logger->debug("[Process] (A.3.1.1.1.1.1.1) Is message type BID? No.");
+                            _logger->debug("[Process] [{}] (A.3.1.1.1.1.1.1) Is message type BID? No.", display(message_uuid));
 
                             // (A.3.1.1.2.1.1.1) Discard message
+                            _logger->debug("[Process] [{}] (A.3.1.1.2.1.1.1) Discard message.", display(message_uuid));
                             _logger->info("Discarding message for UUID {}.", display(message_uuid));
                             continue;
                         }
                     } else {
-                        _logger->debug("[Process] (A.3.1.1.1.1) Is UUID's handler in AUCTION_WAITING? No.");
+                        _logger->debug("[Process] [{}] (A.3.1.1.1.1) Is UUID's handler in AUCTION_WAITING? No.", display(message_uuid));
 
                         // (A.3.1.1.2.1.1.1) Discard message
                         _logger->info("Discarding message for UUID {}.", display(message_uuid));
                         continue;
                     }
                 } else {
-                    _logger->debug("[Process] (A.3.1.1) Is UUID's handler running? No");
+                    _logger->debug("[Process] [{}] (A.3.1.1) Is UUID's handler running? No", display(message_uuid));
 
                     switch (uuid_state) {
                         // If state is ASSESSING, PRESENTING, AUCTION_BIDDING, REPLENISHING, or CLOSED,
@@ -346,7 +348,7 @@ void Process::operator()() {
                         case HandlerState::PRESENTING:
                         case HandlerState::AUCTION_BIDDING:
                         case HandlerState::CLOSED:
-                            _logger->debug("[Process] (A.3.1.1.2.1) What is the found handler state? {}",
+                            _logger->debug("[Process] [{}] (A.3.1.1.2.1) What is the found handler state? {}", display(message_uuid),
                                            handler_state_to_string(uuid_state));
 
                             // (A.3.1.1.2.1.1.1) Discard message
@@ -357,12 +359,12 @@ void Process::operator()() {
                         case HandlerState::AUCTION_WAITING:
                         case HandlerState::RESERVED:
                         case HandlerState::READY:
-                            _logger->debug("[Process] (A.3.1.1.2.1) What is the found handler state? {}",
+                            _logger->debug("[Process] [{}] (A.3.1.1.2.1) What is the found handler state? {}", display(message_uuid),
                                            handler_state_to_string(uuid_state));
 
                             // (A.3.1.1.2.1.2.1) Get handler h from Store.
-                            _logger->debug("[Process] (A.3.1.1.2.1.2.1) Get handler h from Store.");
-                            _logger->debug("[Process] (A.3.1.1.2.1.2.2) Execute lifecycle of handler h.");
+                            _logger->debug("[Process] [{}] (A.3.1.1.2.1.2.1) Get handler h from Store.", display(message_uuid));
+                            _logger->debug("[Process] [{}] (A.3.1.1.2.1.2.2) Execute lifecycle of handler h.", display(message_uuid));
 
                             _logger->trace("[Process] Resuming handler on UUID {}.", display(message_uuid));
                             handler = resume_handler(message_uuid);
@@ -371,13 +373,13 @@ void Process::operator()() {
             } else {
                 _logger->debug("[Process] (A.3) Is UUID {} already known? No.", display(message_uuid));
 
-                _logger->debug("[Process] (A.3.2.1) Create handler h with this new UUID.");
+                _logger->debug("[Process] [{}] (A.3.2.1) Create handler h with this new UUID.", display(message_uuid));
                 handler = create_handler(message_uuid);
 
-                _logger->debug("[Process] (A.3.2.2) Save h in Store.");
+                _logger->debug("[Process] [{}] (A.3.2.2) Save h in Store.", display(message_uuid));
                 _store[message_uuid] = handler;
 
-                _logger->debug("[Process] (A.3.2.3) Execute lifecycle of handler h.");
+                _logger->debug("[Process] [{}] (A.3.2.3) Execute lifecycle of handler h.", display(message_uuid));
                 handler->borrow(_dispatcher)->execute();
 #ifdef FROM_SIMUZILLA
                 handler->borrow(_simulated_connections);
@@ -396,7 +398,7 @@ void Process::operator()() {
             // Parse the message type. (A.4)
             switch (message_header.type()) {
                 case MessageType::EAR:
-                    _logger->debug("[Process] (A.4) What is this message type? EAR.");
+                    _logger->debug("[Process] [{}] (A.4) What is this message type? EAR.", display(message_uuid));
 
                     // Get the source of this message and set it on the handler.
                     _logger->trace("[Process] [{}] Marking the handler's source address.", display(message_uuid));
@@ -406,7 +408,7 @@ void Process::operator()() {
                     handler->handle(dynamic_cast<EAR *>(message));
                     break;
                 case MessageType::MAR:
-                    _logger->debug("[Process] (A.4) What is this message type? MAR.");
+                    _logger->debug("[Process] [{}] (A.4) What is this message type? MAR.", display(message_uuid));
 
                     // Get the source of this message and set it on the handler.
                     _logger->trace("[Process] [{}] Marking the handler's source address.", display(message_uuid));
@@ -416,7 +418,7 @@ void Process::operator()() {
                     handler->handle(dynamic_cast<MAR *>(message));
                     break;
                 case MessageType::BID:
-                    _logger->debug("[Process] (A.4) What is this message type? BID.");
+                    _logger->debug("[Process] [{}] (A.4) What is this message type? BID.", display(message_uuid));
 
                     // Get the source of this message and set it on the handler.
                     _logger->trace("[Process] [{}] Marking the handler's source address.", display(message_uuid));
@@ -426,7 +428,7 @@ void Process::operator()() {
                     handler->handle(dynamic_cast<BID *>(message));
                     break;
                 case MessageType::ACC:
-                    _logger->debug("[Process] (A.4) What is this message type? ACC.");
+                    _logger->debug("[Process] [{}] (A.4) What is this message type? ACC.", display(message_uuid));
 
                     // Get the source of this message and set it as an accepting node in the handler.
                     _logger->trace("[Process] [{}] Marking the handler's accepting node address.",
@@ -438,14 +440,14 @@ void Process::operator()() {
                     handler->handle(dynamic_cast<ACC *>(message));
                     break;
                 case MessageType::REF:
-                    _logger->debug("[Process] (A.4) What is this message type? REF.");
+                    _logger->debug("[Process] [{}] (A.4) What is this message type? REF.", display(message_uuid));
 
                     _logger->trace("[Process] [{}] Passing message to the handler.", display(message_uuid));
                     //handler->mark_source(std::make_pair(source_address, source_address_type));
                     handler->handle(dynamic_cast<REF *>(message));
                     break;
                 case MessageType::REP:
-                    _logger->debug("[Process] (A.4) What is this message type? REP.");
+                    _logger->debug("[Process] [{}] (A.4) What is this message type? REP.", display(message_uuid));
 
                     // Get the source of this message and set it on the handler.
                     _logger->trace("[Process] [{}] Marking the handler's source address.", display(message_uuid));

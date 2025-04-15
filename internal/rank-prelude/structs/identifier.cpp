@@ -3,8 +3,8 @@
 UUIDv4 generate_new_uuid() {
     UUIDv4 ulid = 0;
     ulid::EncodeTimeSystemClockNow(ulid);
-    //ulid::EncodeEntropyRand(ulid);
-    ulid::EncodeEntropy([]() { return 4; }, ulid);
+    ulid::EncodeEntropyRand(ulid);
+    //ulid::EncodeEntropy([]() { return 4; }, ulid);
 
     return ulid;
 }
