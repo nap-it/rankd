@@ -706,18 +706,28 @@ void Handler::operator()() {
                                         _logger->trace("[Handler] [{}] Handler state transitioned from {} to {}.", display(_uuid), handler_state_to_string(old_state),
                                                        handler_state_to_string(_state));
 
-                                        // (B.1.2.2.1.2(bis)) Begin timer for MAR timeout.
-                                        _logger->debug("[Handler] [{}] (B.1.2.2.1.2(bis)) Begin timer for MAR timeout.", display(_uuid));
+                                        // (B.1.2.2.1.2) Add message source address as reservation past node.
+                                        _logger->debug("[Handler] [{}] (B.1.2.2.1.2) Add message source address as reservation past node.", display(_uuid));
+                                        _reservation->set_past_node(_source_identifier);
+
+                                        // (B.1.2.2.1.3(bis)) Begin timer for MAR timeout.
+                                        _logger->debug("[Handler] [{}] (B.1.2.2.1.3(bis)) Begin timer for MAR timeout.", display(_uuid));
                                         _timeout_handler->initiate_timeout(this, TimeoutType::MAR);
 
-                                        // (B.1.2.2.1.2) Terminate thread.
-                                        _logger->debug("[Handler] [{}] (B.1.2.2.1.2) Terminate thread.", display(_uuid));
+                                        // (B.1.2.2.1.3) Terminate thread.
+                                        _logger->debug("[Handler] [{}] (B.1.2.2.1.3) Terminate thread.", display(_uuid));
                                         stop();
                                     } break;
                                 }
                             }
                         } else {
                             _logger->debug("[Handler] [{}] (B.1.2.1) Is there a bid in Store for the UUID? Yes.", display(_uuid));
+
+                            auto result = std::find_if(_resources->reservations().begin(),
+                                                        _resources->reservations().end(), [&](const Reservation& reservation) { return reservation.uuid() == _reservation->uuid(); });
+                            if (result != _resources->reservations().end()) {
+                                _reservation = &(*result);
+                            }
 
                             //* Snip of code copied from above. Look for (*//) to end the copied block.
                             // (B.1.2.1.1.1) Get connections towards listener(s).
@@ -858,12 +868,16 @@ void Handler::operator()() {
                                     _logger->trace("[Handler] [{}] Handler state transitioned from {} to {}.", display(_uuid), handler_state_to_string(old_state),
                                                    handler_state_to_string(_state));
 
-                                    // (B.1.2.2.1.2(bis)) Begin timer for MAR timeout.
-                                    _logger->debug("[Handler] [{}] (B.1.2.2.1.2(bis)) Begin timer for MAR timeout.", display(_uuid));
+                                    // (B.1.2.2.1.2) Add message source address as reservation past node.
+                                    _logger->debug("[Handler] [{}] (B.1.2.2.1.2) Add message source address as reservation past node.", display(_uuid));
+                                    _reservation->set_past_node(_source_identifier);
+
+                                    // (B.1.2.2.1.3(bis)) Begin timer for MAR timeout.
+                                    _logger->debug("[Handler] [{}] (B.1.2.2.1.3(bis)) Begin timer for MAR timeout.", display(_uuid));
                                     _timeout_handler->initiate_timeout(this, TimeoutType::MAR);
 
-                                    // (B.1.2.2.1.2) Terminate thread.
-                                    _logger->debug("[Handler] [{}] (B.1.2.2.1.2) Terminate thread.", display(_uuid));
+                                    // (B.1.2.2.1.3) Terminate thread.
+                                    _logger->debug("[Handler] [{}] (B.1.2.2.1.3) Terminate thread.", display(_uuid));
                                     stop();
                                 } break;
                             } // *// End of the copied block.
@@ -977,6 +991,7 @@ void Handler::operator()() {
 
                         // (C.1.2.3) Pre-reserve R with UUID in the store.
                         _logger->debug("[Handler] [{}] (C.1.2.3) Pre-reserve R with UUID in the store.", display(_uuid));
+                        _reservation->update_last_bid(bid_value);
                         _resources->mark_pre_reservation(_reservation);
 
                         // (C.1.2.4(bis)) Begin timer for BID timeout.
@@ -1101,16 +1116,16 @@ void Handler::operator()() {
                             _logger->trace("[Handler] [{}] Handler state transitioned from {} to {}.", display(_uuid), handler_state_to_string(old_state),
                                            handler_state_to_string(_state));
 
-                            // (D.1.1.3.1.1.1.2) Add message source address as reservation past node.
-                            _logger->debug("[Handler] [{}] (D.1.1.3.1.1.1.2) Add message source address as reservation past node.", display(_uuid));
-                            //_reservation->set_past_node(_source_identifier);
+                            // // (D.1.1.3.1.1.1.2) Add message source address as reservation past node.
+                            // _logger->debug("[Handler] [{}] (D.1.1.3.1.1.1.2) Add message source address as reservation past node.", display(_uuid));
+                            // //_reservation->set_past_node(_source_identifier);
 
-                            // (D.1.1.3.1.1.1.3(bis)) Begin timer for EAR timeout.
-                            _logger->debug("[Handler] [{}] (D.1.1.3.1.1.1.3(bis)) Begin timer for EAR timeout.", display(_uuid));
+                            // (D.1.1.3.1.1.1.2(bis)) Begin timer for EAR timeout.
+                            _logger->debug("[Handler] [{}] (D.1.1.3.1.1.1.2(bis)) Begin timer for EAR timeout.", display(_uuid));
                             _timeout_handler->initiate_timeout(this, TimeoutType::EAR);
 
-                            // (D.1.1.3.1.1.1.3) Terminate thread.
-                            _logger->debug("[Handler] [{}] (D.1.1.3.1.1.1.3) Terminate thread.", display(_uuid));
+                            // (D.1.1.3.1.1.1.2) Terminate thread.
+                            _logger->debug("[Handler] [{}] (D.1.1.3.1.1.1.2) Terminate thread.", display(_uuid));
                             stop();
                             break;
                         } else {
@@ -1147,17 +1162,17 @@ void Handler::operator()() {
                                 _logger->trace("[Handler] [{}] Handler state transitioned from {} to {}.", display(_uuid), handler_state_to_string(old_state),
                                                handler_state_to_string(_state));
 
-                                // (D.1.1.3.1.1.2.4) Add message source address as reservation past node.
-                                _logger->debug("[Handler] [{}] (D.1.1.3.1.1.2.4) Add message source address as reservation past node.", display(_uuid));
-                                _reservation->set_past_node(_source_identifier);
+                                // // (D.1.1.3.1.1.2.4) Add message source address as reservation past node.
+                                // _logger->debug("[Handler] [{}] (D.1.1.3.1.1.2.4) Add message source address as reservation past node.", display(_uuid));
+                                // _reservation->set_past_node(_source_identifier);
 
-                                // (D.1.1.3.1.1.2.5(bis)) Begin timer for EAR timeout.
-                                _logger->debug("[Handler] [{}] (D.1.1.3.1.1.2.5(bis)) Begin timer for EAR timeout.", display(_uuid));
+                                // (D.1.1.3.1.1.2.4(bis)) Begin timer for EAR timeout.
+                                _logger->debug("[Handler] [{}] (D.1.1.3.1.1.2.4(bis)) Begin timer for EAR timeout.", display(_uuid));
                                 _timeout_handler->initiate_timeout(this, TimeoutType::EAR);
                                 // TODO _timeout_handler->initiate_timeout(this, RANK_EAR_TO_EAR_TIMEOUT);
 
-                                // (D.1.1.3.1.1.2.5) Terminate thread.
-                                _logger->debug("[Handler] [{}] (D.1.1.3.1.1.2.5) Terminate thread.", display(_uuid));
+                                // (D.1.1.3.1.1.2.4) Terminate thread.
+                                _logger->debug("[Handler] [{}] (D.1.1.3.1.1.2.4) Terminate thread.", display(_uuid));
                                 stop();
                                 break;
                             }
