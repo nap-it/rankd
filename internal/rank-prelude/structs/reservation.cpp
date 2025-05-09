@@ -1,5 +1,18 @@
 #include "structs/reservation.h"
 
+Reservation::Reservation(const Reservation& reservation) {
+    _logger = reservation.logger();
+    _state = ReservationState::CREATED;
+    _priority = reservation.priority();
+    _capabilities = reservation.requirements();
+    _uuid = reservation.uuid();
+    _listener_length = reservation.listener_length();
+    _listener = reservation.listener();
+    _estimated_bid = reservation.last_bid();
+
+    _logger->debug("[Reservation] [{}] Reservation object copied with state {}.", display(_uuid), reservation_state_as_string(_state));
+}
+
 Reservation::Reservation(const Reservation& reservation, const std::string& logger_name) {
     _logger = spdlog::get(logger_name);
     _state = ReservationState::CREATED;
@@ -19,6 +32,8 @@ Reservation::Reservation(const RequestingCapabilities& capabilities, uint8_t pri
     _priority = priority;
     _capabilities = capabilities;
     _estimated_bid = -1;
+
+    _logger->debug("[Reservation] [{}] Reservation object created first with state {}.", display(_uuid), reservation_state_as_string(_state));
 }
 
 void Reservation::add_next_node(const std::pair<std::vector<uint8_t>, IdentifierType> &node) {
@@ -67,6 +82,10 @@ std::pair<std::vector<uint8_t>, IdentifierType> Reservation::past_node() const {
 
 double Reservation::last_bid() const {
     return _estimated_bid;
+}
+
+std::shared_ptr<spdlog::logger> Reservation::logger() const {
+    return _logger;
 }
 
 Reservation* Reservation::mark_listener(const std::vector<uint8_t>& listener, uint8_t length) {

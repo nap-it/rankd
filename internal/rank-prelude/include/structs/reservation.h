@@ -15,6 +15,7 @@
 class Reservation {
 public:
     // Instance handling.
+    Reservation(const Reservation& reservation);
     Reservation(const Reservation& reservation, const std::string& logger_name);
     Reservation(const RequestingCapabilities& capabilities, uint8_t priority, const std::string& logger_name);
 
@@ -32,6 +33,7 @@ public:
     [[nodiscard]] std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> next_nodes() const;
     [[nodiscard]] std::pair<std::vector<uint8_t>, IdentifierType> past_node() const;
     [[nodiscard]] double last_bid() const;
+    [[nodiscard]] std::shared_ptr<spdlog::logger> logger() const;
 
     // Setters.
     Reservation* mark_listener(const std::vector<uint8_t>& listener, uint8_t length);

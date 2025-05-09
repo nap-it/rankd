@@ -154,6 +154,10 @@ double Resources::current_resource_assessment(const RequestingCapabilities &requ
         }
     }
 
+    if (individual_assessments.empty()) {
+        return 0.0;
+    }
+
     std::function<double(const std::vector<double>&)> alpha;
     alpha = [&](const std::vector<double>& requirements) -> double {
         if (requirements.size() == 1) {
@@ -299,31 +303,31 @@ double Resources::proximity_pl_assessment(const std::vector<uint8_t> &target, bo
     return final_value;
 }
 
-Reservation* Resources::available_for_performance(const Reservation& statement, uint8_t priority) { // TODO This is implemented disregarding the VIRTUALLY_PRE_RESERVED clause.
+Reservation* Resources::available_for_performance(Reservation* statement, uint8_t priority) { // TODO This is implemented disregarding the VIRTUALLY_PRE_RESERVED clause.
     // Check if there are no resources to perform this statement.
-    if (bare_metal_resource_assessment(statement.requirements()) == 0) {
+    if (bare_metal_resource_assessment(statement->requirements()) == 0) {
         _logger->trace("[Resources] [{}] The current admission request cannot be done here by bad bare-metal requirements.",
-                       display(statement.uuid()));
+                       display(statement->uuid()));
         return nullptr;
     } else {
         // Estimate the bid.
-        Reservation this_reservation = statement;
-        this_reservation.set_priority(priority);
+        statement->set_priority(priority);
 
-        auto bid = estimate_bid(this_reservation);
-        this_reservation.update_last_bid(bid);
-        _logger->trace("[Resources] [{}] Estimated a bid of {}.", display(statement.uuid()), bid);
+        auto bid = estimate_bid(*statement);
+        statement->update_last_bid(bid);
+        _logger->trace("[Resources] [{}] Estimated a bid of {}.", display(statement->uuid()), bid);
 
         if (bid != 0) {
             // Otherwise, then check if there is a reservation with lower priority that could be unconsidered.
-            auto reservation_pointer = std::min_element(_reservations.begin(), _reservations.end());
+            //auto reservation_pointer = std::min_element(_reservations.begin(), _reservations.end());
 
             // Create a new reservation with the given statement where the minimum reservation was replenished.
-            _reservations.insert(reservation_pointer, this_reservation);
+            //_reservations.insert(reservation_pointer, this_reservation);
+            _reservations.push_back(*statement);
             //*reservation_pointer = this_reservation;
 
             // Return the location of such a reservation.
-            return &(*reservation_pointer);
+            return std::addressof(_reservations.back());
         } else {
             return nullptr;
         }
@@ -353,6 +357,17 @@ Resources* Resources::mark_reservation(Reservation* reservation) {
         _logger->debug("[Reservation] Reserving directly a request for resources as this is the listener.");
         reservation->reserve();
     } else {
+        if (found_reservation->state() != ReservationState::CREATED) {
+            found_reservation->mark_reserved();
+        } else {
+            found_reservation->reserve();
+        }
+
+    }
+
+    _reservations.sort();
+
+        /* FIXME Removed to test new logic on reservations.
         // Remove reservation in the set of reservations.
         _reservations.erase(found_reservation);
 
@@ -367,6 +382,7 @@ Resources* Resources::mark_reservation(Reservation* reservation) {
     // Add the modified reservation to the set of reservations.
     _reservations.push_back(*reservation);
     _reservations.sort();
+    */
 
     return this;
 }
@@ -381,6 +397,10 @@ Resources* Resources::mark_pre_reservation(Reservation* reservation) {
         return this;
     }
 
+    found_reservation->pre_reserve();
+    _reservations.sort();
+
+    /* FIXME Removed to test new logic on reservations.
     // Remove reservation in the set of reservations.
     _reservations.erase(found_reservation);
 
@@ -390,12 +410,19 @@ Resources* Resources::mark_pre_reservation(Reservation* reservation) {
     // Add the modified reservation to the set of reservations.
     _reservations.push_back(*reservation);
     _reservations.sort();
+     */
 
     return this;
 }
 
 std::list<Reservation> Resources::reservations() const {
     return _reservations;
+}
+
+Reservation *Resources::get_reservation_for(const UUIDv4 &uuid) {
+    auto reservation_pointer = std::find_if(_reservations.begin(), _reservations.end(), [&](const Reservation& reservation) { return reservation.uuid() == uuid; });
+
+    return reservation_pointer != _reservations.end() ? std::addressof(*reservation_pointer) : nullptr;
 }
 
 size_t Resources::reservations_size() const {

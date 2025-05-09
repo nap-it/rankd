@@ -120,6 +120,10 @@ void cbor_stream_decode(void *src, const struct cbor_callbacks* callbacks, void*
 }
 
 rapidjson::Value load_cbor_to_decode(cbor_item_t* item, rapidjson::Document::AllocatorType& allocator) {
+    if (item == nullptr) {
+        return rapidjson::Value{};
+    }
+
     switch (cbor_typeof(item)) {
         case CBOR_TYPE_UINT:
             return rapidjson::Value(cbor_get_int(item));

@@ -13,6 +13,10 @@ std::vector<uint8_t> marshall(const std::string& stringified_json) {
 }
 
 RequestingCapabilities unmarshal(const std::vector<uint8_t>& data) {
+    if (data.empty()) {
+        return {};
+    }
+
     auto capabilities_as_json = deserialize_json(data.data(), data.size());
 
     auto yang_compliant_json = validate_yang(&capabilities_as_json);

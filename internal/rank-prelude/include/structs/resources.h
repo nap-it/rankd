@@ -32,11 +32,12 @@ public:
     double estimate_bid(const Reservation& reservation);
 
     // Reservation handling.
-    Reservation* available_for_performance(const Reservation& statement, uint8_t priority);
+    Reservation* available_for_performance(Reservation* statement, uint8_t priority);
     Resources* replenish_reservation(Reservation* reservation);
     Resources* mark_reservation(Reservation* reservation);
     Resources* mark_pre_reservation(Reservation* reservation);
     std::list<Reservation> reservations() const;
+    Reservation* get_reservation_for(const UUIDv4& uuid);
     size_t reservations_size() const;
 
     // Threading control mechanisms.
