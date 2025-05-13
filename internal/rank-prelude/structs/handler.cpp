@@ -175,10 +175,6 @@ std::set<std::pair<std::vector<uint8_t>, IdentifierType>> Handler::max_bids() {
 }
 
 bool Handler::is_max_bid_unique(const std::set<std::pair<std::vector<uint8_t>, IdentifierType>> &targets) const {
-    _logger->critical("[Handler] bids are:");
-    for (const auto& [vec, id]: targets) {
-        _logger->critical("[Handler] -> {} with {}", vec[0], identifier_to_string(id));
-    }
     return targets.size() == 1;
 }
 
