@@ -382,6 +382,8 @@ bool Handler::is_running() const {
 
 void Handler::operator()() {
     _logger->trace("[Handler] [{}] This handler session is starting/resuming functions.", display(_uuid));
+    _logger->warn("[Handler] [{}] Handler with reference {}.", display(_uuid), fmt::ptr(this));
+    _logger->warn("[Handler] [{}] Handler is being ran with {} reservations.", display(_uuid), _resources->reservations_size());
 
     // Variables for debugging purposes.
     HandlerState old_state{};
@@ -392,6 +394,8 @@ void Handler::operator()() {
         if (_message != nullptr) {
             // Get reservation for this current UUID.
             _reservation = _resources->get_reservation_for(_uuid);
+            _logger->error("[Handler] [{}] Reservation's pointer at {}.", display(_uuid), fmt::ptr(_reservation));
+            _logger->error("[Handler] [{}] Source Identifier's pointer at {}.", display(_uuid), fmt::ptr(&_source_identifier));
 
             if (_reservation != nullptr) {
                 switch (_reservation->state()) {
@@ -584,9 +588,37 @@ void Handler::operator()() {
                             _logger->debug("[Handler] [{}] (B.1.1.2) Create a REF message and send it back.",
                                            display(_uuid));
                             REF *ref_message = new REF(_uuid);
+#ifdef FROM_SIMUZILLA
+                            std::vector<std::pair<std::vector<std::pair<uint8_t, uint8_t>>, IdentifierType>> connections_to_target_raw =
+                                    get_connections_to(_source_identifier.first.at(0));
+                            _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:",
+                                           display(_uuid), connections_to_target_raw.size(),
+                                           connections_to_target_raw.size() == 1 ? "" : "s",
+                                           _source_identifier.first.at(0));
+                            for (const auto &[connection, type]: connections_to_target_raw) {
+                                _logger->trace("[Handler]                               |-> {} with depth {}",
+                                               connection.at(0).second, connection.at(0).first);
+                            }
+                            std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target{};
+                            uint8_t min_depth = UINT8_MAX;
+                            for (const auto &[locators, type]: connections_to_target_raw) {
+                                for (const auto &[depth, locator]: locators) {
+                                    if (depth < min_depth) {
+                                        min_depth = depth;
+                                    }
+                                    if (depth == min_depth) {
+                                        connections_to_target.push_back({{locator}, type});
+                                    }
+                                }
+                            }
+
+#else
+                            std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target =
+                                        get_connections_to(_source_identifier.first);
+#endif
                             _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid),
                                            ref_message->display());
-                            _dispatcher->send_message(ref_message, _source_identifier.first, _source_identifier.second);
+                            _dispatcher->send_message(ref_message, connections_to_target.front().first, _source_identifier.second);
 
                             old_state = _state;
                             _state = HandlerState::CLOSED;
@@ -623,8 +655,37 @@ void Handler::operator()() {
                                 _logger->debug("[Handler] [{}] (B.1.1.2) Create a REF message and send it back.",
                                                display(_uuid));
                                 REF *ref_message = new REF(_uuid);
-                                _dispatcher->send_message(ref_message, _source_identifier.first,
-                                                          _source_identifier.second);
+#ifdef FROM_SIMUZILLA
+                                std::vector<std::pair<std::vector<std::pair<uint8_t, uint8_t>>, IdentifierType>> connections_to_target_raw =
+                                        get_connections_to(_source_identifier.first.at(0));
+                                _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:",
+                                               display(_uuid), connections_to_target_raw.size(),
+                                               connections_to_target_raw.size() == 1 ? "" : "s",
+                                               _source_identifier.first.at(0));
+                                for (const auto &[connection, type]: connections_to_target_raw) {
+                                    _logger->trace("[Handler]                               |-> {} with depth {}",
+                                                   connection.at(0).second, connection.at(0).first);
+                                }
+                                std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target{};
+                                uint8_t min_depth = UINT8_MAX;
+                                for (const auto &[locators, type]: connections_to_target_raw) {
+                                    for (const auto &[depth, locator]: locators) {
+                                        if (depth < min_depth) {
+                                            min_depth = depth;
+                                        }
+                                        if (depth == min_depth) {
+                                            connections_to_target.push_back({{locator}, type});
+                                        }
+                                    }
+                                }
+
+#else
+                                std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target =
+                                        get_connections_to(_source_identifier.first);
+#endif
+                                _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid),
+                                               ref_message->display());
+                                _dispatcher->send_message(ref_message, connections_to_target.front().first, _source_identifier.second);
 
                                 old_state = _state;
                                 _state = HandlerState::CLOSED;
@@ -769,6 +830,8 @@ void Handler::operator()() {
                                                 display(_uuid));
                                         _reservation->set_past_node(_source_identifier);
                                         _logger->error("DBG: Set past node was {}.", _reservation->past_node().first.at(0));
+                                        _logger->error("[Handler] [{}] Reservation's pointer at {}.", display(_uuid), fmt::ptr(_reservation));
+                                        _logger->error("[Handler] [{}] Source Identifier's pointer at {}.", display(_uuid), fmt::ptr(&_source_identifier));
 
                                         // (B.1.2.2.2.3(bis)) Begin timer for EAR timeout.
                                         _logger->debug("[Handler] [{}] (B.1.2.2.2.3(bis)) Begin timer for EAR timeout.",
@@ -825,6 +888,8 @@ void Handler::operator()() {
                                                 display(_uuid));
                                         _reservation->set_past_node(_source_identifier);
                                         _logger->error("DBG: Set past node was {}.", _reservation->past_node().first.at(0));
+                                        _logger->error("[Handler] [{}] Reservation's pointer at {}.", display(_uuid), fmt::ptr(_reservation));
+                                        _logger->error("[Handler] [{}] Source Identifier's pointer at {}.", display(_uuid), fmt::ptr(&_source_identifier));
 
                                         // (B.1.2.2.1.3(bis)) Begin timer for MAR timeout.
                                         _logger->debug("[Handler] [{}] (B.1.2.2.1.3(bis)) Begin timer for MAR timeout.",
@@ -843,7 +908,7 @@ void Handler::operator()() {
                             _logger->debug("[Handler] [{}] (B.1.2.1) Is there a bid in Store for the UUID? Yes.",
                                            display(_uuid));
 
-                            auto reservations = _resources->reservations();
+                            /*auto reservations = _resources->reservations(); // FIXME This code was giving deadends on reservation reference trackings.
                             auto result = std::find_if(reservations.begin(),
                                                        reservations.end(), [&](const Reservation &reservation) {
                                         return reservation.uuid() == _reservation->uuid();
@@ -851,6 +916,12 @@ void Handler::operator()() {
                             if (result != _resources->reservations().end()) {
                                 //_logger->debug("This happened with status of {} and listener {}.", reservation_state_as_string(result->state()), result->listener().at(0));
                                 _reservation = std::addressof(*result);
+                            }*/
+
+                            for (auto& reservation : _resources->reservations()) {
+                                if (reservation.uuid() == _uuid) {
+                                    _reservation = &reservation;
+                                }
                             }
 
                             //* Snip of code copied from above. Look for (*//) to end the copied block.
@@ -976,6 +1047,8 @@ void Handler::operator()() {
                                             display(_uuid));
                                     _reservation->set_past_node(_source_identifier);
                                     _logger->error("DBG: Set past node was {}.", _reservation->past_node().first.at(0));
+                                    _logger->error("[Handler] [{}] Reservation used to register past node was {}.",
+                                                   display(_uuid), fmt::ptr(_reservation));
 
                                     // (B.1.2.2.2.3(bis)) Begin timer for EAR timeout.
                                     _logger->debug("[Handler] [{}] (B.1.2.2.2.3(bis)) Begin timer for EAR timeout.",
@@ -1031,6 +1104,8 @@ void Handler::operator()() {
                                             display(_uuid));
                                     _reservation->set_past_node(_source_identifier);
                                     _logger->error("DBG: Set past node was {}.", _reservation->past_node().first.at(0));
+                                    _logger->error("[Handler] [{}] Reservation used to register past node was {}.",
+                                                   display(_uuid), fmt::ptr(_reservation));
 
                                     // (B.1.2.2.1.3(bis)) Begin timer for MAR timeout.
                                     _logger->debug("[Handler] [{}] (B.1.2.2.1.3(bis)) Begin timer for MAR timeout.",
@@ -1485,6 +1560,8 @@ void Handler::operator()() {
                             new_target = _reservation->past_node();
 #else
                             // Get connecting port to targeted entity.
+                            _logger->error("[Handler] [{}] Reservation's pointer at {}.", display(_uuid), fmt::ptr(_reservation));
+                            _logger->error("[Handler] [{}] Source Identifier's pointer at {}.", display(_uuid), fmt::ptr(&_source_identifier));
                             if (_reservation->past_node().second == IdentifierType::Simulation) {
                                 auto topology = _dispatcher->get_topology();
                                 auto found = std::find(topology.begin(), topology.end(),
@@ -1537,7 +1614,17 @@ void Handler::operator()() {
                     // (F.1) Delete pre-reservations with UUID in the Store.
                     _logger->debug("[Handler] [{}] (F.1) Delete pre-reservations with UUID in the Store.",
                                    display(_uuid));
-                    // TODO
+                    {
+                        std::lock_guard<std::mutex> guard(*_store_locker);
+
+                        for (const auto &[uuid, handler]: *_store) {
+                            if (uuid == _uuid) {
+                                if (handler->associated_reservation() != nullptr and handler->associated_reservation()->state() == ReservationState::PRE_RESERVED) {
+                                    _store->erase(uuid);
+                                }
+                            }
+                        }
+                    }
 
                     // (F.2) Is UUID in the TranslationTable?
                     if (not is_translation_table_empty_for(_uuid)) {
@@ -1546,7 +1633,13 @@ void Handler::operator()() {
                         // (F.2.1.1) Delete UUID* from the Translation Table.
                         _logger->debug("[Handler] [{}] (F.2.1.1) Delete UUID* from the Translation Table.",
                                        display(_uuid));
-                        // TODO
+                        {
+                            std::lock_guard<std::mutex> guard(*_translation_table_locker);
+
+                            auto old_uuid = _translation_table->at(_uuid);
+                            _translation_table->erase(_uuid);
+                            _uuid = old_uuid;
+                        }
 
                         // (F.2.1.2) Is TranslationTable empty?
                         if (not is_translation_table_empty_for(_uuid)) {
@@ -1604,7 +1697,7 @@ void Handler::operator()() {
 
 
                             // (F.2.1.3) Terminate the thread.
-                            _logger->debug("[Handler] [{}] (F.2.1.3) Terminate the thread.");
+                            _logger->debug("[Handler] [{}] (F.2.1.3) Terminate the thread.", display(_uuid));
                             stop();
                             break;
                         }
@@ -1643,6 +1736,8 @@ void Handler::operator()() {
                             new_target = _source_identifier;
 #else
                             // Get connecting port to targeted entity.
+                            _logger->error("[Handler] [{}] Reservation's pointer at {}.", display(_uuid), fmt::ptr(_reservation));
+                            _logger->error("[Handler] [{}] Source Identifier's pointer at {}.", display(_uuid), fmt::ptr(&_source_identifier));
                             if (_source_identifier.second == IdentifierType::Simulation) {
                                 auto topology = _dispatcher->get_topology();
                                 auto found = std::find(topology.begin(), topology.end(),

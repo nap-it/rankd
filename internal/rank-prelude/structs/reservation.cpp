@@ -9,6 +9,8 @@ Reservation::Reservation(const Reservation& reservation) {
     _listener_length = reservation.listener_length();
     _listener = reservation.listener();
     _estimated_bid = reservation.last_bid();
+    _past_node = reservation.past_node();
+    _next_nodes = reservation.next_nodes();
 
     _logger->debug("[Reservation] [{}] Reservation object copied with state {}.", display(_uuid), reservation_state_as_string(_state));
 }
@@ -22,6 +24,8 @@ Reservation::Reservation(const Reservation& reservation, const std::string& logg
     _listener_length = reservation.listener_length();
     _listener = reservation.listener();
     _estimated_bid = -1;
+    _past_node = reservation.past_node();
+    _next_nodes = reservation.next_nodes();
 
     _logger->debug("[Reservation] [{}] Reservation object created with state {}.", display(_uuid), reservation_state_as_string(_state));
 }

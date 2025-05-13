@@ -352,20 +352,36 @@ Resources* Resources::replenish_reservation(Reservation* reservation) {
 
 Resources* Resources::mark_reservation(Reservation* reservation) {
     // Find reservation in reservations and if no such reservation was found, then throw exception.
-    auto found_reservation = std::find(_reservations.begin(), _reservations.end(), *reservation);
-    if (found_reservation == _reservations.end()) {
-        _logger->debug("[Reservation] Reserving directly a request for resources as this is the listener.");
-        reservation->reserve();
-    } else {
-        if (found_reservation->state() != ReservationState::CREATED) {
-            found_reservation->mark_reserved();
-        } else {
-            found_reservation->reserve();
+    bool found = false;
+    for (auto& reservation_item: _reservations) {
+        if (*reservation == reservation_item) {
+            found = true;
+            if (reservation_item.state() != ReservationState::CREATED) {
+                reservation_item.mark_reserved();
+            } else {
+                reservation_item.reserve();
+            }
         }
-
     }
 
-    _reservations.sort();
+    if (not found) {
+        _logger->debug("[Reservation] Reserving directly a request for resources as this is the listener.");
+        reservation->reserve();
+    }
+
+    // auto found_reservation = std::find(_reservations.begin(), _reservations.end(), *reservation);
+    // if (found_reservation == _reservations.end()) {
+    //     _logger->debug("[Reservation] Reserving directly a request for resources as this is the listener.");
+    //     reservation->reserve();
+    // } else {
+    //     if (found_reservation->state() != ReservationState::CREATED) {
+    //         found_reservation->mark_reserved();
+    //     } else {
+    //         found_reservation->reserve();
+    //     }
+    // }
+
+    //_reservations.sort();
 
         /* FIXME Removed to test new logic on reservations.
         // Remove reservation in the set of reservations.
@@ -389,16 +405,31 @@ Resources* Resources::mark_reservation(Reservation* reservation) {
 
 Resources* Resources::mark_pre_reservation(Reservation* reservation) {
     // Find reservation in reservations and if no such reservation was found, then throw exception.
-    auto found_reservation = std::find(_reservations.begin(), _reservations.end(), *reservation);
-    if (found_reservation == _reservations.end()) {
+    bool found = false;
+    for (auto& reservation_item: _reservations) {
+        if (*reservation == reservation_item) {
+            found = true;
+            reservation_item.pre_reserve();
+            //_reservations.sort();
+        }
+    }
+
+    if (not found) {
         reservation->pre_reserve();
         _reservations.push_back(*reservation);
-        _reservations.sort();
+        //_reservations.sort();
         return this;
     }
 
-    found_reservation->pre_reserve();
-    _reservations.sort();
+    // auto found_reservation = std::find(_reservations.begin(), _reservations.end(), *reservation);
+    // if (found_reservation == _reservations.end()) {
+    //     reservation->pre_reserve();
+    //     _reservations.push_back(*reservation);
+    //     _reservations.sort();
+    //     return this;
+    // }
+    // found_reservation->pre_reserve();
+    // _reservations.sort();
 
     /* FIXME Removed to test new logic on reservations.
     // Remove reservation in the set of reservations.
@@ -415,7 +446,7 @@ Resources* Resources::mark_pre_reservation(Reservation* reservation) {
     return this;
 }
 
-std::list<Reservation> Resources::reservations() const {
+std::list<Reservation>& Resources::reservations() {
     return _reservations;
 }
 
