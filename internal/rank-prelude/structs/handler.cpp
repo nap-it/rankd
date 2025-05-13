@@ -175,6 +175,10 @@ std::set<std::pair<std::vector<uint8_t>, IdentifierType>> Handler::max_bids() {
 }
 
 bool Handler::is_max_bid_unique(const std::set<std::pair<std::vector<uint8_t>, IdentifierType>> &targets) const {
+    _logger->critical("[Handler] bids are:");
+    for (const auto& [vec, id]: targets) {
+        _logger->critical("[Handler] -> {} with {}", vec[0], identifier_to_string(id));
+    }
     return targets.size() == 1;
 }
 
@@ -382,20 +386,15 @@ bool Handler::is_running() const {
 
 void Handler::operator()() {
     _logger->trace("[Handler] [{}] This handler session is starting/resuming functions.", display(_uuid));
-    _logger->warn("[Handler] [{}] Handler with reference {}.", display(_uuid), fmt::ptr(this));
-    _logger->warn("[Handler] [{}] Handler is being ran with {} reservations.", display(_uuid), _resources->reservations_size());
 
     // Variables for debugging purposes.
     HandlerState old_state{};
 
     // Initialization for the threading mechanism.
-
     while (_running) {
         if (_message != nullptr) {
             // Get reservation for this current UUID.
             _reservation = _resources->get_reservation_for(_uuid);
-            _logger->error("[Handler] [{}] Reservation's pointer at {}.", display(_uuid), fmt::ptr(_reservation));
-            _logger->error("[Handler] [{}] Source Identifier's pointer at {}.", display(_uuid), fmt::ptr(&_source_identifier));
 
             if (_reservation != nullptr) {
                 switch (_reservation->state()) {
@@ -829,9 +828,6 @@ void Handler::operator()() {
                                                 "[Handler] [{}] (B.1.2.2.2.2) Add message source address as reservation past node.",
                                                 display(_uuid));
                                         _reservation->set_past_node(_source_identifier);
-                                        _logger->error("DBG: Set past node was {}.", _reservation->past_node().first.at(0));
-                                        _logger->error("[Handler] [{}] Reservation's pointer at {}.", display(_uuid), fmt::ptr(_reservation));
-                                        _logger->error("[Handler] [{}] Source Identifier's pointer at {}.", display(_uuid), fmt::ptr(&_source_identifier));
 
                                         // (B.1.2.2.2.3(bis)) Begin timer for EAR timeout.
                                         _logger->debug("[Handler] [{}] (B.1.2.2.2.3(bis)) Begin timer for EAR timeout.",
@@ -887,9 +883,6 @@ void Handler::operator()() {
                                                 "[Handler] [{}] (B.1.2.2.1.2) Add message source address as reservation past node.",
                                                 display(_uuid));
                                         _reservation->set_past_node(_source_identifier);
-                                        _logger->error("DBG: Set past node was {}.", _reservation->past_node().first.at(0));
-                                        _logger->error("[Handler] [{}] Reservation's pointer at {}.", display(_uuid), fmt::ptr(_reservation));
-                                        _logger->error("[Handler] [{}] Source Identifier's pointer at {}.", display(_uuid), fmt::ptr(&_source_identifier));
 
                                         // (B.1.2.2.1.3(bis)) Begin timer for MAR timeout.
                                         _logger->debug("[Handler] [{}] (B.1.2.2.1.3(bis)) Begin timer for MAR timeout.",
@@ -907,16 +900,6 @@ void Handler::operator()() {
                         } else {
                             _logger->debug("[Handler] [{}] (B.1.2.1) Is there a bid in Store for the UUID? Yes.",
                                            display(_uuid));
-
-                            /*auto reservations = _resources->reservations(); // FIXME This code was giving deadends on reservation reference trackings.
-                            auto result = std::find_if(reservations.begin(),
-                                                       reservations.end(), [&](const Reservation &reservation) {
-                                        return reservation.uuid() == _reservation->uuid();
-                                    });
-                            if (result != _resources->reservations().end()) {
-                                //_logger->debug("This happened with status of {} and listener {}.", reservation_state_as_string(result->state()), result->listener().at(0));
-                                _reservation = std::addressof(*result);
-                            }*/
 
                             for (auto& reservation : _resources->reservations()) {
                                 if (reservation.uuid() == _uuid) {
@@ -1046,9 +1029,6 @@ void Handler::operator()() {
                                             "[Handler] [{}] (B.1.2.2.2.2) Add message source address as reservation past node.",
                                             display(_uuid));
                                     _reservation->set_past_node(_source_identifier);
-                                    _logger->error("DBG: Set past node was {}.", _reservation->past_node().first.at(0));
-                                    _logger->error("[Handler] [{}] Reservation used to register past node was {}.",
-                                                   display(_uuid), fmt::ptr(_reservation));
 
                                     // (B.1.2.2.2.3(bis)) Begin timer for EAR timeout.
                                     _logger->debug("[Handler] [{}] (B.1.2.2.2.3(bis)) Begin timer for EAR timeout.",
@@ -1077,7 +1057,6 @@ void Handler::operator()() {
 #ifdef FROM_SIMUZILLA
                                         listener.at(0) = _reservation->listener().at(0);
 
-                                        _logger->error("DBG: Listener through EAR is {}", _reservation->listener().at(0));
 #else
                                         std::copy_n(ear_message->listener().begin(), ear_message->listener_length(), listener.begin());
 #endif
@@ -1103,9 +1082,6 @@ void Handler::operator()() {
                                             "[Handler] [{}] (B.1.2.2.1.2) Add message source address as reservation past node.",
                                             display(_uuid));
                                     _reservation->set_past_node(_source_identifier);
-                                    _logger->error("DBG: Set past node was {}.", _reservation->past_node().first.at(0));
-                                    _logger->error("[Handler] [{}] Reservation used to register past node was {}.",
-                                                   display(_uuid), fmt::ptr(_reservation));
 
                                     // (B.1.2.2.1.3(bis)) Begin timer for MAR timeout.
                                     _logger->debug("[Handler] [{}] (B.1.2.2.1.3(bis)) Begin timer for MAR timeout.",
@@ -1201,8 +1177,6 @@ void Handler::operator()() {
                     // Mark reservation UUID.
                     _reservation->set_uuid(_uuid);
 
-                    _logger->error("DBG: Listener through MAR is {}", _reservation->listener().at(0));
-
                     // (C.1) Can R be performed with priority p?
                     auto *position = _resources->available_for_performance(_reservation, mar_message->priority());
                     if (position != nullptr) {
@@ -1282,8 +1256,6 @@ void Handler::operator()() {
                 }
                     break;
                 case MessageType::BID: {
-                    _logger->error("DBG: Listener on starting BID is {}.", _reservation->listener().at(0));
-
                     // (D.1) Is auction waiting?
                     if (_state != HandlerState::AUCTION_WAITING) {
                         _logger->debug("[Handler] [{}] (D.1) Is auction waiting? No.", display(_uuid));
@@ -1355,7 +1327,6 @@ void Handler::operator()() {
                             std::array<uint8_t, 16> listener{};
 #ifdef FROM_SIMUZILLA
                             listener.at(0) = _reservation->listener().at(0);
-                            _logger->error("DBG: Listener is {}", listener.at(0));
 #else
                             std::copy_n(_reservation->listener().begin(), _reservation->listener_length(), listener.begin());
 #endif
@@ -1411,7 +1382,7 @@ void Handler::operator()() {
                             // translations UUID to UUID* in TranslationTable.
                             _logger->debug("[Handler] [{}] (D.1.1.3.1.1.2.1) Create new UUID* for each max(B) node.",
                                            display(_uuid));
-                            for (const auto &bid_target: _bids) {
+                            for (const auto &bid_target: maximum_bid) {
                                 auto new_uuid = create_translation(_uuid);
                                 _logger->debug("[Handler] [{}] (D.1.1.3.1.1.2.1) Created {} as a new UUID*.",
                                                display(_uuid), display(new_uuid));
@@ -1439,7 +1410,7 @@ void Handler::operator()() {
                                 std::vector<uint8_t> target;
 #ifdef FROM_SIMUZILLA
                                 std::vector<std::pair<std::vector<std::pair<uint8_t, uint8_t>>, IdentifierType>> connections_to_target_raw =
-                                        get_connections_to(bid_target.second.first.at(0));
+                                        get_connections_to(bid_target.first.at(0));
                                 _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:",
                                                display(_uuid), connections_to_target_raw.size(),
                                                connections_to_target_raw.size() == 1 ? "" : "s",
@@ -1453,7 +1424,7 @@ void Handler::operator()() {
                                 target = minimum_bids.begin()->first;
 #endif
                                 _dispatcher->send_message(ear_message, target,
-                                                          bid_target.second.second);
+                                                          bid_target.second);
 
                                 // Change the state to PRE_RESERVED.
                                 old_state = _state;
@@ -1474,9 +1445,9 @@ void Handler::operator()() {
 
                                 // (D.1.1.3.1.1.2.4) Terminate thread.
                                 _logger->debug("[Handler] [{}] (D.1.1.3.1.1.2.4) Terminate thread.", display(_uuid));
-                                stop();
-                                break;
                             }
+                            stop();
+                            break;
                         }
                     }
 
@@ -1560,8 +1531,6 @@ void Handler::operator()() {
                             new_target = _reservation->past_node();
 #else
                             // Get connecting port to targeted entity.
-                            _logger->error("[Handler] [{}] Reservation's pointer at {}.", display(_uuid), fmt::ptr(_reservation));
-                            _logger->error("[Handler] [{}] Source Identifier's pointer at {}.", display(_uuid), fmt::ptr(&_source_identifier));
                             if (_reservation->past_node().second == IdentifierType::Simulation) {
                                 auto topology = _dispatcher->get_topology();
                                 auto found = std::find(topology.begin(), topology.end(),
@@ -1736,8 +1705,6 @@ void Handler::operator()() {
                             new_target = _source_identifier;
 #else
                             // Get connecting port to targeted entity.
-                            _logger->error("[Handler] [{}] Reservation's pointer at {}.", display(_uuid), fmt::ptr(_reservation));
-                            _logger->error("[Handler] [{}] Source Identifier's pointer at {}.", display(_uuid), fmt::ptr(&_source_identifier));
                             if (_source_identifier.second == IdentifierType::Simulation) {
                                 auto topology = _dispatcher->get_topology();
                                 auto found = std::find(topology.begin(), topology.end(),
@@ -1975,8 +1942,6 @@ void Handler::operator()() {
             // Delete the pointer of the message.
             delete _message;
             _message = nullptr;
-
-            _logger->error("DBG: The listener on ending this round is {}", _reservation->listener().at(0));
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(_waiting_time));
