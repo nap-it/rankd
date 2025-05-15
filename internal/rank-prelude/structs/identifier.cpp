@@ -9,15 +9,23 @@ UUIDv4 generate_new_uuid() {
     return ulid;
 }
 
+UUIDv4 generate_new_uuid_with(time_t time) {
+    UUIDv4 ulid = 0;
+    ulid::EncodeTime(time, ulid);
+    ulid::EncodeEntropyRand(ulid);
+
+    return ulid;
+}
+
 std::string display(const UUIDv4& uuid) {
     return ulid::Marshal(uuid);
 }
 
-bool is_same_randomness(const UUIDv4& left, const UUIDv4& right) {
-    auto left_randomness = display(left).substr(10, 16);
-    auto right_randomness = display(right).substr(10, 16);
+bool is_same_timestamp(const UUIDv4& left, const UUIDv4& right) {
+    auto left_timestamp = marshall_into_vector(left);
+    auto right_timestamp = marshall_into_vector(right);
 
-    return left_randomness == right_randomness;
+    return std::equal(left_timestamp.begin(), left_timestamp.begin()+6, right_timestamp.begin());
 }
 
 std::vector<uint8_t> marshall_into_vector(const UUIDv4& uuid) {

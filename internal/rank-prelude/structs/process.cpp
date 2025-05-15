@@ -86,9 +86,9 @@ Handler *Process::suspend_handler(const UUIDv4 &id) {
     return handler;
 }
 
-Handler *Process::get_handler(const UUIDv4 &id) {
+Handler *Process::get_handler(const UUIDv4 &id, bool tester) {
     // If the store has the UUID, then return its handler; otherwise nullptr.
-    if (is_uuid_in_store(id)) {
+    if (is_uuid_in_store(id, tester)) {
         std::lock_guard<std::mutex> lock(_store_locker);
         return _store.at(id);
     } else {
@@ -107,13 +107,14 @@ HandlerState Process::get_handler_state(const UUIDv4 &id) {
     throw std::exception();  // TODO
 }
 
-bool Process::is_uuid_in_store(const UUIDv4 &id) {
+bool Process::is_uuid_in_store(const UUIDv4 &id, bool tester) {
     std::lock_guard<std::mutex> lock(_store_locker);
 
     std::vector<UUIDv4> uuids;
 
     for (const auto& [item_id, _]: _store) {
-        if (is_same_randomness(item_id, id)) {
+        if (is_same_timestamp(item_id, id)) {
+            _logger->critical("Adding {} to uuids to consider.", display(item_id));
             uuids.push_back(item_id);
         }
     }
@@ -124,17 +125,31 @@ bool Process::is_uuid_in_store(const UUIDv4 &id) {
         return false;
     }
 
-    if (uuids.front() != id) {
-        // Update the UUID of the Handler.
-        _store[uuids.front()]->new_id(id);
-        _logger->trace("[Process] We found a pre-translated version of this UUID. Changing {} to {}.", display(uuids.front()),
-                       display(id));
-
-        // Reseat the UUID in Store.
-        _store[id] = _store[uuids.front()];
-        _logger->trace("[Process] Deleting {}.", display(uuids.front()));
-        _store.erase(uuids.front());
+    if (tester) {
+        return true;
     }
+
+    UUIDv4 old = -1;
+    for (const UUIDv4& uuid: uuids) {
+        if (uuid != id) {
+            old = uuid;
+            break;
+        }
+    }
+
+    // Update the UUID of the Handler.
+    if (old == -1) {
+        return true;
+    }
+
+    _store[old]->new_id(id);
+    _logger->critical("[Process] We found a pre-translated version of this UUID. Changing {} to {}.", display(uuids.front()),
+                   display(id));
+
+    // Reseat the UUID in Store.
+    _store[id] = _store[old];
+    _logger->critical("[Process] Deleting {}.", display(uuids.front()));
+    _store.erase(old);
 
     return true;
 }
@@ -190,6 +205,10 @@ MessageType Process::parse_as_message_type(const std::vector<uint8_t> &data) {
 
 UUIDv4 Process::parse_as_message_uuid(const std::vector<uint8_t> &data) {
     return parse_as_message_header(data).uuid();
+}
+
+bool Process::store_contains_uuids_related_to(const UUIDv4& uuid) {
+    return std::any_of(_store.begin(), _store.end(), [&](const std::pair<const UUIDv4&, Handler*>& pair) { return is_same_timestamp(pair.first, uuid); });
 }
 
 Process *Process::execute() {
@@ -253,6 +272,7 @@ void Process::operator()() {
 
             // Get the UUID from the raw data received.
             auto message_uuid = message->uuid();
+            _logger->critical("INT: {}, ULID: {}", message_uuid, display(message_uuid));
 
             _logger->trace("[Process] Outside --> Rank: Message UUID of {}.", display(message_uuid));
             _logger->trace("[Process] Outside --> Rank: Message source address type of {}.",
@@ -262,8 +282,80 @@ void Process::operator()() {
             Handler *handler = nullptr;
 
             // If UUID is known (A.3)...
-            if (is_uuid_in_store(message_uuid)) {
+            bool i_am_origin = false;
+            bool listener_of_message = false;
+            bool requesting_message = false;
+
+            // Check if this message is ending in this process.
+            {
+                std::lock_guard<std::mutex> lock(_origin_set_locker);
+
+                for (const auto& [originated_uuid, _]: _origin_set) {
+                    i_am_origin = i_am_origin or is_same_timestamp(originated_uuid, message_uuid);
+                }
+            }
+#ifdef FROM_SIMUZILLA
+            if (message->header().type() == MessageType::EAR) {
+                if (_simulated_identity(dynamic_cast<EAR *>(message)->listener().at(0)) and store_contains_uuids_related_to(message_uuid)) {
+                    listener_of_message = true;
+                }
+                requesting_message = dynamic_cast<EAR *>(message)->payload_length() != 0;
+            } else if (message->header().type() == MessageType::MAR) {
+                requesting_message = true;
+            }
+#else
+            if (message->header().type() == MessageType::EAR) {
+                requesting_message = dynamic_cast<EAR *>(message)->payload_length() != 0;
+                auto listener = dynamic_cast<EAR *>(message)->listener();
+                switch (dynamic_cast<EAR *>(message)->listener_length()) {
+                    case RANK_EAR_MESSAGE_LEN_LT_IP4: {
+                        std::array<uint8_t, IPV4_ADDR_LEN> listener_array{};
+                        std::copy_n(listener.begin(), IPV4_ADDR_LEN, listener_array.begin());
+                        if (is_me(listener_array)) {
+                            listener_of_message = true;
+                        }
+                    }
+                    case RANK_EAR_MESSAGE_LEN_LT_IP6: {
+                        std::array<uint8_t, IPV6_ADDR_LEN> listener_array{};
+                        std::copy_n(listener.begin(), IPV6_ADDR_LEN, listener_array.begin());
+                        if (is_me(listener_array)) {
+                            listener_of_message = true;
+                        }
+                    }
+                    case RANK_EAR_MESSAGE_LEN_LT_MAC: {
+                        std::array<uint8_t, MAC_ADDR_LEN> listener_array{};
+                        std::copy_n(listener.begin(), MAC_ADDR_LEN, listener_array.begin());
+                        if (is_me(listener_array)) {
+                            listener_of_message = true;
+                        }
+                    }
+                    case RANK_EAR_MESSAGE_LEN_LT_DDS: {
+                        std::array<uint8_t, DDS_ADDR_LEN> listener_array{};
+                        std::copy_n(listener.begin(), DDS_ADDR_LEN, listener_array.begin());
+                        if (is_me(listener_array)) {
+                            listener_of_message = true;
+                        }
+                    }
+                }
+            } else if (message->header().type() == MessageType::MAR) {
+                requesting_message = true;
+            }
+#endif
+            if (is_uuid_in_store(message_uuid, true) and requesting_message) {
                 _logger->debug("[Process] (A.3) Is UUID {} already known? Yes.", display(message_uuid));
+                _logger->warn(
+                        "[Process] The UUID {} is a duplicate request of other request that already is being processed. Ignoring this one...");
+                continue;
+            }
+            if ((i_am_origin and is_uuid_in_store(message_uuid, true)) or listener_of_message or is_uuid_in_store(message_uuid)) {
+                _logger->debug("[Process] (A.3) Is UUID {} already known? Yes.", display(message_uuid));
+
+                if (listener_of_message and not _store.contains(message_uuid)) {
+                    _logger->warn("[Process] The UUID {} is a duplicate request of other that already has been processed. Ignoring...",
+                                  display(message_uuid));
+                    continue;
+                }
+
                 // Check the state of such UUID.
                 auto uuid_state = _store[message_uuid]->state();
 

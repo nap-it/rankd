@@ -12,9 +12,11 @@ typedef ulid::ULID UUIDv4;
 
 UUIDv4 generate_new_uuid();
 
+UUIDv4 generate_new_uuid_with(time_t time);
+
 std::string display(const UUIDv4& uuid);
 
-bool is_same_randomness(const UUIDv4& left, const UUIDv4& right);
+bool is_same_timestamp(const UUIDv4& left, const UUIDv4& right);
 
 std::vector<uint8_t> marshall_into_vector(const UUIDv4& uuid);
 

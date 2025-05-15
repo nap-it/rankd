@@ -62,14 +62,26 @@ Handler *Handler::handle(Message *message) {
 }
 
 UUIDv4 Handler::create_translation(const UUIDv4 &original) {
-    // Generate a new UUID.
-    UUIDv4 new_uuid = generate_new_uuid();
+    // Generate a new UUID with the timestamp of the original.
+    auto original_vector = marshall_into_vector(original);
+    auto timestamp_slice = std::vector<uint8_t>(original_vector.begin(), original_vector.begin()+6);
+    uint64_t timestamp;
+    for (int i = 0; i < 6; ++i) {
+        timestamp = (timestamp << 8) | timestamp_slice[i];
+    }
+    UUIDv4 new_uuid = generate_new_uuid_with((long) timestamp);
 
     // Save translation in the TranslationTable.
     {
         std::lock_guard<std::mutex> lock(*_translation_table_locker);
         _translation_table->insert({new_uuid, original});
     }
+
+    // // Save translation in Store.
+    // {
+    //     std::lock_guard<std::mutex> lock(*_store_locker);
+    //     _store->insert({new_uuid, this});
+    // }
 
     // Return the new UUID.
     return new_uuid;
@@ -88,7 +100,7 @@ UUIDv4 Handler::locate_original_of(const UUIDv4 &translated) {
 
 bool Handler::is_translation_table_empty_for(const UUIDv4 &uuid) {
     std::lock_guard<std::mutex> lock(*_translation_table_locker);
-    return !_translation_table->contains(uuid);
+    return not _translation_table->contains(uuid);
 }
 
 bool Handler::is_translation_table_empty() {
@@ -510,7 +522,9 @@ void Handler::operator()() {
                     }
 
                     // Mark reservation UUID.
-                    _reservation->set_uuid(_uuid);
+                    if (_reservation != nullptr) {
+                        _reservation->set_uuid(_uuid);
+                    }
 
                     if (i_am_listener) {
                         _logger->debug("[Handler] [{}] (B.1) Am I the listener? Yes.", display(_uuid));
@@ -1455,16 +1469,34 @@ void Handler::operator()() {
                 case MessageType::ACC: {
                     auto acc_message = dynamic_cast<ACC *>(_message);
 
+                    if (_state == HandlerState::RESERVED) {
+                        _logger->warn("[Handler] [{}] An ACC message has beed received for an already reserved request. Ignoring...", display(_uuid));
+                        stop();
+                        break;
+                    }
+
                     // (E.1) Set pre-reservation as reserved on UUID in Store.
                     _logger->debug("[Handler] [{}] (E.1) Set pre-reservation as reserved on UUID in Store.",
                                    display(_uuid));
                     _resources->mark_reservation(_reservation);
 
                     // (E.2) Is UUID in the TranslationTable?
+                    _logger->critical("Printing elements in TT");
+                    for (const auto& [left, right]: *_translation_table) {
+                        _logger->critical("{} means {}", display(left), display(right));
+                    }
                     if (not is_translation_table_empty_for(_uuid)) {
                         _logger->debug("[Handler] [{}] (E.2) Is UUID in the TranslationTable? Yes.", display(_uuid));
 
                         UUIDv4 original_uuid = locate_original_of(_uuid);
+
+                        {
+                            std::lock_guard<std::mutex> lock(*_store_locker);
+                            auto stored_item = _store->extract(_uuid);
+                            stored_item.key() = original_uuid;
+                            _store->insert(std::move(stored_item));
+                            _uuid = original_uuid;
+                        }
 
                         // (E.2.1.1) Create ACC message to the original UUID.
                         _logger->debug("[Handler] [{}] (E.2.1.1) Create ACC message to the original UUID.",
@@ -1472,7 +1504,27 @@ void Handler::operator()() {
                         ACC *new_acc_message = new ACC(original_uuid);
                         _logger->trace("[Handler] [{}] Sending message {}.", display(_uuid),
                                        new_acc_message->display());
-                        _dispatcher->send_message(new_acc_message, _source_identifier.first, _source_identifier.second);
+                        std::pair<std::vector<uint8_t>, IdentifierType> new_target;
+#ifndef FROM_SIMUZILLA
+                        new_target = _reservation->past_node();
+#else
+                        // Get connecting port to targeted entity.
+                        if (_reservation->past_node().second == IdentifierType::Simulation) {
+                            auto topology = _dispatcher->get_topology();
+                            auto found = std::find(topology.begin(), topology.end(),
+                                                   _reservation->past_node().first.at(0));
+                            if (found == topology.end()) {
+                                _logger->error(
+                                        "[Handler] [{}] No direct connection was found relating the targeted node {} to a node port in Simuzilla.",
+                                        display(_uuid), _reservation->past_node().first.at(0));
+                                stop();
+                                break;
+                            }
+                            new_target.first = {static_cast<uint8_t>(std::distance(topology.begin(), found))};
+                            new_target.second = IdentifierType::Simulation;
+                        }
+#endif
+                        _dispatcher->send_message(new_acc_message, new_target.first, new_target.second); //_source_identifier.first, _source_identifier.second);
 
                         // Change state to RESERVED.
                         old_state = _state;
@@ -1549,8 +1601,7 @@ void Handler::operator()() {
                             ACC *new_acc_message = new ACC(_uuid);
                             _logger->trace("[Handler] [{}] Sending message {}.", display(_uuid),
                                            new_acc_message->display());
-                            _dispatcher->send_message(new_acc_message, new_target.first,
-                                                      new_target.second); //_source_identifier.first, _source_identifier.second);
+                            _dispatcher->send_message(new_acc_message, new_target.first, new_target.second); //_source_identifier.first, _source_identifier.second);
 
                             // Change state to RESERVED.
                             old_state = _state;

@@ -56,11 +56,11 @@ public:
 
     Handler *suspend_handler(const UUIDv4 &id);
 
-    Handler *get_handler(const UUIDv4 &id);
+    Handler *get_handler(const UUIDv4 &id, bool tester = false);
 
     HandlerState get_handler_state(const UUIDv4 &id);
 
-    bool is_uuid_in_store(const UUIDv4 &uuid);
+    bool is_uuid_in_store(const UUIDv4 &uuid, bool tester = false);
 
     std::map<UUIDv4, HandlerState> get_store_summary();
 
@@ -79,6 +79,8 @@ public:
     MessageType parse_as_message_type(const std::vector<uint8_t> &data);
 
     UUIDv4 parse_as_message_uuid(const std::vector<uint8_t> &data);
+
+    bool store_contains_uuids_related_to(const UUIDv4& uuid);
 
     // Threading control mechanisms.
     Process *execute();
@@ -111,7 +113,7 @@ public:
     ~Process();
 
 private:
-    Process(const std::string& logger_name);
+    explicit Process(const std::string& logger_name);
 
     Dispatcher *_dispatcher;
     Resources *_resources;
@@ -120,7 +122,7 @@ private:
     std::mutex _store_locker;
     OriginSet _origin_set;
     std::mutex _origin_set_locker;
-    TranslationTable _translation_table;
+    TranslationTable _translation_table{};
     std::mutex _translation_table_locker;
     unsigned int _waiting_time = 10;
     bool _running = false;

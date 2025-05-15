@@ -451,9 +451,18 @@ std::list<Reservation>& Resources::reservations() {
 }
 
 Reservation *Resources::get_reservation_for(const UUIDv4 &uuid) {
-    auto reservation_pointer = std::find_if(_reservations.begin(), _reservations.end(), [&](const Reservation& reservation) { return reservation.uuid() == uuid; });
+    auto reservation_pointer = std::find_if(_reservations.begin(), _reservations.end(), [&](const Reservation& reservation) { return is_same_timestamp(reservation.uuid(), uuid); });
 
-    return reservation_pointer != _reservations.end() ? std::addressof(*reservation_pointer) : nullptr;
+    if (reservation_pointer != _reservations.end()) {
+        if (reservation_pointer->uuid() == uuid) {
+            return std::addressof(*reservation_pointer);
+        } else {
+            reservation_pointer->set_uuid(uuid);
+            return std::addressof(*reservation_pointer);
+        }
+    } else {
+        return nullptr;
+    }
 }
 
 size_t Resources::reservations_size() const {
