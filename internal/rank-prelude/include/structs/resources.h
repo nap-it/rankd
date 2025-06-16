@@ -35,7 +35,7 @@ public:
     Reservation* available_for_performance(Reservation* statement, uint8_t priority);
     Resources* replenish_reservation(Reservation* reservation);
     Resources* mark_reservation(Reservation* reservation);
-    Resources* mark_pre_reservation(Reservation* reservation);
+    Reservation* mark_pre_reservation(Reservation* reservation);
     std::list<Reservation>& reservations();
     Reservation* get_reservation_for(const UUIDv4& uuid);
     size_t reservations_size() const;

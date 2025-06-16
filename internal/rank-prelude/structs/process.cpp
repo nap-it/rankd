@@ -114,7 +114,6 @@ bool Process::is_uuid_in_store(const UUIDv4 &id, bool tester) {
 
     for (const auto& [item_id, _]: _store) {
         if (is_same_timestamp(item_id, id)) {
-            _logger->critical("Adding {} to uuids to consider.", display(item_id));
             uuids.push_back(item_id);
         }
     }
@@ -143,12 +142,12 @@ bool Process::is_uuid_in_store(const UUIDv4 &id, bool tester) {
     }
 
     _store[old]->new_id(id);
-    _logger->critical("[Process] We found a pre-translated version of this UUID. Changing {} to {}.", display(uuids.front()),
+    _logger->warn("[Process] We found a pre-translated version of this UUID. Changing {} to {}.", display(uuids.front()),
                    display(id));
 
     // Reseat the UUID in Store.
     _store[id] = _store[old];
-    _logger->critical("[Process] Deleting {}.", display(uuids.front()));
+    _logger->warn("[Process] Deleting {}.", display(uuids.front()));
     _store.erase(old);
 
     return true;
@@ -272,7 +271,7 @@ void Process::operator()() {
 
             // Get the UUID from the raw data received.
             auto message_uuid = message->uuid();
-            _logger->critical("INT: {}, ULID: {}", message_uuid, display(message_uuid));
+            //_logger->critical("INT: {}, ULID: {}", message_uuid, display(message_uuid));
 
             _logger->trace("[Process] Outside --> Rank: Message UUID of {}.", display(message_uuid));
             _logger->trace("[Process] Outside --> Rank: Message source address type of {}.",
@@ -356,8 +355,16 @@ void Process::operator()() {
                     continue;
                 }
 
+                // If is origin and UUID in translation table, then translate it.
+                {
+                    std::lock_guard<std::mutex> lock(_translation_table_locker);
+                    if (i_am_origin and _translation_table.contains(message_uuid)) {
+                        message_uuid = _translation_table.at(message_uuid);
+                    }
+                }
+
                 // Check the state of such UUID.
-                auto uuid_state = _store[message_uuid]->state();
+                auto uuid_state = _store.at(message_uuid)->state();
 
                 _logger->trace("[Process] The UUID {} is in store and its handler is in {} state.",
                                display(message_uuid), handler_state_to_string(uuid_state));

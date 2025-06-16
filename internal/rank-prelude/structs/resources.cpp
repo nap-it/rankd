@@ -403,7 +403,7 @@ Resources* Resources::mark_reservation(Reservation* reservation) {
     return this;
 }
 
-Resources* Resources::mark_pre_reservation(Reservation* reservation) {
+Reservation* Resources::mark_pre_reservation(Reservation* reservation) {
     // Find reservation in reservations and if no such reservation was found, then throw exception.
     bool found = false;
     for (auto& reservation_item: _reservations) {
@@ -411,6 +411,7 @@ Resources* Resources::mark_pre_reservation(Reservation* reservation) {
             found = true;
             reservation_item.pre_reserve();
             //_reservations.sort();
+            return std::addressof(reservation_item);
         }
     }
 
@@ -418,7 +419,7 @@ Resources* Resources::mark_pre_reservation(Reservation* reservation) {
         reservation->pre_reserve();
         _reservations.push_back(*reservation);
         //_reservations.sort();
-        return this;
+        return std::addressof(_reservations.back());
     }
 
     // auto found_reservation = std::find(_reservations.begin(), _reservations.end(), *reservation);
@@ -443,7 +444,7 @@ Resources* Resources::mark_pre_reservation(Reservation* reservation) {
     _reservations.sort();
      */
 
-    return this;
+    return nullptr;
 }
 
 std::list<Reservation>& Resources::reservations() {

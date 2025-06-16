@@ -543,10 +543,9 @@ void Handler::operator()() {
                             _resources->mark_reservation(_reservation);
 
                             // (B.1.1.1.1.2) Create an ACC message and send it.
-                            _logger->debug("[Handler] [{}] (B.1.1.1.1.2) Create an ACC message and send it back.",
-                                           display(_uuid));
                             ACC *acc_message = new ACC(_uuid);
 #ifdef FROM_SIMUZILLA
+                            _logger->debug("[Simuzilla] [{}] (B.1.1.1.1.2) Starting.", display(_uuid));
                             std::vector<std::pair<std::vector<std::pair<uint8_t, uint8_t>>, IdentifierType>> connections_to_target_raw =
                                     get_connections_to(_source_identifier.first.at(0));
                             _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:",
@@ -569,13 +568,15 @@ void Handler::operator()() {
                                     }
                                 }
                             }
-
+                            _logger->debug("[Simuzilla] [{}] (B.1.1.1.1.2) Ending.", display(_uuid));
 #else
                             std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target =
                                         get_connections_to(_source_identifier.first);
 #endif
                             _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid),
                                            acc_message->display());
+                            _logger->debug("[Handler] [{}] (B.1.1.1.1.2) Create an ACC message and send it back.",
+                                           display(_uuid));
                             _dispatcher->send_message(acc_message, connections_to_target.front().first,
                                                       _source_identifier.second);
 
@@ -598,6 +599,7 @@ void Handler::operator()() {
                                            display(_uuid));
                             REF *ref_message = new REF(_uuid);
 #ifdef FROM_SIMUZILLA
+                            _logger->debug("[Simuzilla] [{}] (B.1.1.2) Starting.", display(_uuid));
                             std::vector<std::pair<std::vector<std::pair<uint8_t, uint8_t>>, IdentifierType>> connections_to_target_raw =
                                     get_connections_to(_source_identifier.first.at(0));
                             _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:",
@@ -620,7 +622,7 @@ void Handler::operator()() {
                                     }
                                 }
                             }
-
+                            _logger->debug("[Simuzilla] [{}] (B.1.1.2) Ending.", display(_uuid));
 #else
                             std::vector<std::pair<std::vector<uint8_t>, IdentifierType>> connections_to_target =
                                         get_connections_to(_source_identifier.first);
@@ -713,7 +715,7 @@ void Handler::operator()() {
                                 // (B.1.2.1.2.2) Pre-reserve R with UUID in Store.
                                 _logger->debug("[Handler] [{}] (B.1.2.1.2.2) Pre-reserve R with UUID in Store.",
                                                display(_uuid));
-                                _resources->mark_pre_reservation(_reservation);
+                                _reservation = _resources->mark_pre_reservation(_reservation);
 
                                 // (B.1.2.1.1.1) Get connections towards listener(s).
                                 std::vector<uint8_t> target{};
@@ -781,12 +783,16 @@ void Handler::operator()() {
 
                                         // If no connection is found...
                                         // (B.1.2.2.3.1) Create REF message and send it.
-                                        _logger->debug(
-                                                "[Handler] [{}] (B.1.2.2.3.1) If no connection is found... create REF message and send it back.",
-                                                display(_uuid));
                                         REF *ref_message = new REF(_uuid);
                                         _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid),
                                                        ref_message->display());
+#ifdef FROM_SIMUZILLA
+                                        _logger->debug("[Simuzilla] [{}] (B.1.2.2.3.1) Starting.", display(_uuid));
+                                        _logger->debug("[Simuzilla] [{}] (B.1.2.2.3.1) Ending.", display(_uuid));
+#endif
+                                        _logger->debug(
+                                                "[Handler] [{}] (B.1.2.2.3.1) If no connection is found... create REF message and send it back.",
+                                                display(_uuid));
                                         _dispatcher->send_message(ref_message, _source_identifier.first,
                                                                   _source_identifier.second);
 
@@ -809,11 +815,11 @@ void Handler::operator()() {
 
                                         // If only one connection is found...
                                         // (B.1.2.2.2.1) Create EAR message and send it.
-                                        _logger->debug("[Handler] [{}] (B.1.2.2.2.1) Create EAR message and send it.",
-                                                       display(_uuid));
                                         std::array<uint8_t, 16> listener{};
 #ifdef FROM_SIMUZILLA
+                                        _logger->debug("[Simuzilla] [{}] (B.1.2.2.2.1) Starting.", display(_uuid));
                                         listener.at(0) = _reservation->listener().at(0);
+                                        _logger->debug("[Simuzilla] [{}] (B.1.2.2.2.1) Ending.", display(_uuid));
 #else
                                         std::copy_n(ear_message->listener().begin(), ear_message->listener_length(), listener.begin());
 #endif
@@ -823,6 +829,8 @@ void Handler::operator()() {
                                                         listener, _reservation->requirements());
                                         _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid),
                                                        new_ear_message->display());
+                                        _logger->debug("[Handler] [{}] (B.1.2.2.2.1) Create EAR message and send it.",
+                                                       display(_uuid));
                                         _dispatcher->send_message(new_ear_message, connections_to_target.front().first,
                                                                   connections_to_target.front().second);
 
@@ -861,12 +869,12 @@ void Handler::operator()() {
 
                                         // If more than one connection is found...
                                         // (B.1.2.2.1.1) For each connection create a MAR message and send it.
-                                        _logger->debug("[Handler] [{}] (B.1.2.2.1.1) Create a MAR message and send it.",
-                                                       display(_uuid));
                                         for (const auto &intermediate: connections_to_target) {
                                             std::array<uint8_t, 16> listener{};
 #ifdef FROM_SIMUZILLA
+                                            _logger->debug("[Simuzilla] [{}] (B.1.2.2.1.1) Starting.", display(_uuid));
                                             listener.at(0) = _reservation->listener().at(0);
+                                            _logger->debug("[Simuzilla] [{}] (B.1.2.2.1.1) Ending.", display(_uuid));
 #else
                                             std::copy_n(ear_message->listener().begin(), ear_message->listener_length(), listener.begin());
 #endif
@@ -877,6 +885,8 @@ void Handler::operator()() {
                                                             _reservation->requirements());
                                             _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid),
                                                            mar_message->display());
+                                            _logger->debug("[Handler] [{}] (B.1.2.2.1.1) Create a MAR message and send it.",
+                                                           display(_uuid));
                                             _dispatcher->send_message(mar_message, intermediate.first,
                                                                       intermediate.second);
                                         }
@@ -984,12 +994,16 @@ void Handler::operator()() {
 
                                     // If no connection is found...
                                     // (B.1.2.2.3.1) Create REF message and send it.
-                                    _logger->debug(
-                                            "[Handler] [{}] (B.1.2.2.3.1) If no connection is found... create REF message and send it back.",
-                                            display(_uuid));
                                     REF *ref_message = new REF(_uuid);
                                     _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid),
                                                    ref_message->display());
+#ifdef FROM_SIMUZILLA
+                                    _logger->debug("[Simuzilla] [{}] (B.1.2.2.3.1) Starting.", display(_uuid));
+                                    _logger->debug("[Simuzilla] [{}] (B.1.2.2.3.1) Ending.", display(_uuid));
+#endif
+                                    _logger->debug(
+                                            "[Handler] [{}] (B.1.2.2.3.1) If no connection is found... create REF message and send it back.",
+                                            display(_uuid));
                                     _dispatcher->send_message(ref_message, _source_identifier.first,
                                                               _source_identifier.second);
 
@@ -1011,11 +1025,11 @@ void Handler::operator()() {
 
                                     // If only one connection is found...
                                     // (B.1.2.2.2.1) Create EAR message and send it.
-                                    _logger->debug("[Handler] [{}] (B.1.2.2.2.1) Create EAR message and send it.",
-                                                   display(_uuid));
                                     std::array<uint8_t, 16> listener{};
 #ifdef FROM_SIMUZILLA
+                                    _logger->debug("[Simuzilla] [{}] (B.1.2.2.2.1) Starting.", display(_uuid));
                                     listener.at(0) = _reservation->listener().at(0);
+                                    _logger->debug("[Simuzilla] [{}] (B.1.2.2.2.1) Starting.", display(_uuid));
 #else
                                     std::copy_n(ear_message->listener().begin(), ear_message->listener_length(), listener.begin());
 #endif
@@ -1024,6 +1038,8 @@ void Handler::operator()() {
                                                     listener, _reservation->requirements());
                                     _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid),
                                                    new_ear_message->display());
+                                    _logger->debug("[Handler] [{}] (B.1.2.2.2.1) Create EAR message and send it.",
+                                                   display(_uuid));
                                     _dispatcher->send_message(new_ear_message, connections_to_target.front().first,
                                                               connections_to_target.front().second);
 
@@ -1060,12 +1076,12 @@ void Handler::operator()() {
 
                                     // If more than one connection is found...
                                     // (B.1.2.2.1.1) For each connection create a MAR message and send it.
-                                    _logger->debug("[Handler] [{}] (B.1.2.2.1.1) Create a MAR message and send it.",
-                                                   display(_uuid));
                                     for (const auto &intermediate: connections_to_target) {
                                         std::array<uint8_t, 16> listener{};
 #ifdef FROM_SIMUZILLA
+                                        _logger->debug("[Simuzilla] [{}] (B.1.2.2.1.1) Starting.", display(_uuid));
                                         listener.at(0) = _reservation->listener().at(0);
+                                        _logger->debug("[Simuzilla] [{}] (B.1.2.2.1.1) Ending.", display(_uuid));
 
 #else
                                         std::copy_n(ear_message->listener().begin(), ear_message->listener_length(), listener.begin());
@@ -1077,6 +1093,8 @@ void Handler::operator()() {
                                                         _reservation->requirements());
                                         _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid),
                                                        mar_message->display());
+                                        _logger->debug("[Handler] [{}] (B.1.2.2.1.1) Create a MAR message and send it.",
+                                                       display(_uuid));
                                         _dispatcher->send_message(mar_message, intermediate.first, intermediate.second);
                                     }
 
@@ -1200,10 +1218,10 @@ void Handler::operator()() {
                         _logger->trace("[Handler] [{}] The bid was estimated of {}.", display(_uuid), bid_value);
 
                         // (C.1.2.2) Create BID message and send it.
-                        _logger->debug("[Handler] [{}] (C.1.2.2) Create BID message and send it.", display(_uuid));
                         BID *bid_message = new BID(_uuid, bid_value);
                         std::vector<uint8_t> target;
 #ifdef FROM_SIMUZILLA
+                        _logger->debug("[Simuzilla] [{}] (C.1.2.2) Starting.", display(_uuid));
                         std::vector<std::pair<std::vector<std::pair<uint8_t, uint8_t>>, IdentifierType>> connections_to_target_raw =
                                 get_connections_to(_source_identifier.first.at(0));
                         _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:",
@@ -1215,10 +1233,12 @@ void Handler::operator()() {
                                            connection.at(0).second, connection.at(0).first);
                         }
                         target = {connections_to_target_raw.at(0).first.at(0).second};
+                        _logger->debug("[Simuzilla] [{}] (C.1.2.2) Ending.", display(_uuid));
 #else
                         target = _source_identifier.first;
 #endif
                         _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid), bid_message->display());
+                        _logger->debug("[Handler] [{}] (C.1.2.2) Create BID message and send it.", display(_uuid));
                         _dispatcher->send_message(bid_message, target, _source_identifier.second);
 
                         // Change state to PRE_RESERVED.
@@ -1232,7 +1252,7 @@ void Handler::operator()() {
                         _logger->debug("[Handler] [{}] (C.1.2.3) Pre-reserve R with UUID in the store.",
                                        display(_uuid));
                         _reservation->update_last_bid(bid_value);
-                        _resources->mark_pre_reservation(_reservation);
+                        _reservation = _resources->mark_pre_reservation(_reservation);
 
                         // (C.1.2.4(bis)) Begin timer for BID timeout.
                         _logger->debug("[Handler] [{}] (C.1.2.4(bis)) Begin timer for BID timeout.", display(_uuid));
@@ -1245,10 +1265,28 @@ void Handler::operator()() {
                         _logger->debug("[Handler] [{}] (C.1) Can R be performed with priority p? No.", display(_uuid));
 
                         // (C.1.1.1) Create zeroed-bid message and send it.
+                        BID *bid_message = new BID(_uuid, 0);
+                        std::vector<uint8_t> target;
+#ifdef FROM_SIMUZILLA
+                        _logger->debug("[Simuzilla] [{}] (C.1.1.1) Starting.", display(_uuid));
+                        std::vector<std::pair<std::vector<std::pair<uint8_t, uint8_t>>, IdentifierType>> connections_to_target_raw =
+                                get_connections_to(_source_identifier.first.at(0));
+                        _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:",
+                                       display(_uuid), connections_to_target_raw.size(),
+                                       connections_to_target_raw.size() == 1 ? "" : "s",
+                                       _source_identifier.first.at(0));
+                        for (const auto &[connection, type]: connections_to_target_raw) {
+                            _logger->trace("[Handler]                               -> {} with depth {}",
+                                           connection.at(0).second, connection.at(0).first);
+                        }
+                        target = {connections_to_target_raw.at(0).first.at(0).second};
+                        _logger->debug("[Simuzilla] [{}] (C.1.1.1) Ending.", display(_uuid));
+#else
+                        target = _source_identifier.first;
+#endif
+                        _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid), bid_message->display());
                         _logger->debug("[Handler] [{}] (C.1.1.1) Create zeroed-bid message and send it.",
                                        display(_uuid));
-                        BID *bid_message = new BID(_uuid, 0);
-                        _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid), bid_message->display());
                         _dispatcher->send_message(bid_message, _source_identifier.first, _source_identifier.second);
 
                         // Change handler's state to CLOSED.
@@ -1304,9 +1342,13 @@ void Handler::operator()() {
                         _logger->debug("[Handler] [{}] (D.1.1.3) Check the cardinal of bids. Zero", display(_uuid));
 
                         // (D.1.1.3.2.1) Create REF message and send it.
-                        _logger->debug("[Handler] [{}] (D.1.1.3.2.1) Create REF message and send it.", display(_uuid));
                         REF *ref_message = new REF(_uuid);
+#ifdef FROM_SIMUZILLA
+                        _logger->debug("[Simuzilla] [{}] (D.1.1.3.2.1) Starting.", display(_uuid));
+                        _logger->debug("[Simuzilla] [{}] (D.1.1.3.2.1) Ending.", display(_uuid));
+#endif
                         _logger->trace("[Handler] [{}] Sending message: {}.", display(_uuid), ref_message->display());
+                        _logger->debug("[Handler] [{}] (D.1.1.3.2.1) Create REF message and send it.", display(_uuid));
                         _dispatcher->send_message(ref_message, _source_identifier.first, _source_identifier.second);
 
                         // Change the state to CLOSED.
@@ -1331,9 +1373,6 @@ void Handler::operator()() {
                                            display(_uuid));
 
                             // (D.1.1.3.1.1.1.1) As it is unique, send an EAR message to it.
-                            _logger->debug(
-                                    "[Handler] [{}] (D.1.1.3.1.1.1.1) As it is unique, send an EAR message to it.",
-                                    display(_uuid));
                             std::array<uint8_t, 16> listener{};
 #ifdef FROM_SIMUZILLA
                             listener.at(0) = _reservation->listener().at(0);
@@ -1348,6 +1387,7 @@ void Handler::operator()() {
                                            ear_message->display());
                             std::vector<uint8_t> target;
 #ifdef FROM_SIMUZILLA
+                            _logger->debug("[Simuzilla] [{}] (D.1.1.3.1.1.1.1) Starting.", display(_uuid));
                             std::vector<std::pair<std::vector<std::pair<uint8_t, uint8_t>>, IdentifierType>> connections_to_target_raw =
                                     get_connections_to(maximum_bid.begin()->first.at(0));
                             _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:",
@@ -1359,9 +1399,13 @@ void Handler::operator()() {
                                                connection.at(0).second, connection.at(0).first);
                             }
                             target = {connections_to_target_raw.at(0).first.at(0).second};
+                            _logger->debug("[Simuzilla] [{}] (D.1.1.3.1.1.1.1) Ending.", display(_uuid));
 #else
                             target = minimum_bids.begin()->first;
 #endif
+                            _logger->debug(
+                                    "[Handler] [{}] (D.1.1.3.1.1.1.1) As it is unique, send an EAR message to it.",
+                                    display(_uuid));
                             _dispatcher->send_message(ear_message, target, maximum_bid.begin()->second);
 
                             // Change the state to PRE_RESERVED.
@@ -1385,7 +1429,7 @@ void Handler::operator()() {
                             stop();
                             break;
                         } else {
-                            _logger->debug("[Handler] [{}] (D.1.1.3.1.1) Is the minimum bid unique? No.",
+                            _logger->debug("[Handler] [{}] (D.1.1.3.1.1) Is the maximum bid unique? No.",
                                            display(_uuid));
 
                             // (D.1.1.3.1.1.2.1) Create a new UUID for each max(B) node and (D.1.1.3.1.1.2.2) Save
@@ -1402,9 +1446,6 @@ void Handler::operator()() {
                                         display(_uuid));
 
                                 // (D.1.1.3.1.1.2.3) Create EAR message and send it to each min(B) node, with UUID*.
-                                _logger->debug(
-                                        "[Handler] [{}] (D.1.1.3.1.1.2.3) Create EAR message and send it to each min(B) node, with UUID*.",
-                                        display(_uuid));
                                 std::array<uint8_t, 16> listener{};
 #ifdef FROM_SIMUZILLA
                                 listener.at(0) = _reservation->listener().at(0);
@@ -1419,6 +1460,7 @@ void Handler::operator()() {
                                                ear_message->display());
                                 std::vector<uint8_t> target;
 #ifdef FROM_SIMUZILLA
+                                _logger->debug("[Simuzilla] [{}] (D.1.1.3.1.1.2.3) Starting.", display(_uuid));
                                 std::vector<std::pair<std::vector<std::pair<uint8_t, uint8_t>>, IdentifierType>> connections_to_target_raw =
                                         get_connections_to(bid_target.first.at(0));
                                 _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:",
@@ -1430,9 +1472,13 @@ void Handler::operator()() {
                                                    connection.at(0).second, connection.at(0).first);
                                 }
                                 target = {connections_to_target_raw.at(0).first.at(0).second};
+                                _logger->debug("[Simuzilla] [{}] (D.1.1.3.1.1.2.3) Ending.", display(_uuid));
 #else
                                 target = minimum_bids.begin()->first;
 #endif
+                                _logger->debug(
+                                        "[Handler] [{}] (D.1.1.3.1.1.2.3) Create EAR message and send it to each min(B) node, with UUID*.",
+                                        display(_uuid));
                                 _dispatcher->send_message(ear_message, target,
                                                           bid_target.second);
 
@@ -1481,10 +1527,6 @@ void Handler::operator()() {
                     _resources->mark_reservation(_reservation);
 
                     // (E.2) Is UUID in the TranslationTable?
-                    _logger->critical("Printing elements in TT");
-                    for (const auto& [left, right]: *_translation_table) {
-                        _logger->critical("{} means {}", display(left), display(right));
-                    }
                     if (not is_translation_table_empty_for(_uuid)) {
                         _logger->debug("[Handler] [{}] (E.2) Is UUID in the TranslationTable? Yes.", display(_uuid));
 
@@ -1499,8 +1541,6 @@ void Handler::operator()() {
                         }
 
                         // (E.2.1.1) Create ACC message to the original UUID.
-                        _logger->debug("[Handler] [{}] (E.2.1.1) Create ACC message to the original UUID.",
-                                       display(_uuid));
                         ACC *new_acc_message = new ACC(original_uuid);
                         _logger->trace("[Handler] [{}] Sending message {}.", display(_uuid),
                                        new_acc_message->display());
@@ -1509,6 +1549,7 @@ void Handler::operator()() {
                         new_target = _reservation->past_node();
 #else
                         // Get connecting port to targeted entity.
+                        _logger->debug("[Simuzilla] [{}] (E.2.1.1) Starting.", display(_uuid));
                         if (_reservation->past_node().second == IdentifierType::Simulation) {
                             auto topology = _dispatcher->get_topology();
                             auto found = std::find(topology.begin(), topology.end(),
@@ -1523,7 +1564,10 @@ void Handler::operator()() {
                             new_target.first = {static_cast<uint8_t>(std::distance(topology.begin(), found))};
                             new_target.second = IdentifierType::Simulation;
                         }
+                        _logger->debug("[Simuzilla] [{}] (E.2.1.1) Ending.", display(_uuid));
 #endif
+                        _logger->debug("[Handler] [{}] (E.2.1.1) Create ACC message to the original UUID.",
+                                       display(_uuid));
                         _dispatcher->send_message(new_acc_message, new_target.first, new_target.second); //_source_identifier.first, _source_identifier.second);
 
                         // Change state to RESERVED.
@@ -1578,6 +1622,7 @@ void Handler::operator()() {
 #ifndef FROM_SIMUZILLA
                             new_target = _reservation->past_node();
 #else
+                            _logger->debug("[Simuzilla] [{}] (E.2.2.1.2.1) Starting.", display(_uuid));
                             // Get connecting port to targeted entity.
                             if (_reservation->past_node().second == IdentifierType::Simulation) {
                                 auto topology = _dispatcher->get_topology();
@@ -1593,6 +1638,7 @@ void Handler::operator()() {
                                 new_target.first = {static_cast<uint8_t>(std::distance(topology.begin(), found))};
                                 new_target.second = IdentifierType::Simulation;
                             }
+                            _logger->debug("[Simuzilla] [{}] (E.2.2.1.2.1) Ending.", display(_uuid));
 #endif
 
                             // (E.2.2.1.2.1) Create ACC message to the UUID.
@@ -1661,10 +1707,12 @@ void Handler::operator()() {
                         if (not is_translation_table_empty_for(_uuid)) {
                             _logger->debug("[Handler] [{}] (F.2.1.2) Is TranslationTable empty? No.", display(_uuid));
 
+                            // (F.2.2.1.2.1) Create REF message and send it.
                             std::pair<std::vector<uint8_t>, IdentifierType> new_target;
 #ifndef FROM_SIMUZILLA
                             new_target = _source_identifier;
 #else
+                            _logger->debug("[Simuzilla] [{}] (F.2.2.1.2.1) Starting.", display(_uuid));
                             // Get connecting port to targeted entity.
                             if (_source_identifier.second == IdentifierType::Simulation) {
                                 auto topology = _dispatcher->get_topology();
@@ -1680,14 +1728,14 @@ void Handler::operator()() {
                                 new_target.first = {static_cast<uint8_t>(std::distance(topology.begin(), found))};
                                 new_target.second = IdentifierType::Simulation;
                             };
+                            _logger->debug("[Simuzilla] [{}] (F.2.2.1.2.1) Ending.", display(_uuid));
 #endif
 
-                            // (F.2.2.1.2.1) Create REF message and send it.
-                            _logger->debug("[Handler] [{}] (F.2.2.1.2.1) Create REF message and send it.",
-                                           display(_uuid));
                             REF *new_ref_message = new REF(_uuid);
                             _logger->trace("[Handler] [{}] Sending message {}.", display(_uuid),
                                            new_ref_message->display());
+                            _logger->debug("[Handler] [{}] (F.2.2.1.2.1) Create REF message and send it.",
+                                           display(_uuid));
                             _dispatcher->send_message(new_ref_message, new_target.first, new_target.second);
 
                             // Change state to CLOSED.
@@ -1846,10 +1894,10 @@ void Handler::operator()() {
                                        display(_uuid));
 
                         // (G.1.1.1) Create REF message and send it.
-                        _logger->debug("[Handler] [{}] (G.1.1.1) Create REF message and send it.", display(_uuid));
                         REF *ref_message = new REF(_uuid);
                         std::vector<uint8_t> target;
 #ifdef FROM_SIMUZILLA
+                        _logger->debug("[Simuzilla] [{}] (G.1.1.1) Starting.", display(_uuid));
                         std::vector<std::pair<std::vector<std::pair<uint8_t, uint8_t>>, IdentifierType>> connections_to_target_raw =
                                 get_connections_to(_source_identifier.first.at(0));
                         _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:",
@@ -1861,10 +1909,12 @@ void Handler::operator()() {
                                            connection.at(0).second, connection.at(0).first);
                         }
                         target = {connections_to_target_raw.at(0).first.at(0).second};
+                        _logger->debug("[Simuzilla] [{}] (G.1.1.1) Ending.", display(_uuid));
 #else
                         target = _source_identifier.first;
 #endif
                         _logger->trace("[Handler] [{}] Sending message {}.", display(_uuid), ref_message->display());
+                        _logger->debug("[Handler] [{}] (G.1.1.1) Create REF message and send it.", display(_uuid));
                         _dispatcher->send_message(ref_message, target, _source_identifier.second);
 
                         // Change state to CLOSED.
@@ -1887,13 +1937,12 @@ void Handler::operator()() {
                             _logger->debug("[Handler] [{}] (G.1.2.1) Is UUID in Store? Yes.", display(_uuid));
 
                             // (G.1.2.1.1.1) Create REP message towards L and send it.
-                            _logger->debug("[Handler] [{}] (G.1.2.1.1.1) Create REP message towards L and send it.",
-                                           display(_uuid));
                             REP *new_rep_message = new REP(_uuid, _reservation->listener_length(),
                                                            _reservation->listener());
                             for (const auto &direction: _reservation->next_nodes()) {
                                 std::vector<uint8_t> target;
 #ifdef FROM_SIMUZILLA
+                                _logger->debug("[Simuzilla] [{}] (G.1.2.1.1.1) Starting.", display(_uuid));
                                 std::vector<std::pair<std::vector<std::pair<uint8_t, uint8_t>>, IdentifierType>> connections_to_target_raw =
                                         get_connections_to(direction.first.at(0));
                                 _logger->trace("[Handler] [{}] Collected {} connection{} to target {}. Possibilities:",
@@ -1905,11 +1954,14 @@ void Handler::operator()() {
                                                    connection.at(0).second, connection.at(0).first);
                                 }
                                 target = {connections_to_target_raw.at(0).first.at(0).second};
+                                _logger->debug("[Simuzilla] [{}] (G.1.2.1.1.1) Ending.", display(_uuid));
 #else
                                 target = _source_identifier.first;
 #endif
                                 _logger->trace("[Handler] [{}] Sending message {}.", display(_uuid),
                                                new_rep_message->display());
+                                _logger->debug("[Handler] [{}] (G.1.2.1.1.1) Create REP message towards L and send it.",
+                                               display(_uuid));
                                 _dispatcher->send_message(new_rep_message, target, direction.second);
                             }
 
