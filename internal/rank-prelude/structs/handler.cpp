@@ -1222,7 +1222,7 @@ void Handler::operator()() {
                         _logger->debug("[Handler] [{}] (C.1) Can R be performed with priority p? Yes.", display(_uuid));
 
                         // (C.1.2.1) Save bid as b.
-                        float bid_value = _resources->estimate_bid(*_reservation); // TODO
+                        float bid_value = position->last_bid(); //  _resources->estimate_bid(*_reservation); // TODO
                         _logger->debug("[Handler] [{}] (C.1.2.1) Save bid as b.", display(_uuid));
                         _logger->trace("[Handler] [{}] The bid was estimated of {}.", display(_uuid), bid_value);
 
